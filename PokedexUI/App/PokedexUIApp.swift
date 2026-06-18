@@ -25,6 +25,7 @@ struct PokedexUIApp: App {
 private struct RootView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.container) private var container
+    @State private var featureFlags = FeatureFlags()
 
     var body: some View {
         RootTabView(
@@ -33,6 +34,8 @@ private struct RootView: View {
                 container: container
             )
         )
+        .environment(\.featureFlags, featureFlags)
+        .task { await featureFlags.fetch() }
     }
 }
 

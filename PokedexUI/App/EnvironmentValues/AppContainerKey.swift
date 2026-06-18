@@ -8,4 +8,5 @@ extension EnvironmentValues {
     /// rather than a fresh instance because `@Entry` re-evaluates its default
     /// expression on each read.
     @Entry var container: AppContainer = .live
+    @Entry var featureFlags: FeatureFlags = FeatureFlags()
 }

@@ -10,10 +10,13 @@ struct SpriteImage: View {
     enum Style { case circle, plain }
 
     @Environment(\.container) private var container
+    @Environment(\.featureFlags) private var featureFlags
     @State private var image: Image?
+    @State private var tintColor: Color = .white
 
     let url: String?
     var style: Style = .circle
+    var silhouetteTint: Color? = .white
     var onLoaded: ((UIImage) async -> Void)?
 
     var body: some View {
@@ -21,6 +24,8 @@ struct SpriteImage: View {
             if let image {
                 image
                     .resizable()
+                    .renderingMode(featureFlags.silhouetteEnabled ? .template : .original)
+                    .foregroundStyle(tintColor.opacity(featureFlags.silhouetteEnabled ? Opacity.silhouette : 1))
                     .transition(.opacity)
             } else {
                 placeholder
@@ -32,7 +37,10 @@ struct SpriteImage: View {
                   let uiImage = await container.spriteLoader.spriteImage(from: url)
             else { return }
             await onLoaded?(uiImage)
+            let dominant = await container.imageColorAnalyzer.dominantColor(for: url.hashValue, image: uiImage)
+            let isLight = dominant?.isLight ?? false
             withAnimation(DesignKit.Animation.Primitive.easeInOut20) {
+                tintColor = silhouetteTint ?? (isLight ? .black : .white)
                 image = Image(uiImage: uiImage)
             }
         }

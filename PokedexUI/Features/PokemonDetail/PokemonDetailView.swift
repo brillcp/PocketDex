@@ -8,6 +8,7 @@ import SwiftData
 /// `NavigationStack`: the compact pokedex stack, the regular-width detail
 /// column, search, my team, and type lists.
 struct PokemonDetailView<ViewModel: PokemonDetailViewModelProtocol>: View {
+    @Environment(\.featureFlags) private var featureFlags
 
     @State private var viewModel: ViewModel
     /// "Battle" challenges this Pokémon; the sheet picks the player's fighter.
