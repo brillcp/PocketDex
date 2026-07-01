@@ -17,6 +17,7 @@ import SwiftData
 /// whenever the size class changes.
 struct PokedexContent<ViewModel: PokedexViewModelProtocol>: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.featureFlags) private var featureFlags
 
     let viewModel: ViewModel
 
@@ -109,6 +110,10 @@ private struct PokedexDetailColumn: View {
                     .font(.pixel14)
                     .applyPokedexStyling(title: "")
             }
+            .onChange(of: featureFlags.nameSortEnabled) { _, isEnabled in
+                guard isEnabled else { return }
+                viewModel.sortType = .name
+            }
         }
     }
 }
@@ -117,7 +122,9 @@ private struct PokedexDetailColumn: View {
 ///
 /// Holds the view model in `@State` only to get `$viewModel` bindings for the
 /// sort picker; the parent passes the same long-lived reference each time.
-private struct PokedexToolbar<ViewModel: PokedexViewModelProtocol>: ToolbarContent {
+private struct PokedexToolbar<ViewModel: PokedexViewModelProtocol & Sendable>: ToolbarContent {
+    @Environment(\.featureFlags) private var featureFlags
+
     @State var viewModel: ViewModel
 
     var body: some ToolbarContent {

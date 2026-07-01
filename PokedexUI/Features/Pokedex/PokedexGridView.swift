@@ -128,6 +128,8 @@ private struct PokedexGridItem: View {
 
 /// Id pill and name overlaid on the sprite cell.
 private struct CardOverlay: View {
+    @Environment(\.featureFlags) private var featureFlags
+
     let id: Int
     let name: String
     let isLight: Bool
@@ -140,7 +142,9 @@ private struct CardOverlay: View {
             }
             .padding(DesignKit.Spacing.Primitive.s8)
             Spacer()
-            Text(name)
+            if !featureFlags.silhouetteEnabled {
+                Text(name)
+            }
         }
         .padding(.bottom, DesignKit.Spacing.Primitive.s12)
         .foregroundStyle(isLight ? Color.darkGrey : .white)

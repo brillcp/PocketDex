@@ -110,6 +110,8 @@ struct PokemonGrid<Cell: View>: View {
 /// first appear, as a one-time pass over the models already passed in
 /// (later keystrokes only run substring checks against it).
 struct PokemonPickerGrid: View {
+    @Environment(\.featureFlags) private var featureFlags
+
     let sections: [PokemonGridSection]
     var namespace: Namespace.ID?
     /// Shown on the top-trailing corner of cells in sections with
@@ -151,7 +153,7 @@ struct PokemonPickerGrid: View {
             Button {
                 onSelect(pokemon)
             } label: {
-                PokemonSpriteCard(pokemon: pokemon)
+                PokemonSpriteCard(pokemon: pokemon, hidesName: featureFlags.silhouetteEnabled)
                     .overlay(alignment: .topTrailing) {
                         if section.showsBadges, let chip = badge?(pokemon) {
                             chip.padding(DesignKit.Spacing.Primitive.s6)

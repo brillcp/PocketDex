@@ -2,6 +2,8 @@ import SwiftUI
 
 /// Horizontal evolution row with equal-width stages separated by trigger arrows.
 struct EvolutionChainView: View {
+    @Environment(\.featureFlags) private var featureFlags
+
     let stages: [EvolutionChain.Stage]
     let textColor: Color
     let onSelect: (Int) -> Void
@@ -34,11 +36,13 @@ private extension EvolutionChainView {
                     SpriteImage(url: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/\(id).png")
                         .frame(width: 72, height: 72)
                 }
-                Text(stage.species.displayName)
-                    .font(.pixel12)
-                    .foregroundStyle(textColor)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                if !featureFlags.silhouetteEnabled {
+                    Text(stage.species.displayName)
+                        .font(.pixel12)
+                        .foregroundStyle(textColor)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                }
             }
             .frame(maxWidth: .infinity)
         }

@@ -11,6 +11,7 @@ import SwiftData
 struct SearchView<ViewModel: SearchViewModelProtocol>: View {
     @FocusState private var isSearchFocused: Bool
     @Namespace private var namespace
+    @Environment(\.featureFlags) private var featureFlags
     @Query(sort: \Pokemon.id) private var corpus: [Pokemon]
 
     @State var viewModel: ViewModel
@@ -26,7 +27,7 @@ struct SearchView<ViewModel: SearchViewModelProtocol>: View {
                         Button {
                             selectedPokemon = pokemon
                         } label: {
-                            PokemonSpriteCard(pokemon: pokemon)
+                            PokemonSpriteCard(pokemon: pokemon, hidesName: featureFlags.silhouetteEnabled)
                                 .applyTransitionSource(id: pokemon.id, namespace: namespace)
                         }
                         .buttonStyle(.plain)
@@ -121,6 +122,7 @@ private struct SuggestedPokemonSection: View {
     let namespace: Namespace.ID
     /// Pushes through the search stack's single detail destination.
     let onSelect: (Pokemon) -> Void
+    @Environment(\.featureFlags) private var featureFlags
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s8) {
@@ -131,7 +133,7 @@ private struct SuggestedPokemonSection: View {
                     Button {
                         onSelect(pokemon)
                     } label: {
-                        PokemonSpriteCard(pokemon: pokemon)
+                        PokemonSpriteCard(pokemon: pokemon, hidesName: featureFlags.silhouetteEnabled)
                             .matchedTransitionSource(id: pokemon.id, in: namespace)
                     }
                     .buttonStyle(.plain)
