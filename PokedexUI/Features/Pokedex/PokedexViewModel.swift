@@ -54,10 +54,6 @@ final class PokedexViewModel {
     private let repository: PokedexRepositoryProtocol
     private let modelContext: ModelContext
 
-    private var cachedSortedPokemon: [Pokemon]?
-    private let fetcher: PokemonFetcher
-    private var downloadTicks: Int = 0
-
     var pokemon: [Pokemon] = [] { didSet { recomputeSortedPokemon() } }
     var isLoading: Bool = false
     var loadingProgress: Double = 0

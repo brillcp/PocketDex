@@ -8,7 +8,6 @@ import SwiftData
 /// `NavigationStack`: the compact pokedex stack, the regular-width detail
 /// column, search, my team, and type lists.
 struct PokemonDetailView<ViewModel: PokemonDetailViewModelProtocol>: View {
-    @Environment(\.featureFlags) private var featureFlags
 
     @State private var viewModel: ViewModel
     /// "Battle" challenges this Pokémon; the sheet picks the player's fighter.
@@ -43,6 +42,7 @@ struct PokemonDetailView<ViewModel: PokemonDetailViewModelProtocol>: View {
         .background {
             DetailSpriteBackdrop(
                 sprite: viewModel.sprite,
+                tint: textColor,
                 blurRadius: $spriteBlur
             )
         }
@@ -201,13 +201,19 @@ private extension PokemonDetailView {
 /// frame: the parent body never reads `spriteBlur`, so it isn't a dependency
 /// of the parent.
 private struct DetailSpriteBackdrop: View {
+    @Environment(\.featureFlags) private var featureFlags
+
     let sprite: Image?
+    /// Silhouette color when the remote silhouette flag is on.
+    let tint: Color
     @Binding var blurRadius: CGFloat
 
     var body: some View {
         VStack {
             sprite?
                 .resizable()
+                .renderingMode(featureFlags.silhouetteEnabled ? .template : .original)
+                .foregroundStyle(tint.opacity(featureFlags.silhouetteEnabled ? Opacity.silhouette : 1))
                 .aspectRatio(contentMode: .fit)
                 .frame(height: 320)
                 .blur(radius: blurRadius)

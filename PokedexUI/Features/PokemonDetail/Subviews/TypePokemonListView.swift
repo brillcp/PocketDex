@@ -7,7 +7,6 @@ import SwiftData
 struct TypePokemonListView: View {
     let typeName: String
 
-    @Environment(\.featureFlags) private var featureFlags
     @Namespace private var namespace
     @Query private var pokemonOfType: [Pokemon]
     @State private var selectedPokemon: Pokemon?
@@ -29,7 +28,7 @@ struct TypePokemonListView: View {
             Button {
                 selectedPokemon = pokemon
             } label: {
-                PokemonSpriteCard(pokemon: pokemon, hidesName: featureFlags.silhouetteEnabled)
+                PokemonSpriteCard(pokemon: pokemon)
                     .applyTransitionSource(id: pokemon.id, namespace: namespace)
             }
             .buttonStyle(.plain)

@@ -8,5 +8,8 @@ extension EnvironmentValues {
     /// rather than a fresh instance because `@Entry` re-evaluates its default
     /// expression on each read.
     @Entry var container: AppContainer = .live
-    @Entry var featureFlags: FeatureFlags = FeatureFlags()
+    /// Remote feature flags. `RootView` injects the instance it fetches;
+    /// the default is the shared `FeatureFlags.defaults` (a `static let`, so
+    /// every read returns the same object instead of a new one).
+    @Entry var featureFlags: FeatureFlags = .defaults
 }

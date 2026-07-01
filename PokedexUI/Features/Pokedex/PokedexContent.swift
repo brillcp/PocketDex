@@ -19,7 +19,7 @@ struct PokedexContent<ViewModel: PokedexViewModelProtocol>: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.featureFlags) private var featureFlags
 
-    let viewModel: ViewModel
+    @State var viewModel: ViewModel
 
     /// Pushed screens in compact width.
     @State private var path: [PokedexRoute] = []
@@ -42,6 +42,12 @@ struct PokedexContent<ViewModel: PokedexViewModelProtocol>: View {
                     if newPath.isEmpty { selection = nil }
                 }
             }
+        }
+        // The remote name-sort flag switches the grid to alphabetical order
+        // when it turns on (pairs with silhouette mode hiding names).
+        .onChange(of: featureFlags.nameSortEnabled) { _, isEnabled in
+            guard isEnabled else { return }
+            viewModel.sortType = .name
         }
         // Carry the open Pokémon and "My team" across fold/unfold so they
         // stay on screen.
@@ -110,10 +116,6 @@ private struct PokedexDetailColumn: View {
                     .font(.pixel14)
                     .applyPokedexStyling(title: "")
             }
-            .onChange(of: featureFlags.nameSortEnabled) { _, isEnabled in
-                guard isEnabled else { return }
-                viewModel.sortType = .name
-            }
         }
     }
 }
@@ -122,9 +124,7 @@ private struct PokedexDetailColumn: View {
 ///
 /// Holds the view model in `@State` only to get `$viewModel` bindings for the
 /// sort picker; the parent passes the same long-lived reference each time.
-private struct PokedexToolbar<ViewModel: PokedexViewModelProtocol & Sendable>: ToolbarContent {
-    @Environment(\.featureFlags) private var featureFlags
-
+private struct PokedexToolbar<ViewModel: PokedexViewModelProtocol>: ToolbarContent {
     @State var viewModel: ViewModel
 
     var body: some ToolbarContent {
