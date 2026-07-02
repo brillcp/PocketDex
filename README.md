@@ -47,7 +47,7 @@ PocketDex+ is **Protocol-Oriented MVVM** with clear layer boundaries and aggress
 ```
 ┌─────────────────────────────────────────────────────────┐
 │  App/                                                   │
-│    PocketUIApp        AppContainer (composition root)  │
+│    PokedexUIApp        AppContainer (composition root)  │
 ├─────────────────────────────────────────────────────────┤
 │  Features/                                              │
 │    Pokedex   PokemonDetail   Battle   Search            │
