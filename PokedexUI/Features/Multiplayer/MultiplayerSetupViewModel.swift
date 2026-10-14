@@ -157,6 +157,18 @@ extension MultiplayerSetupViewModel {
 
     /// Derived from `.battleEnded` message or launch VM's winner.
     var battleEnded: Bool { receivedBattleEnded || launch?.viewModel.winner != nil }
+
+    /// Drives the invitation alert. Dismissing clears the pending invitation.
+    var isShowingInvitation: Bool {
+        get { pendingInvitation != nil }
+        set { if !newValue { pendingInvitation = nil } }
+    }
+
+    /// Drives the error alert. Dismissing clears the error message.
+    var isShowingError: Bool {
+        get { errorMessage != nil }
+        set { if !newValue { errorMessage = nil } }
+    }
 }
 
 // MARK: - Private
@@ -198,7 +210,10 @@ private extension MultiplayerSetupViewModel {
         switch message {
         case .hello(let version, _, _):
             if version != MultipeerProtocol.version {
-                errorMessage = "Opponent uses a different protocol version."
+                errorMessage = String(
+                    localized: "Opponent uses a different protocol version.",
+                    comment: "Error alert message when the connected peer runs an incompatible app version."
+                )
                 multipeer.disconnect()
                 showPicker = false
                 reset()
@@ -210,15 +225,17 @@ private extension MultiplayerSetupViewModel {
                 tryLaunch()
             }
         case .challengeDeclined:
-            let name = connectedPeerName ?? "Opponent"
-            errorMessage = "\(name) declined the challenge."
+            let name = connectedPeerName ?? Self.opponentFallbackName
+            errorMessage = String(
+                localized: "\(name) declined the challenge.",
+                comment: "Error alert message. The variable is the opponent's device name."
+            )
             showPicker = false
             reset()
         case .disconnect:
             guard phase != .discovering else { return }
             if !battleEnded {
-                let name = connectedPeerName ?? "Opponent"
-                errorMessage = "\(name) canceled."
+                errorMessage = canceledMessage()
             }
             showPicker = false
             reset()
@@ -232,18 +249,23 @@ private extension MultiplayerSetupViewModel {
 
     /// Peer we invited declined (MC disconnected while connecting).
     func inviteDeclined() {
-        let name = invitedPeer?.name ?? "Trainer"
+        let name = invitedPeer?.name ?? String(
+            localized: "Trainer",
+            comment: "Fallback name for an invited nearby player whose device name is unknown."
+        )
         invitedPeer = nil
         phase = .discovering
-        errorMessage = "\(name) declined the battle."
+        errorMessage = String(
+            localized: "\(name) declined the battle.",
+            comment: "Error alert message. The variable is the invited player's device name."
+        )
         startDiscovery()
     }
 
     /// MC dropped unexpectedly during picking, waiting, or battle.
     func connectionLost() {
         if !battleEnded {
-            let name = connectedPeerName ?? "Opponent"
-            errorMessage = "\(name) canceled."
+            errorMessage = canceledMessage()
         }
         showPicker = false
         reset()
@@ -259,7 +281,10 @@ private extension MultiplayerSetupViewModel {
         let selfMoves = selection.selectedMoves
         let peerMoves = peerChallenge.moveNames.compactMap { PokeBattleKit.move(named: $0) }
         guard peerMoves.count == selection.maxSelections else {
-            errorMessage = "Opponent sent an invalid loadout."
+            errorMessage = String(
+                localized: "Opponent sent an invalid loadout.",
+                comment: "Error alert message when the peer's chosen moves can't be resolved."
+            )
             showPicker = false
             reset()
             return
@@ -275,6 +300,18 @@ private extension MultiplayerSetupViewModel {
             container: container
         )
         launch = MultiplayerLaunch(viewModel: viewModel)
+    }
+
+    static var opponentFallbackName: String {
+        String(localized: "Opponent", comment: "Fallback name for the connected player whose device name is unknown.")
+    }
+
+    func canceledMessage() -> String {
+        let name = connectedPeerName ?? Self.opponentFallbackName
+        return String(
+            localized: "\(name) canceled.",
+            comment: "Error alert message when the opponent leaves. The variable is the opponent's device name."
+        )
     }
 
     func reset() {

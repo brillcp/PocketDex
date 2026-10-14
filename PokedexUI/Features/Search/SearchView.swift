@@ -33,19 +33,13 @@ struct SearchView<ViewModel: SearchViewModelProtocol>: View {
             .searchable(text: $viewModel.query)
             .searchFocused($isSearchFocused)
             .onSubmit(of: .search, viewModel.recordSearch)
-            .onAppear {
-                viewModel.updateCorpus(corpus)
-            }
-            .onChange(of: corpus) { _, newCorpus in
-                viewModel.updateCorpus(newCorpus)
+            .task(id: corpus) {
+                await viewModel.updateCorpus(corpus)
             }
             .scrollDismissesKeyboard(.immediately)
             .onChange(of: isSearchFocused) { old, new in
                 guard old, !new, !viewModel.query.isEmpty else { return }
                 viewModel.recordSearch()
-            }
-            .onChange(of: viewModel.query) { _, _ in
-                viewModel.updateFilteredPokemon()
             }
             .sensoryFeedback(.impact(weight: .light), trigger: viewModel.query)
             .applyPokedexStyling(title: Tabs.search.title)
@@ -65,16 +59,19 @@ struct SearchView<ViewModel: SearchViewModelProtocol>: View {
 
 // MARK: - Private
 private extension SearchView {
-    @ViewBuilder
     var emptyState: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24.0) {
                 if !viewModel.suggestedPokemon.isEmpty {
-                    suggestedSection
+                    SuggestedPokemonSection(pokemon: viewModel.suggestedPokemon, namespace: namespace)
                 }
-                suggestedTermsSection
+                SuggestedTermsSection(terms: ViewModel.suggestedTerms, onSelect: selectSuggestedTerm)
                 if !viewModel.recentSearches.isEmpty {
-                    recentSection
+                    RecentSearchesSection(
+                        terms: viewModel.recentSearches,
+                        onSelect: { viewModel.query = $0 },
+                        onClear: viewModel.clearRecentSearches
+                    )
                 } else {
                     Text("Search Pokemon, types, habitats or abilities")
                         .frame(maxWidth: .infinity, alignment: .center)
@@ -100,14 +97,24 @@ private extension SearchView {
         }
     }
 
-    var suggestedTermsSection: some View {
+    func selectSuggestedTerm(_ term: String) {
+        viewModel.query = term
+        viewModel.recordSearch()
+    }
+}
+
+/// Curated search-term chips shown in the empty state.
+private struct SuggestedTermsSection: View {
+    let terms: [String]
+    let onSelect: (String) -> Void
+
+    var body: some View {
         VStack(alignment: .leading, spacing: 8.0) {
-            sectionHeader(title: "Try searching for", systemImage: "magnifyingglass")
+            SearchSectionHeader(title: "Try searching for", systemImage: "magnifyingglass")
             FlowLayout(spacing: 6.0) {
-                ForEach(ViewModel.suggestedTerms, id: \.self) { term in
+                ForEach(terms, id: \.self) { term in
                     Button {
-                        viewModel.query = term
-                        viewModel.recordSearch()
+                        onSelect(term)
                     } label: {
                         Chip(term, style: .accent, size: .medium)
                     }
@@ -117,21 +124,41 @@ private extension SearchView {
         }
         .padding(.horizontal)
     }
+}
 
-    var suggestedSection: some View {
+/// Random suggested Pokemon cards shown in the empty state.
+private struct SuggestedPokemonSection: View {
+    let pokemon: [Pokemon]
+    let namespace: Namespace.ID
+
+    var body: some View {
         VStack(alignment: .leading, spacing: 8.0) {
-            sectionHeader(title: "Suggested", systemImage: "sparkles.2")
+            SearchSectionHeader(title: "Suggested", systemImage: "sparkles.2")
                 .padding(.horizontal)
-            suggestedGrid
+            LazyVGrid(columns: GridLayout.two.layout, spacing: GridLayout.two.spacing) {
+                ForEach(pokemon, id: \.id) { pokemon in
+                    NavigationLink(value: pokemon) {
+                        PokemonSpriteCard(pokemon: pokemon)
+                            .matchedTransitionSource(id: pokemon.id, in: namespace)
+                    }
+                }
+            }
         }
     }
+}
 
-    var recentSection: some View {
+/// Recent search terms with a clear button.
+private struct RecentSearchesSection: View {
+    let terms: [String]
+    let onSelect: (String) -> Void
+    let onClear: () -> Void
+
+    var body: some View {
         VStack(alignment: .leading, spacing: 8.0) {
             HStack {
-                sectionHeader(title: "Recent", systemImage: "clock.arrow.circlepath")
+                SearchSectionHeader(title: "Recent", systemImage: "clock.arrow.circlepath")
                 Spacer()
-                Button(action: viewModel.clearRecentSearches) {
+                Button(action: onClear) {
                     Image(systemName: "trash.fill")
                         .font(.pixel16)
                         .foregroundStyle(Color.pokedexRed)
@@ -139,9 +166,9 @@ private extension SearchView {
             }
             .padding(.horizontal)
             VStack(spacing: 2.0) {
-                ForEach(viewModel.recentSearches, id: \.self) { term in
+                ForEach(terms, id: \.self) { term in
                     Button {
-                        viewModel.query = term
+                        onSelect(term)
                     } label: {
                         HStack {
                             Label(term, systemImage: "magnifyingglass")
@@ -157,25 +184,20 @@ private extension SearchView {
             }
         }
     }
+}
 
-    func sectionHeader(title: String, systemImage: String) -> some View {
+/// Small icon + title header used by the empty-state sections.
+private struct SearchSectionHeader: View {
+    let title: LocalizedStringResource
+    let systemImage: String
+
+    var body: some View {
         Label(title, systemImage: systemImage)
             .font(.pixel12)
             .foregroundStyle(.secondary)
     }
-
-    var suggestedGrid: some View {
-        LazyVGrid(columns: GridLayout.two.layout, spacing: GridLayout.two.spacing) {
-            ForEach(viewModel.suggestedPokemon, id: \.id) { pokemon in
-                NavigationLink(value: pokemon) {
-                    PokemonSpriteCard(pokemon: pokemon)
-                        .matchedTransitionSource(id: pokemon.id, in: namespace)
-                }
-            }
-        }
-    }
 }
 
 #Preview {
-    SearchView(viewModel: SearchViewModel())
+    SearchView(viewModel: SearchViewModel(repository: AppContainer.live.repository))
 }

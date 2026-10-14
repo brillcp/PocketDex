@@ -18,7 +18,7 @@ struct RootTabView<PokedexViewModel: PokedexViewModelProtocol>: View {
             Tab(Tabs.search.title, systemImage: Tabs.search.icon, value: Tabs.search, role: .search, content: searchTab)
         }
         .task { await viewModel.requestPokemon() }
-        .colorScheme(.dark)
+        .preferredColorScheme(.dark)
         .sheet(isPresented: $viewModel.openFavourites, content: BookmarksView.init)
     }
 }
@@ -34,7 +34,7 @@ private extension RootTabView {
     }
 
     func searchTab() -> some View {
-        SearchView(viewModel: SearchViewModel())
+        SearchView(viewModel: SearchViewModel(repository: container.repository))
     }
 
     func battleTab() -> some View {

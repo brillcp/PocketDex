@@ -52,13 +52,16 @@ actor PokedexStore {
         (try? modelContext.fetchCount(FetchDescriptor<ItemData>())) ?? 0
     }
 
-    /// Delete every item row (categories, details, sprites, effects) so the
-    /// next load re-imports them.
+    /// Delete every item row (categories, details, sprites, effects, and
+    /// each detail's category `APIItem`) ahead of a re-import.
     func deleteAllItems() throws {
-        try modelContext.delete(model: ItemData.self)
-        try modelContext.delete(model: ItemDetail.self)
-        try modelContext.delete(model: ItemSprite.self)
-        try modelContext.delete(model: Effect.self)
+        for detail in try modelContext.fetch(FetchDescriptor<ItemDetail>()) {
+            modelContext.delete(detail.category)
+            if let sprites = detail.sprites { modelContext.delete(sprites) }
+            detail.effect.forEach(modelContext.delete)
+            modelContext.delete(detail)
+        }
+        try modelContext.fetch(FetchDescriptor<ItemData>()).forEach(modelContext.delete)
         try modelContext.save()
     }
 

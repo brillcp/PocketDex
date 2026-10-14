@@ -3,6 +3,7 @@ import PokeBattleKit
 
 /// Mutable selection state for picking moves before battle. Used by both
 /// single-player and multiplayer setup flows.
+@MainActor
 @Observable
 final class MoveSelection {
     let maxSelections: Int

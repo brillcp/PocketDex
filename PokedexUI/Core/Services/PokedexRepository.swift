@@ -34,7 +34,7 @@ actor PokedexRepository {
     private let modelContainer: ModelContainer
     private let client: PokeAPIClient
     private let evolutionService: EvolutionService
-    private var store: PokedexStore?
+    private var storeTask: Task<PokedexStore, Never>?
 
     init(modelContainer: ModelContainer, evolutionService: EvolutionService) {
         self.modelContainer = modelContainer
@@ -60,7 +60,7 @@ extension PokedexRepository: PokedexRepositoryProtocol {
             detail: PokeAPIRequest.pokemonDetails,
             onTick: tick
         )
-        await progress.setTotal(details.count * 2 + 1)
+        await progress.setTotal(details.count * 2 + ProgressCounter.estimatedChainCount + 1)
 
         let species = await withTaskGroup(of: (Int, PokemonSpecies)?.self) { group in
             for dto in details {
@@ -80,7 +80,7 @@ extension PokedexRepository: PokedexRepositoryProtocol {
         }
 
         let chainIds = Set(species.values.compactMap(\.evolutionChain?.id))
-        await progress.addToTotal(chainIds.count)
+        await progress.setRemaining(chainIds.count + 1)
         await evolutionService.prefetchChains(ids: chainIds, onTick: tick)
 
         try await store.importPokemon(details, species: species)
@@ -90,21 +90,17 @@ extension PokedexRepository: PokedexRepositoryProtocol {
     func loadItemsIfNeeded() async throws {
         let store = await resolvedStore()
         let defaults = UserDefaults.standard
-        let storedVersion = defaults.integer(forKey: Self.itemDataVersionKey)
+        let isOutdated = defaults.integer(forKey: Self.itemDataVersionKey) < Self.itemDataVersion
+        let hasItems = await store.itemCategoryCount() > 0
+        guard isOutdated || !hasItems else { return }
 
-        if storedVersion < Self.itemDataVersion {
-            // Stores imported before v2 mixed every language's effect text,
-            // so drop them once and re-import English-only rows.
-            try await store.deleteAllItems()
-        } else if await store.itemCategoryCount() > 0 {
-            return
-        }
-
+        // Download first: if it fails (e.g. offline), the existing rows stay.
         let details = try await client.fetchAll(
             ItemDetailDTO.self,
             list: .itemList(limit: Self.itemLimit),
             detail: PokeAPIRequest.itemDetails
         )
+        if hasItems { try await store.deleteAllItems() }
         try await store.importItems(details)
         defaults.set(Self.itemDataVersion, forKey: Self.itemDataVersionKey)
     }
@@ -120,21 +116,30 @@ extension PokedexRepository: PokedexRepositoryProtocol {
 
 // MARK: - Private
 private extension PokedexRepository {
+    /// One shared store. Caching the creation task (not the result) means
+    /// concurrent first callers await the same store instead of each
+    /// creating their own across the suspension.
     func resolvedStore() async -> PokedexStore {
-        if let store { return store }
-        let created = await PokedexStore.make(modelContainer: modelContainer)
-        store = created
-        return created
+        if let storeTask { return await storeTask.value }
+        let container = modelContainer
+        let task = Task { await PokedexStore.make(modelContainer: container) }
+        storeTask = task
+        return await task.value
     }
 }
 
 /// Counts download units and forwards progress only when the whole
-/// percentage changes, so the UI sees ~100 updates instead of thousands.
+/// percentage increases, so the UI sees ~100 monotonic updates instead of
+/// thousands.
 private actor ProgressCounter {
+    /// Typical number of evolution chains, used until the real count is
+    /// known after the species step.
+    static let estimatedChainCount = 540
+
     private let onProgress: @Sendable (Double) async -> Void
     /// Estimate until the detail list size is known: details + species +
-    /// a typical chain count + the final import step.
-    private var total = 1150 * 2 + 540 + 1
+    /// chains + the final import step.
+    private var total = 1150 * 2 + estimatedChainCount + 1
     private var done = 0
     private var lastPercent = -1
 
@@ -143,7 +148,8 @@ private actor ProgressCounter {
     }
 
     func setTotal(_ value: Int) { total = max(value, done) }
-    func addToTotal(_ value: Int) { total += value }
+    /// Replace the estimate for the remaining work once it's known.
+    func setRemaining(_ value: Int) { total = done + value }
 
     func tick() async {
         done += 1
@@ -158,7 +164,8 @@ private actor ProgressCounter {
     private func report() async {
         let fraction = min(1, Double(done) / Double(max(total, 1)))
         let percent = Int(fraction * 100)
-        guard percent != lastPercent else { return }
+        // Never step backwards when an estimate is corrected upwards.
+        guard percent > lastPercent else { return }
         lastPercent = percent
         await onProgress(fraction)
     }

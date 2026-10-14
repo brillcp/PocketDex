@@ -1,10 +1,12 @@
+import Foundation
+
 /// Top-level TabView selection for the root pokedex screen.
 enum Tabs: Int {
     case pokedex, items, favourites, battle, search
 }
 
 extension Tabs {
-    var title: String {
+    var title: LocalizedStringResource {
         switch self {
             case .pokedex: "PocketDex+"
             case .items: "Items"

@@ -30,7 +30,7 @@ enum TypeEffectiveness {
         case let m where m >= 2: return "×\(Int(m))"
         case let m where m == 1: return "×1"
         case let m where m < 1: return "×0.5"
-        default: return String(format: "×%.1f", mult)
+        default: return "×\(mult.formatted(.number.precision(.fractionLength(1))))"
         }
     }
 

@@ -11,6 +11,11 @@ enum MultipeerProtocol {
 struct ChallengePayload: Codable, Sendable {
     let pokemon: PokemonSummary
     let moveNames: [String]
+
+    init(pokemon: PokemonSummary, moveNames: [String]) {
+        self.pokemon = pokemon
+        self.moveNames = moveNames
+    }
 }
 
 /// All messages exchanged between two peers across a multiplayer battle's

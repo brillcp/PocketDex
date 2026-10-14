@@ -19,7 +19,7 @@ struct HPCard: View, Equatable {
             ProgressView(value: Double(currentHP), total: Double(maxHP))
                 .tint(hpTint)
                 .animation(.easeOut(duration: 0.4), value: currentHP)
-            Text("\(currentHP) / \(maxHP)")
+            Text("\(currentHP) / \(maxHP)", comment: "HP readout on a battle card. The first variable is current HP, the second is max HP.")
                 .font(.pixel12)
                 .foregroundStyle(.secondary)
                 .contentTransition(.numericText(value: Double(currentHP)))

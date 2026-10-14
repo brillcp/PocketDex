@@ -5,6 +5,9 @@ struct GenderRow: View {
     let rate: Int
     let textColor: Color
 
+    /// Whole-number percent, truncated to match the bar's eighths.
+    private static let percentFormat: FloatingPointFormatStyle<Double>.Percent = .pixelPercent(rounding: .towardZero)
+
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
             Text("Gender")
@@ -26,9 +29,15 @@ struct GenderRow: View {
                     }
                     .frame(height: 10)
                     HStack {
-                        Text("♂ \(Int(male * 100))%")
+                        Text(
+                            "♂ \(male, format: Self.percentFormat)",
+                            comment: "Male share of a Pokemon species. The variable is a percentage."
+                        )
                         Spacer()
-                        Text("♀ \(Int(female * 100))%")
+                        Text(
+                            "♀ \(female, format: Self.percentFormat)",
+                            comment: "Female share of a Pokemon species. The variable is a percentage."
+                        )
                     }
                     .font(.pixel12)
                     .foregroundStyle(textColor.opacity(0.8))

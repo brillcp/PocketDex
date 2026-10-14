@@ -40,8 +40,16 @@ struct PokemonViewModel {
 
 extension PokemonViewModel {
     var backSprite: String? { pokemon.sprite.back }
-    var height: String { "\(Double(pokemon.height) / 10.0) m" }
-    var weight: String { "\(Double(pokemon.weight) / 10.0) kg" }
+    var height: String {
+        Measurement(value: Double(pokemon.height) / 10.0, unit: UnitLength.meters)
+            .formatted(.measurement(width: .abbreviated, usage: .asProvided, numberFormatStyle: .number.precision(.fractionLength(1))))
+            .pixelFontSafe
+    }
+    var weight: String {
+        Measurement(value: Double(pokemon.weight) / 10.0, unit: UnitMass.kilograms)
+            .formatted(.measurement(width: .abbreviated, usage: .asProvided, numberFormatStyle: .number.precision(.fractionLength(1))))
+            .pixelFontSafe
+    }
     var latestCry: String? { pokemon.cries.latest }
     var stats: [Stat] { pokemon.stats }
     var habitat: String? { pokemon.habitat?.capitalized }
@@ -56,8 +64,7 @@ extension PokemonViewModel {
     var genderRate: Int { pokemon.genderRate }
     /// Capture rate as a percentage string, e.g. "45%".
     var capturePercent: String {
-        let pct = Int(round(Double(pokemon.captureRate) / 255.0 * 100.0))
-        return "\(pct)%"
+        (Double(pokemon.captureRate) / 255.0).formatted(.pixelPercent())
     }
     var evolutionChainId: String? { pokemon.evolutionChainId }
     var baseStatTotal: Int { pokemon.stats.map(\.baseStat).reduce(0, +) }

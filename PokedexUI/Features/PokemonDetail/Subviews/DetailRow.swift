@@ -20,7 +20,7 @@ struct DetailButton: View {
 /// Titled section with glass-effect card. Used for Data, Stats, and Evolution
 /// sections in the detail view.
 struct DetailSection<Content: View>: View {
-    var title: String?
+    var title: LocalizedStringResource?
     @ViewBuilder let content: () -> Content
 
     var body: some View {
@@ -42,21 +42,24 @@ struct DetailSection<Content: View>: View {
 
 /// Species genus, generation badge, and legendary/mythical tags.
 struct SpeciesHeader: View {
-    let pokemon: PokemonViewModel
+    let genus: String?
+    let generationLabel: String?
+    let isLegendary: Bool
+    let isMythical: Bool
     let textColor: Color
 
     var body: some View {
         HStack {
-            if let genus = pokemon.genus {
+            if let genus {
                 Text(genus)
                     .font(.pixel14)
             }
             Spacer()
-            if let gen = pokemon.generationLabel {
-                Chip(gen, style: .custom(background: textColor.opacity(0.1), foreground: textColor))
+            if let generationLabel {
+                Chip(generationLabel, style: .custom(background: textColor.opacity(0.1), foreground: textColor))
             }
-            if pokemon.isLegendary { Chip("LEGENDARY", style: .primary) }
-            if pokemon.isMythical { Chip("MYTHICAL", style: .primary) }
+            if isLegendary { Chip("LEGENDARY", style: .primary) }
+            if isMythical { Chip("MYTHICAL", style: .primary) }
         }
         .padding(.horizontal, 24)
     }
@@ -65,7 +68,7 @@ struct SpeciesHeader: View {
 /// Generic "Label: value" row with fixed-width labels for alignment.
 /// Use `.vertical` axis for stacked label/value layout (abilities, moves).
 struct DetailRow: View {
-    var title: String?
+    var title: LocalizedStringResource?
     let subtitle: String
     var axis: Axis = .horizontal
 

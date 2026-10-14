@@ -27,60 +27,65 @@ protocol PokedexViewModelProtocol {
     func requestPokemon() async
 }
 
+extension PokedexViewModelProtocol {
+    /// Sort type projection that also resets `sortDirection` to the new
+    /// type's default, so pickers can bind to it with a key path.
+    var sortTypeResettingDirection: SortType {
+        get { sortType }
+        set {
+            sortType = newValue
+            sortDirection = newValue.defaultDirection
+        }
+    }
+}
+
 /// Concrete implementation of `PokedexViewModelProtocol`.
 @MainActor
 @Observable
 final class PokedexViewModel {
-    private static let totalDownloadUnits: Int = 1024 + 1024 + 540 + 1
+    private let repository: PokedexRepositoryProtocol
+    private let modelContext: ModelContext
 
-    private let fetcher: PokemonFetcher
-    private var downloadTicks: Int = 0
-
-    var pokemon: [Pokemon] = [] { didSet { invalidateSortCache() } }
+    var pokemon: [Pokemon] = [] { didSet { recomputeSortedPokemon() } }
     var isLoading: Bool = false
     var loadingProgress: Double = 0
     var selectedTab: Tabs = .pokedex
     var grid: GridLayout = .three
-    var sortType: SortType = .number { didSet { invalidateSortCache() } }
-    var sortDirection: SortDirection = .ascending { didSet { invalidateSortCache() } }
+    var sortType: SortType = .number { didSet { recomputeSortedPokemon() } }
+    var sortDirection: SortDirection = .ascending { didSet { recomputeSortedPokemon() } }
     var openFavourites: Bool = false
-    private var cachedSortedPokemon: [Pokemon]?
+    /// Cached derived collection, recomputed only when an input changes so
+    /// views that read it don't re-sort on every body evaluation.
+    private(set) var sortedPokemon: [Pokemon] = []
 
     init(modelContext: ModelContext, container: AppContainer) {
-        self.fetcher = PokemonFetcher(modelContext: modelContext, container: container)
+        self.repository = container.repository
+        self.modelContext = modelContext
     }
 }
 
 // MARK: - PokedexViewModelProtocol
 
 extension PokedexViewModel: PokedexViewModelProtocol {
-    var sortedPokemon: [Pokemon] {
-        if let cached = cachedSortedPokemon { return cached }
-        let sorted = pokemon.sorted(by: sortType.comparator(direction: sortDirection))
-        cachedSortedPokemon = sorted
-        return sorted
-    }
-
     func requestPokemon() async {
         guard !isLoading else { return }
 
-        if let cached = try? await fetcher.fetchStoredData(), !cached.isEmpty {
-            pokemon = cached
+        if let stored = fetchStoredPokemon(), !stored.isEmpty {
+            pokemon = stored
             return
         }
 
         isLoading = true
         defer { isLoading = false }
-        resetProgress()
-        let tick: @Sendable () async -> Void = { [weak self] in
-            await MainActor.run { self?.tickDownload() }
-        }
+        loadingProgress = 0
 
         do {
-            let bootstrap = try await fetcher.fetchBootstrap(onTick: tick)
-            loadingProgress = 1.0
-            pokemon = bootstrap.pokemon
-            try await fetcher.persist(bootstrap)
+            // Download, decode, and import all run in `PokedexRepository` off the
+            // main actor; only throttled progress hops back here.
+            try await repository.loadPokemonIfNeeded { [weak self] fraction in
+                await self?.setProgress(fraction)
+            }
+            pokemon = fetchStoredPokemon() ?? []
         } catch {
             #if DEBUG
             print("PokedexViewModel: fetch failed: \(error)")
@@ -91,17 +96,17 @@ extension PokedexViewModel: PokedexViewModelProtocol {
 
 // MARK: - Private
 private extension PokedexViewModel {
-    func invalidateSortCache() {
-        cachedSortedPokemon = nil
+    func recomputeSortedPokemon() {
+        sortedPokemon = pokemon.sorted(by: sortType.comparator(direction: sortDirection))
     }
 
-    func resetProgress() {
-        downloadTicks = 0
-        loadingProgress = 0
+    /// Read the persisted rows through the main context so the models the
+    /// UI holds belong to the main actor.
+    func fetchStoredPokemon() -> [Pokemon]? {
+        try? modelContext.fetch(FetchDescriptor<Pokemon>(sortBy: [SortDescriptor(\.id)]))
     }
 
-    func tickDownload() {
-        downloadTicks += 1
-        loadingProgress = min(1.0, Double(downloadTicks) / Double(Self.totalDownloadUnits))
+    func setProgress(_ fraction: Double) {
+        loadingProgress = fraction
     }
 }

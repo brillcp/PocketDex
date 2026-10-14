@@ -7,7 +7,10 @@ protocol SpriteLoading: Sendable {
     func spriteImage(from urlString: String) async -> UIImage?
 }
 
-actor SpriteLoader {
+/// Stateless (`URLSession` and `URLCache` are thread-safe), so concurrent
+/// loads from many grid cells fetch and decode in parallel off the main
+/// thread rather than queueing behind a single actor.
+struct SpriteLoader: SpriteLoading {
     private let session: URLSession
     private let cache: URLCache
 
@@ -15,28 +18,34 @@ actor SpriteLoader {
         self.session = session
         self.cache = cache
     }
-}
 
-// MARK: - SpriteLoading
-
-extension SpriteLoader: SpriteLoading {
+    /// `@concurrent`: the cache lookup, fetch, and decode never run on the
+    /// calling view's main actor.
+    @concurrent
     func spriteImage(from urlString: String) async -> UIImage? {
         guard let url = URL(string: urlString) else { return nil }
 
         let request = URLRequest(url: url)
 
-        if let cachedResponse = cache.cachedResponse(for: request),
-           let sprite = UIImage(data: cachedResponse.data) {
-            return sprite
+        if let cachedResponse = cache.cachedResponse(for: request) {
+            return await Self.decode(cachedResponse.data)
         }
 
         do {
             let (data, response) = try await session.data(for: request)
             cache.cache(response: response, withData: data, for: request)
-            return UIImage(data: data)
+            return await Self.decode(data)
         } catch {
             return nil
         }
+    }
+
+    /// Decode and pre-render the bitmap off the main thread so the first
+    /// draw doesn't pay the decompression cost during scrolling.
+    @concurrent
+    private static func decode(_ data: Data) async -> UIImage? {
+        guard let image = UIImage(data: data) else { return nil }
+        return await image.byPreparingForDisplay() ?? image
     }
 }
 

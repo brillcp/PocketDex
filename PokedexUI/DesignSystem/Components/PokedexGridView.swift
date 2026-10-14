@@ -12,6 +12,9 @@ struct PokedexGridView: View {
     var grid: GridLayout = .three
     var isLoading: Bool = false
     var loadingProgress: Double = 0
+    /// When set, taps write to this binding instead of pushing the detail
+    /// view (used by the side-by-side layout in regular width).
+    var selection: Binding<Pokemon?>? = nil
 
     var body: some View {
         PokemonGrid(
@@ -22,7 +25,9 @@ struct PokedexGridView: View {
             PokedexGridItem(
                 pokemon: pokemon,
                 grid: grid,
-                namespace: namespace
+                namespace: namespace,
+                isSelected: selection?.wrappedValue?.id == pokemon.id,
+                selection: selection
             )
         }
         .overlay {
@@ -54,7 +59,7 @@ private struct IndexingOverlay: View {
             ProgressView(value: progress)
                 .tint(.pokedexRed)
                 .frame(width: 200)
-            Text("Loading Pokedex \(Int(progress * 100))%")
+            Text("Loading Pokedex \(progress, format: .pixelPercent(rounding: .down))")
                 .font(.pixel14)
                 .foregroundStyle(.secondary)
         }
@@ -71,30 +76,46 @@ private struct PokedexGridItem: View {
     let pokemon: Pokemon
     let grid: GridLayout
     let namespace: Namespace.ID
+    var isSelected = false
+    /// Set in regular width: taps select instead of pushing. A binding (not
+    /// a closure) so unchanged cells keep equal inputs and skip re-rendering.
+    var selection: Binding<Pokemon?>?
 
     var body: some View {
-        NavigationLink(value: pokemon) {
-            SpriteImage(url: pokemon.frontSprite, style: .plain) { uiImage in
-                guard let resolved = await container.imageColorAnalyzer.dominantColor(for: pokemon.id, image: uiImage)
-                else { return }
-                isLight = resolved.isLight
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    color = resolved
-                }
-            }
-            .background(color)
-            .overlay {
-                if grid == .three {
-                    CardOverlay(
-                        id: pokemon.id,
-                        name: pokemon.name,
-                        isLight: isLight
-                    )
-                }
-            }
-            .font(.pixel12)
-            .matchedTransitionSource(id: pokemon.id, in: namespace)
+        if let selection {
+            Button { selection.wrappedValue = pokemon } label: { card }
+                .accessibilityAddTraits(isSelected ? .isSelected : [])
+        } else {
+            NavigationLink(value: pokemon) { card }
         }
+    }
+
+    private var card: some View {
+        SpriteImage(url: pokemon.frontSprite, style: .plain) { uiImage in
+            guard let resolved = await container.imageColorAnalyzer.dominantColor(for: pokemon.id, image: uiImage)
+            else { return }
+            isLight = resolved.isLight
+            withAnimation(.easeInOut(duration: 0.2)) {
+                color = resolved
+            }
+        }
+        .background { color }
+        .overlay {
+            if grid == .three {
+                CardOverlay(
+                    id: pokemon.id,
+                    name: pokemon.name,
+                    isLight: isLight
+                )
+            }
+        }
+        .overlay {
+            Rectangle()
+                .strokeBorder(.white, lineWidth: 3)
+                .opacity(isSelected ? 1 : 0)
+        }
+        .font(.pixel12)
+        .matchedTransitionSource(id: pokemon.id, in: namespace)
     }
 }
 

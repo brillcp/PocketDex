@@ -40,7 +40,7 @@ struct MoveCell: View, Equatable {
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(background)
-        .overlay(overlay)
+        .overlay { overlay }
     }
 }
 
@@ -67,11 +67,11 @@ private extension MoveCell {
             case .loadout:
                 VStack(alignment: .leading) {
                     Text("PWR")
-                    Text("\(move.power.map(String.init) ?? "-")")
+                    Text(move.power.map { $0.formatted() } ?? "-")
                 }
                 VStack(alignment: .leading) {
                     Text("ACC")
-                    Text("\(move.accuracy.map { "\($0)%" } ?? "-")")
+                    Text(move.accuracy.map { (Double($0) / 100).formatted(.pixelPercent()) } ?? "-")
                 }
             }
         }

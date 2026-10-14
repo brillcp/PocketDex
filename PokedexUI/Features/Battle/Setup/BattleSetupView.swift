@@ -65,7 +65,7 @@ private extension BattleSetupView {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    func errorState(_ message: String) -> some View {
+    func errorState(_ message: LocalizedStringResource) -> some View {
         Text(message)
             .font(.pixel14)
             .padding()
@@ -136,13 +136,13 @@ private extension BattleSetupView {
 
     func statGrid(pokemon: PokemonViewModel) -> some View {
         let byName = Dictionary(uniqueKeysWithValues: pokemon.stats.map { ($0.stat.name, $0.baseStat) })
-        let entries: [(String, Int)] = [
-            ("HP",  byName["hp"] ?? 0),
-            ("ATK", byName["attack"] ?? 0),
-            ("DEF", byName["defense"] ?? 0),
-            ("SPA", byName["special-attack"] ?? 0),
-            ("SPD", byName["special-defense"] ?? 0),
-            ("SPE", byName["speed"] ?? 0)
+        let entries: [(LocalizedStringResource, Int)] = [
+            (LocalizedStringResource("HP", comment: "Abbreviated Hit Points stat label."), byName["hp"] ?? 0),
+            (LocalizedStringResource("ATK", comment: "Abbreviated Attack stat label."), byName["attack"] ?? 0),
+            (LocalizedStringResource("DEF", comment: "Abbreviated Defense stat label."), byName["defense"] ?? 0),
+            (LocalizedStringResource("SPA", comment: "Abbreviated Special Attack stat label."), byName["special-attack"] ?? 0),
+            (LocalizedStringResource("SPD", comment: "Abbreviated Special Defense stat label."), byName["special-defense"] ?? 0),
+            (LocalizedStringResource("SPE", comment: "Abbreviated Speed stat label."), byName["speed"] ?? 0)
         ]
         return VStack(spacing: 2) {
             ForEach(0..<2) { rowIdx in
@@ -152,7 +152,7 @@ private extension BattleSetupView {
                         HStack(spacing: 2) {
                             Text(label)
                                 .foregroundStyle(.secondary)
-                            Text("\(value)")
+                            Text(value, format: .number)
                         }
                         .font(.pixel9)
                         .frame(maxWidth: .infinity)
@@ -166,7 +166,7 @@ private extension BattleSetupView {
 
     var typeMatchup: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Type matchup")
+            Text("Type matchup", comment: "Section header comparing both Pokémon's type advantages.")
                 .font(.pixel12)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal)
@@ -199,7 +199,7 @@ private extension BattleSetupView {
             Text(fromName)
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            Image(systemName: "arrow.right")
+            Image(systemName: "arrow.forward")
                 .font(.system(size: 10))
                 .foregroundStyle(.secondary)
             Text(toName)

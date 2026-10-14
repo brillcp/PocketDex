@@ -7,16 +7,30 @@ protocol ImageColorAnalyzing: Sendable {
     func dominantColor(for id: Int, image: UIImage) async -> Color?
 }
 
+/// The actor only guards the cache. The pixel scan itself is `@concurrent`,
+/// so many grid cells analyse their sprites in parallel off the main thread
+/// instead of serialising on the actor.
 actor ImageColorAnalyzer {
     private var cache = [Int: Color]()
+
+    init() {}
 }
 
 // MARK: - ImageColorAnalyzing
 
 extension ImageColorAnalyzer: ImageColorAnalyzing {
-    func dominantColor(for id: Int, image: UIImage) -> Color? {
+    func dominantColor(for id: Int, image: UIImage) async -> Color? {
         if let cached = cache[id] { return cached }
+        guard let color = await Self.analyze(image) else { return nil }
+        cache[id] = color
+        return color
+    }
+}
 
+// MARK: - Private
+private extension ImageColorAnalyzer {
+    @concurrent
+    static func analyze(_ image: UIImage) async -> Color? {
         guard let cgImage = image.resize(to: CGSize(width: 50, height: 50))?.cgImage,
               let data = cgImage.dataProvider?.data,
               let bytes = CFDataGetBytePtr(data) else {
@@ -54,14 +68,9 @@ extension ImageColorAnalyzer: ImageColorAnalyzing {
             dominant = fallback
         }
 
-        let final = dominant.toColor()
-        cache[id] = final
-        return final
+        return dominant.toColor()
     }
-}
 
-// MARK: - Private
-private extension ImageColorAnalyzer {
     struct RGB: Hashable {
         let r: UInt8
         let g: UInt8
@@ -71,13 +80,17 @@ private extension ImageColorAnalyzer {
             (r > 232 && g > 232 && b > 232) || (r < 23 && g < 23 && b < 23)
         }
 
-        var isDark: Bool {
-            let luminance = 0.2126 * Double(r) + 0.7152 * Double(g) + 0.0722 * Double(b)
-            return luminance < 127.5
-        }
-
         func toColor() -> Color {
             Color(red: Double(r) / 255, green: Double(g) / 255, blue: Double(b) / 255)
         }
+    }
+}
+
+private extension UIImage {
+    func resize(to targetSize: CGSize) -> UIImage? {
+        UIGraphicsBeginImageContextWithOptions(targetSize, false, 0)
+        defer { UIGraphicsEndImageContext() }
+        draw(in: CGRect(origin: .zero, size: targetSize))
+        return UIGraphicsGetImageFromCurrentImageContext()
     }
 }

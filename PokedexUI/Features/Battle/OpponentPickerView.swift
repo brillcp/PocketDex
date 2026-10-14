@@ -10,7 +10,6 @@ struct OpponentPickerView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.container) private var container
-    @Environment(\.modelContext) private var modelContext
     @Query private var allPokemon: [Pokemon]
     @State private var isAIThinking = false
     @State private var setupOpponent: Pokemon?
@@ -89,14 +88,7 @@ private extension OpponentPickerView {
         Task {
             let candidates = await ensureCandidates()
 
-            let pool = await Task.detached(priority: .userInitiated) {
-                OpponentStrategy.balancedPool(
-                    from: candidates,
-                    playerBST: playerCandidate.baseStatTotal,
-                    playerTypes: playerCandidate.typeNames,
-                    chart: chart
-                )
-            }.value
+            let pool = await Self.balancedPool(from: candidates, player: playerCandidate, chart: chart)
 
             let pickedId = await aiService.chooseOpponent(
                 player: playerCandidate,
@@ -113,30 +105,39 @@ private extension OpponentPickerView {
         }
     }
 
+    /// Scores the whole candidate pool on the cooperative pool, off the
+    /// main actor.
+    @concurrent
+    static func balancedPool(from candidates: [Candidate], player: Candidate, chart: TypeChart?) async -> [Candidate] {
+        OpponentStrategy.balancedPool(
+            from: candidates,
+            playerBST: player.baseStatTotal,
+            playerTypes: player.typeNames,
+            chart: chart
+        )
+    }
+
     /// Builds the candidate cache on view appear so a "Random" tap can
-    /// jump straight to scoring without paying the SwiftData traversal
-    /// cost mid-animation.
+    /// jump straight to scoring. The SwiftData traversal runs on the
+    /// background store, off the main actor.
     func prebuildCandidatesIfNeeded() async {
         guard candidateCache == nil, !allPokemon.isEmpty else { return }
-        candidateCache = await buildCandidates(from: allPokemon)
+        candidateCache = await opponentCandidates()
     }
 
     /// Returns the cached candidates, building them if the prebuild
     /// hasn't completed yet (fallback for an eager Random tap).
     func ensureCandidates() async -> [Candidate] {
         if let cached = candidateCache { return cached }
-        let built = await buildCandidates(from: allPokemon)
+        let built = await opponentCandidates()
         candidateCache = built
         return built
     }
 
-    func buildCandidates(from pokemons: [Pokemon]) async -> [Candidate] {
-        var result: [Candidate] = []
-        result.reserveCapacity(pokemons.count)
-        for (index, pokemon) in pokemons.enumerated() {
-            result.append(Candidate(pokemon: pokemon))
-            if index % 16 == 15 { await Task.yield() }
-        }
-        return result
+    /// Every stored pokemon except the player, matching `allPokemon`'s
+    /// query, so the AI and random fallback can never pick the player.
+    func opponentCandidates() async -> [Candidate] {
+        let playerId = player.id
+        return await container.repository.opponentCandidates().filter { $0.id != playerId }
     }
 }

@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 /// Pokemon detail screen with stats, evolution, weaknesses, and battle entry.
-struct PokemonDetailView<ViewModel: PokemonDetailViewModelProtocol & Sendable>: View {
+struct PokemonDetailView<ViewModel: PokemonDetailViewModelProtocol>: View {
     @Environment(\.container) private var container
     @Environment(\.modelContext) private var modelContext
 
@@ -31,11 +31,10 @@ struct PokemonDetailView<ViewModel: PokemonDetailViewModelProtocol & Sendable>: 
             spriteBlur = min(32, max(0, (offset - 160) / 12))
         }
         .background {
-            VStack {
-                spriteImage()
-                    .blur(radius: spriteBlur)
-                Spacer()
-            }
+            DetailSpriteBackdrop(
+                sprite: viewModel.sprite,
+                blurRadius: $spriteBlur
+            )
         }
         .background {
             MeshGradientBackground(color: viewModel.color ?? .darkGrey)
@@ -100,7 +99,13 @@ private extension PokemonDetailView {
     func loadedContent(pokemon: PokemonViewModel) -> some View {
         VStack(spacing: 32) {
             actionButtons(pokemon: pokemon)
-            SpeciesHeader(pokemon: pokemon, textColor: textColor)
+            SpeciesHeader(
+                genus: pokemon.genus,
+                generationLabel: pokemon.generationLabel,
+                isLegendary: pokemon.isLegendary,
+                isMythical: pokemon.isMythical,
+                textColor: textColor
+            )
 
             if let flavorText = pokemon.flavorText {
                 DetailSection {
@@ -124,7 +129,7 @@ private extension PokemonDetailView {
 
             DetailSection(title: "Type chart") {
                 WeaknessGridView(
-                    pokemon: pokemon,
+                    typeNames: pokemon.typeNames,
                     textColor: textColor,
                     onSelectType: { selectedType = $0 }
                 )
@@ -169,13 +174,6 @@ private extension PokemonDetailView {
         evolutionTarget = viewModel.pokemonForEvolution(speciesId: speciesId)
     }
 
-    func spriteImage() -> some View {
-        viewModel.sprite?
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            .frame(height: 320)
-    }
-
     func actionButtons(pokemon: PokemonViewModel) -> some View {
         HStack {
             if pokemon.latestCry != nil {
@@ -193,6 +191,27 @@ private extension PokemonDetailView {
     }
 }
 
+// MARK: - Sprite Backdrop
+
+/// Large sprite behind the scroll content. Takes the blur as a binding so
+/// only this view, not the whole detail body, re-evaluates on every scroll
+/// frame.
+private struct DetailSpriteBackdrop: View {
+    let sprite: Image?
+    @Binding var blurRadius: CGFloat
+
+    var body: some View {
+        VStack {
+            sprite?
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(height: 320)
+                .blur(radius: blurRadius)
+            Spacer()
+        }
+    }
+}
+
 
 #Preview {
     let container = try! ModelContainer(for: Pokemon.self, configurations: .init(isStoredInMemoryOnly: true))
@@ -203,5 +222,5 @@ private extension PokemonDetailView {
     )
     PokemonDetailView(viewModel: vm)
         .modelContainer(container)
-        .colorScheme(.dark)
+        .preferredColorScheme(.dark)
 }

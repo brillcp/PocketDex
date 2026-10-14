@@ -11,7 +11,7 @@ protocol EvolutionServiceProtocol: Sendable {
 actor EvolutionService {
     private let client: PokeAPIClient
     private let modelContainer: ModelContainer
-    private var store: PokedexStore?
+    private var storeTask: Task<PokedexStore, Never>?
     private var cache: [String: EvolutionChain] = [:]
 
     init(modelContainer: ModelContainer) {
@@ -32,14 +32,14 @@ extension EvolutionService: EvolutionServiceProtocol {
 
         let store = await resolvedStore()
         if let data = await store.chainPayload(id: id),
-           let stored = try? JSONDecoder().decode(EvolutionChain.self, from: data) {
+           let stored = try? JSONDecoder.pokeAPI().decode(EvolutionChain.self, from: data) {
             cache[id] = stored
             return stored
         }
 
         let chain: EvolutionChain = try await client.fetch(.evolutionChain(id))
         cache[id] = chain
-        if let data = try? JSONEncoder().encode(chain) {
+        if let data = try? JSONEncoder.pokeAPI().encode(chain) {
             try? await store.storeChains([EvolutionChainPayload(chainId: id, payload: data)])
         }
         return chain
@@ -64,7 +64,7 @@ extension EvolutionService {
             for id in missing {
                 group.addTask {
                     guard let data = try? await client.fetchData(.evolutionChain(id)),
-                          (try? JSONDecoder().decode(EvolutionChain.self, from: data)) != nil
+                          (try? JSONDecoder.pokeAPI().decode(EvolutionChain.self, from: data)) != nil
                     else { return nil }
                     return EvolutionChainPayload(chainId: id, payload: data)
                 }
@@ -82,10 +82,12 @@ extension EvolutionService {
 
 // MARK: - Private
 private extension EvolutionService {
+    /// Caches the creation task so concurrent first callers share one store.
     func resolvedStore() async -> PokedexStore {
-        if let store { return store }
-        let created = await PokedexStore.make(modelContainer: modelContainer)
-        store = created
-        return created
+        if let storeTask { return await storeTask.value }
+        let container = modelContainer
+        let task = Task { await PokedexStore.make(modelContainer: container) }
+        storeTask = task
+        return await task.value
     }
 }

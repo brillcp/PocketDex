@@ -1,3 +1,5 @@
+import Foundation
+
 /// Sort options for the pokedex toolbar menu.
 enum SortType: Hashable {
     case number, name
@@ -18,7 +20,7 @@ enum SortDirection: Hashable {
         self = self == .ascending ? .descending : .ascending
     }
 
-    var label: String {
+    var label: LocalizedStringResource {
         switch self {
         case .ascending: "Ascending"
         case .descending: "Descending"
@@ -37,18 +39,25 @@ enum SortDirection: Hashable {
 enum Stats: String, CaseIterable {
     case hp, attack, defense, speed
 
-    var displayName: String { rawValue.capitalized }
+    var displayName: LocalizedStringResource {
+        switch self {
+        case .hp: "Hp"
+        case .attack: "Attack"
+        case .defense: "Defense"
+        case .speed: "Speed"
+        }
+    }
 }
 
 extension SortType {
-    var title: String {
+    var title: LocalizedStringResource {
         switch self {
         case .number: "Number"
         case .name: "Name"
         case .height: "Height"
         case .weight: "Weight"
         case .catchRate: "Catch rate"
-        case .stat(let name): "\(name.displayName)"
+        case .stat(let name): name.displayName
         }
     }
 

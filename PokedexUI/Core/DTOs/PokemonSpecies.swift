@@ -17,20 +17,6 @@ struct PokemonSpecies: Decodable, Sendable {
     let isLegendary: Bool
     let isMythical: Bool
 
-    private enum CodingKeys: String, CodingKey {
-        case habitat
-        case flavorTextEntries = "flavor_text_entries"
-        case varieties
-        case genera
-        case genderRate = "gender_rate"
-        case captureRate = "capture_rate"
-        case baseHappiness = "base_happiness"
-        case generation
-        case evolutionChain = "evolution_chain"
-        case isLegendary = "is_legendary"
-        case isMythical = "is_mythical"
-    }
-
     var defaultVariety: Variety? {
         varieties.first(where: \.isDefault) ?? varieties.first
     }
@@ -59,11 +45,6 @@ struct APINamed: Decodable, Sendable {
 struct FlavorTextEntry: Decodable, Sendable {
     let flavorText: String
     let language: APINamed
-
-    private enum CodingKeys: String, CodingKey {
-        case flavorText = "flavor_text"
-        case language
-    }
 }
 
 /// Localized genus label (e.g. "Mouse Pokémon" for Pikachu).
@@ -90,11 +71,6 @@ struct EvolutionChainRef: Decodable, Sendable {
 struct Variety: Decodable, Sendable {
     let isDefault: Bool
     let pokemon: PokemonReference
-
-    private enum CodingKeys: String, CodingKey {
-        case isDefault = "is_default"
-        case pokemon
-    }
 
     struct PokemonReference: Decodable, Sendable {
         let name: String

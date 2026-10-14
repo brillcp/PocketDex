@@ -14,9 +14,12 @@ protocol ItemDetailViewModelProtocol {
 @Observable
 final class ItemDetailViewModel {
     let item: ItemData
+    /// Sorted once on init instead of on every body evaluation.
+    let items: [ItemDetail]
 
     init(item: ItemData) {
         self.item = item
+        self.items = item.items.sorted(by: { $0.name < $1.name })
     }
 }
 
@@ -25,9 +28,5 @@ final class ItemDetailViewModel {
 extension ItemDetailViewModel: ItemDetailViewModelProtocol {
     var title: String {
         item.title.pretty
-    }
-
-    var items: [ItemDetail] {
-        item.items.sorted(by: { $0.name < $1.name })
     }
 }

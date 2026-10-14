@@ -14,7 +14,7 @@ struct MoveLoadoutView<BottomBar: View>: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                pokemonSummary
+                MoveLoadoutSummary(pokemon: pokemon)
                 MovePickerGrid(
                     moveSelection: moveSelection,
                     opponentTypes: opponentTypes
@@ -35,8 +35,12 @@ struct MoveLoadoutView<BottomBar: View>: View {
 }
 
 // MARK: - Private
-private extension MoveLoadoutView {
-    var pokemonSummary: some View {
+/// Sprite, name, and type chips for the pokemon being configured. A separate
+/// view so loadout changes (selection, disabled state) don't re-run it.
+private struct MoveLoadoutSummary: View {
+    let pokemon: Pokemon
+
+    var body: some View {
         HStack(spacing: 12) {
             SpriteImage(url: pokemon.frontSprite)
                 .frame(width: 80, height: 80)

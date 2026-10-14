@@ -5,7 +5,7 @@ import PokeBattleKit
 /// and offensive (strengths) matchups. Type chips are tappable to browse
 /// all Pokemon of that type.
 struct WeaknessGridView: View {
-    let pokemon: PokemonViewModel
+    let typeNames: [String]
     let textColor: Color
     let onSelectType: (String) -> Void
 
@@ -28,7 +28,7 @@ private extension WeaknessGridView {
     // MARK: Defensive (what hits this Pokemon)
 
     var defensiveBuckets: [(label: String, types: [String])] {
-        let defenders = pokemon.typeNames
+        let defenders = typeNames
         let chart = PokeBattleKit.typeChart
 
         var rows: [Double: [String]] = [:]
@@ -47,7 +47,7 @@ private extension WeaknessGridView {
     // MARK: Offensive (what this Pokemon hits)
 
     var offensiveBuckets: [(label: String, types: [String])] {
-        let attackers = pokemon.typeNames
+        let attackers = typeNames
         guard !attackers.isEmpty else { return [] }
         let chart = PokeBattleKit.typeChart
 
@@ -69,7 +69,7 @@ private extension WeaknessGridView {
     // MARK: Shared UI
 
     @ViewBuilder
-    func matchupSection(title: String, buckets: [(label: String, types: [String])]) -> some View {
+    func matchupSection(title: LocalizedStringResource, buckets: [(label: String, types: [String])]) -> some View {
         if !buckets.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
                 Text(title)

@@ -21,7 +21,7 @@ protocol BattleSetupViewModelProtocol {
     var opponentPokemon: PokemonViewModel? { get }
     var selection: MoveSelection { get }
     var opponentLoadout: [Move]? { get }
-    var errorMessage: String? { get }
+    var errorMessage: LocalizedStringResource? { get }
     var phase: BattleSetupPhase { get }
 
     func prepare() async
@@ -42,7 +42,7 @@ final class BattleSetupViewModel {
     var playerPokemon:    PokemonViewModel?
     var opponentPokemon:  PokemonViewModel?
     var opponentLoadout:  [Move]?
-    var errorMessage: String?
+    var errorMessage: LocalizedStringResource?
     private(set) var isPickingLoadout: Bool = false
 
     init(
@@ -80,11 +80,17 @@ extension BattleSetupViewModel: BattleSetupViewModelProtocol {
         let opponentMoves = MoveSelection.movesForPokemon(opponent.pokemon)
 
         guard playerMoves.count >= selection.maxSelections else {
-            errorMessage = "Couldn't load \(playerSummary.name)'s movepool. Check your connection and try again."
+            errorMessage = LocalizedStringResource(
+                "Couldn't load \(playerSummary.name)'s movepool. Check your connection and try again.",
+                comment: "Battle setup error. The variable is the player's Pokémon name."
+            )
             return
         }
         guard opponentMoves.count >= selection.maxSelections else {
-            errorMessage = "Couldn't load \(opponentSummary.name)'s movepool. Check your connection and try again."
+            errorMessage = LocalizedStringResource(
+                "Couldn't load \(opponentSummary.name)'s movepool. Check your connection and try again.",
+                comment: "Battle setup error. The variable is the opponent Pokémon name."
+            )
             return
         }
 
@@ -111,7 +117,10 @@ extension BattleSetupViewModel: BattleSetupViewModelProtocol {
         )
 
         guard picks.count >= selection.maxSelections else {
-            errorMessage = "Opponent couldn't pick a loadout."
+            errorMessage = LocalizedStringResource(
+                "Opponent couldn't pick a loadout.",
+                comment: "Battle setup error when the AI fails to choose the opponent's moves."
+            )
             isPickingLoadout = false
             return
         }

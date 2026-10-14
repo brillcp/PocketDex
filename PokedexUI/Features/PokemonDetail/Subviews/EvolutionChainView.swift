@@ -8,7 +8,7 @@ struct EvolutionChainView: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 0) {
-            ForEach(Array(stages.enumerated()), id: \.offset) { index, stage in
+            ForEach(stages.enumerated(), id: \.element.id) { index, stage in
                 stageCell(stage)
                     .frame(maxWidth: .infinity)
                 if index < stages.count - 1 {

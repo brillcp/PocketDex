@@ -6,6 +6,9 @@ struct BattleLogFeed: View {
     let log: [BattleLogEntry]
 
     var body: some View {
+        // Captured as values: the `visualEffect` closure runs off the main actor.
+        let fadeDistance = Layout.fadeDistance
+        let minScale = Layout.minScale
         ScrollView {
             LazyVStack(alignment: .leading, spacing: Layout.lineSpacing) {
                 ForEach(log) { entry in
@@ -16,10 +19,10 @@ struct BattleLogFeed: View {
                         .frame(height: Layout.lineHeight, alignment: .leading)
                         .visualEffect { content, proxy in
                             let frame = proxy.frame(in: .scrollView(axis: .vertical))
-                            let progress = max(0, min(1, frame.minY / Layout.fadeDistance))
+                            let progress = max(0, min(1, frame.minY / fadeDistance))
                             return content
                                 .opacity(progress)
-                                .scaleEffect(Layout.minScale + (1 - Layout.minScale) * progress, anchor: .top)
+                                .scaleEffect(minScale + (1 - minScale) * progress, anchor: .top)
                         }
                 }
             }

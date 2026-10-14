@@ -10,7 +10,10 @@ struct MovePickerGrid: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            header
+            MovePickerHeader(
+                selectedCount: moveSelection.selectedNames.count,
+                maxSelections: moveSelection.maxSelections
+            )
             grid
         }
     }
@@ -18,13 +21,6 @@ struct MovePickerGrid: View {
 
 // MARK: - Private
 private extension MovePickerGrid {
-    var header: some View {
-        Text("\(moveSelection.selectedNames.count)/\(moveSelection.maxSelections)")
-            .font(.pixel12)
-            .foregroundStyle(.secondary)
-            .padding(.horizontal)
-    }
-
     var grid: some View {
         LazyVGrid(columns: GridLayout.two.layout, spacing: GridLayout.two.spacing) {
             ForEach(moveSelection.pool, id: \.name, content: moveCard)
@@ -37,7 +33,40 @@ private extension MovePickerGrid {
         let effectiveness: Double? = opponentTypes.isEmpty
             ? nil
             : PokeBattleKit.typeChart.multiplier(attacking: move.typeName, defenders: opponentTypes)
-        return Button {
+        return MovePickerCard(
+            move: move,
+            selected: selected,
+            atCap: atCap,
+            effectiveness: effectiveness,
+            moveSelection: moveSelection
+        )
+    }
+}
+
+/// "selected/max" counter above the grid.
+private struct MovePickerHeader: View {
+    let selectedCount: Int
+    let maxSelections: Int
+
+    var body: some View {
+        Text("\(selectedCount)/\(maxSelections)")
+            .font(.pixel12)
+            .foregroundStyle(.secondary)
+            .padding(.horizontal)
+    }
+}
+
+/// Toggleable move card. Takes narrow values so only cards whose selection
+/// or cap state changed re-run their body when the selection updates.
+private struct MovePickerCard: View {
+    let move: Move
+    let selected: Bool
+    let atCap: Bool
+    let effectiveness: Double?
+    let moveSelection: MoveSelection
+
+    var body: some View {
+        Button {
             withAnimation(.easeOut(duration: 0.15)) {
                 moveSelection.toggle(move)
             }

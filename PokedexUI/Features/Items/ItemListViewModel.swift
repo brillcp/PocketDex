@@ -17,13 +17,15 @@ protocol ItemListViewModelProtocol {
 @MainActor
 @Observable
 final class ItemListViewModel {
-    private let fetcher: ItemFetcher
+    private let repository: PokedexRepositoryProtocol
+    private let modelContext: ModelContext
 
     var items: [ItemData] = []
     var isLoading: Bool = false
 
     init(modelContext: ModelContext, container: AppContainer) {
-        self.fetcher = ItemFetcher(modelContext: modelContext, container: container)
+        self.repository = container.repository
+        self.modelContext = modelContext
     }
 }
 
@@ -34,7 +36,16 @@ extension ItemListViewModel: ItemListViewModelProtocol {
         guard !isLoading, items.isEmpty else { return }
 
         items = await withLoadingState {
-            await fetcher.fetchDataFromStorageOrAPI()
+            // Downloads and imports off the main actor when nothing is
+            // stored yet; the rows are then read through the main context.
+            do {
+                try await repository.loadItemsIfNeeded()
+            } catch {
+                #if DEBUG
+                print("ItemListViewModel: fetch failed: \(error)")
+                #endif
+            }
+            return (try? modelContext.fetch(FetchDescriptor<ItemData>(sortBy: [SortDescriptor(\.title)]))) ?? []
         }
     }
 }

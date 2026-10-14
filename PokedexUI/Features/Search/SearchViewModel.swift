@@ -9,7 +9,7 @@ protocol SearchViewModelProtocol {
 
     /// The filtered list based on the current query.
     var filtered: [Pokemon] { get }
-    /// The user's search input query.
+    /// The user's search input query. Setting it refreshes `filtered`.
     var query: String { get set }
     /// Most-recent submitted search terms, newest first.
     var recentSearches: [String] { get }
@@ -17,7 +17,8 @@ protocol SearchViewModelProtocol {
     var suggestedPokemon: [Pokemon] { get }
 
     /// Replaces the backing corpus (called by SearchView when @Query updates).
-    func updateCorpus(_ corpus: [Pokemon])
+    /// The search haystacks are built off the main actor.
+    func updateCorpus(_ corpus: [Pokemon]) async
     /// Filters the list based on the query and updates `filtered`.
     func updateFilteredPokemon()
     /// Records the current `query` into `recentSearches`.
@@ -40,14 +41,16 @@ final class SearchViewModel {
     ]
 
     private var index: [(pokemon: Pokemon, haystack: String)] = []
+    private let repository: PokedexRepositoryProtocol
     private let defaults: UserDefaults
 
     var filtered: [Pokemon] = []
-    var query: String = ""
+    var query: String = "" { didSet { updateFilteredPokemon() } }
     var recentSearches: [String]
     var suggestedPokemon: [Pokemon] = []
 
-    init(defaults: UserDefaults = .standard) {
+    init(repository: PokedexRepositoryProtocol, defaults: UserDefaults = .standard) {
+        self.repository = repository
         self.defaults = defaults
         self.recentSearches = defaults.stringArray(forKey: Self.recentSearchesKey) ?? []
     }
@@ -56,8 +59,12 @@ final class SearchViewModel {
 // MARK: - SearchViewModelProtocol
 
 extension SearchViewModel: SearchViewModelProtocol {
-    func updateCorpus(_ corpus: [Pokemon]) {
-        index = corpus.map { ($0, Pokemon.searchHaystack(for: $0)) }
+    func updateCorpus(_ corpus: [Pokemon]) async {
+        let entries = await repository.searchIndex()
+        let byId = Dictionary(corpus.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        index = entries.compactMap { entry in
+            byId[entry.id].map { ($0, entry.haystack) }
+        }
         if suggestedPokemon.isEmpty && !corpus.isEmpty {
             suggestedPokemon = Array(corpus.shuffled().prefix(2))
         }

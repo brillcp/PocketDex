@@ -52,6 +52,7 @@ protocol BattleAIServiceProtocol: Sendable {
 /// 3. Strategy.adjust runs post-pick corrections against either branch.
 actor BattleAIService {
     private let client = LanguageModelClient()
+    init() {}
 }
 
 extension BattleAIService: BattleAIServiceProtocol {

@@ -18,7 +18,7 @@ struct BattlerSprite: View {
     var body: some View {
         SpriteImage(url: url)
             .frame(width: 120, height: 148)
-        .modifier(ShakeEffect(animatableData: CGFloat(shakeTick)))
+        .modifier(ShakeEffect(progress: CGFloat(shakeTick)))
         .rotationEffect(.degrees(celebratingTilt))
         .offset(
             x: lungeOffset.width + entryOffset,
@@ -75,7 +75,7 @@ private struct DamagePopup: View {
     @State private var opacity: Double = 0
 
     var body: some View {
-        Text("-\(amount)")
+        Text("-\(amount)", comment: "Floating damage label above a battle sprite. The variable is the HP lost.")
             .font(.pixel14)
             .foregroundStyle(Color.pokedexRed)
             .shadow(color: .black.opacity(0.6), radius: 1, x: 0, y: 1)

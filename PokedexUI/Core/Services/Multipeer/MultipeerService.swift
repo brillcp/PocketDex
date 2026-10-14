@@ -1,5 +1,5 @@
 import Foundation
-import MultipeerConnectivity
+@preconcurrency import MultipeerConnectivity
 import SwiftUI
 
 /// Lightweight invitation handle for SwiftUI alert presentation.
@@ -32,13 +32,13 @@ enum MultipeerEvent {
 /// Process-wide MultipeerConnectivity wrapper. Owns the `MCSession`,
 /// advertiser, and browser; emits typed `MultipeerEvent`s via AsyncStream
 /// for consumption by view models.
+@MainActor
 @Observable
 final class MultipeerService: NSObject {
     private static let serviceType = "pokedex-vs"
 
     private var subscribers: [UUID: AsyncStream<MultipeerEvent>.Continuation] = [:]
-    private let myPeerID: MCPeerID
-    private let session: MCSession
+    @ObservationIgnored private var connection: (peerID: MCPeerID, session: MCSession)?
     private var advertiser: MCNearbyServiceAdvertiser?
     private var browser: MCNearbyServiceBrowser?
     private var invitationHandler: ((Bool) -> Void)?
@@ -46,16 +46,25 @@ final class MultipeerService: NSObject {
     private(set) var role: MultipeerRole?
     var localDisplayName: String { myPeerID.displayName }
 
-    override init() {
-        let name = UIDevice.current.name
-        self.myPeerID = MCPeerID(displayName: name.isEmpty ? "Trainer" : name)
-        self.session = MCSession(
-            peer: myPeerID,
-            securityIdentity: nil,
-            encryptionPreference: .required
-        )
+    /// Nonisolated so `AppContainer.live` (and the `\.container`
+    /// environment default) can be built without the main actor. The peer
+    /// and session are created on first use instead, on the main actor,
+    /// because the display name comes from `UIDevice`.
+    nonisolated override init() {
         super.init()
-        self.session.delegate = self
+    }
+
+    private var myPeerID: MCPeerID { resolvedConnection().peerID }
+    private var session: MCSession { resolvedConnection().session }
+
+    private func resolvedConnection() -> (peerID: MCPeerID, session: MCSession) {
+        if let connection { return connection }
+        let name = UIDevice.current.name
+        let peerID = MCPeerID(displayName: name.isEmpty ? "Trainer" : name)
+        let session = MCSession(peer: peerID, securityIdentity: nil, encryptionPreference: .required)
+        session.delegate = self
+        connection = (peerID, session)
+        return (peerID, session)
     }
 
     /// Return a new `AsyncStream` that receives all future events. Each
@@ -162,70 +171,97 @@ private extension MultipeerService {
             continuation.yield(event)
         }
     }
+
+    /// Hop a delegate callback (delivered on MultipeerConnectivity's private
+    /// queue) onto the main actor. `DispatchQueue.main` keeps events FIFO.
+    nonisolated func onMain(_ work: @escaping @MainActor () -> Void) {
+        DispatchQueue.main.async { MainActor.assumeIsolated(work) }
+    }
 }
 
 // MARK: - MCSessionDelegate
 extension MultipeerService: MCSessionDelegate {
-    func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
-        switch state {
-        case .connected:
-            stopDiscovery()
-            emit(.peerConnected(peerID))
-        case .connecting:
-            emit(.peerConnecting(peerID))
-        case .notConnected:
-            emit(.peerDisconnected(peerID))
-        @unknown default:
-            break
+    nonisolated func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
+        onMain {
+            switch state {
+            case .connected:
+                self.stopDiscovery()
+                self.emit(.peerConnected(peerID))
+            case .connecting:
+                self.emit(.peerConnecting(peerID))
+            case .notConnected:
+                self.emit(.peerDisconnected(peerID))
+            @unknown default:
+                break
+            }
         }
     }
 
-    func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
+    nonisolated func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
         guard let message = try? JSONDecoder().decode(BattleMessage.self, from: data) else {
             #if DEBUG
             print("MultipeerService: dropped undecodable payload (\(data.count) bytes)")
             #endif
             return
         }
-        emit(.message(message))
+        onMain { self.emit(.message(message)) }
     }
 
-    func session(_ session: MCSession, didReceive stream: InputStream, withName streamName: String, fromPeer peerID: MCPeerID) {}
-    func session(_ session: MCSession, didStartReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, with progress: Progress) {}
-    func session(_ session: MCSession, didFinishReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, at localURL: URL?, withError error: Error?) {}
+    nonisolated func session(_ session: MCSession, didReceive stream: InputStream, withName streamName: String, fromPeer peerID: MCPeerID) {}
+    nonisolated func session(_ session: MCSession, didStartReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, with progress: Progress) {}
+    nonisolated func session(_ session: MCSession, didFinishReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, at localURL: URL?, withError error: Error?) {}
 }
 
 // MARK: - MCNearbyServiceAdvertiserDelegate
 extension MultipeerService: MCNearbyServiceAdvertiserDelegate {
-    func advertiser(
+    nonisolated func advertiser(
         _ advertiser: MCNearbyServiceAdvertiser,
         didReceiveInvitationFromPeer peerID: MCPeerID,
         withContext context: Data?,
         invitationHandler: @escaping (Bool, MCSession?) -> Void
     ) {
-        let session = session
-        self.invitationHandler = { accepted in
-            invitationHandler(accepted, accepted ? session : nil)
+        let reply = InvitationReply(invitationHandler)
+        onMain {
+            let session = self.session
+            self.invitationHandler = { accepted in
+                reply.respond(accepted, accepted ? session : nil)
+            }
+            self.emit(.invitationReceived(peerName: peerID.displayName))
         }
-        emit(.invitationReceived(peerName: peerID.displayName))
     }
 
-    func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didNotStartAdvertisingPeer error: Error) {
-        emit(.advertisingFailed(error))
+    nonisolated func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didNotStartAdvertisingPeer error: Error) {
+        onMain { self.emit(.advertisingFailed(error)) }
+    }
+}
+
+/// Carries the advertiser's invitation callback onto the main actor.
+/// MultipeerConnectivity documents the handler as callable from any
+/// thread, and it's invoked at most once, so the unchecked conformance
+/// is sound.
+private final class InvitationReply: @unchecked Sendable {
+    private let handler: (Bool, MCSession?) -> Void
+
+    init(_ handler: @escaping (Bool, MCSession?) -> Void) {
+        self.handler = handler
+    }
+
+    func respond(_ accepted: Bool, _ session: MCSession?) {
+        handler(accepted, session)
     }
 }
 
 // MARK: - MCNearbyServiceBrowserDelegate
 extension MultipeerService: MCNearbyServiceBrowserDelegate {
-    func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String: String]?) {
-        emit(.peerFound(peerID))
+    nonisolated func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String: String]?) {
+        onMain { self.emit(.peerFound(peerID)) }
     }
 
-    func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {
-        emit(.peerLost(peerID))
+    nonisolated func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {
+        onMain { self.emit(.peerLost(peerID)) }
     }
 
-    func browser(_ browser: MCNearbyServiceBrowser, didNotStartBrowsingForPeers error: Error) {
-        emit(.browsingFailed(error))
+    nonisolated func browser(_ browser: MCNearbyServiceBrowser, didNotStartBrowsingForPeers error: Error) {
+        onMain { self.emit(.browsingFailed(error)) }
     }
 }

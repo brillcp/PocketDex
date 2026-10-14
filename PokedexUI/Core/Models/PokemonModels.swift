@@ -80,11 +80,11 @@ extension Pokemon {
     convenience init(dto: PokemonDTO, species: PokemonSpecies?) {
         self.init(
             id: dto.id,
-            name: dto.name,
+            name: dto.name.capitalized,
             weight: dto.weight,
             height: dto.height,
             cries: Cries(latest: dto.cries.latest),
-            sprite: Sprite(front: dto.sprites.front, back: dto.sprites.back),
+            sprite: Sprite(front: dto.sprites.frontDefault, back: dto.sprites.backDefault),
             abilities: dto.abilities.map { Ability(ability: APIItem($0.ability)) },
             moveNames: dto.moves.map(\.move.name),
             types: dto.types.map { Type(type: APIItem($0.type)) },

@@ -10,11 +10,23 @@ struct TypePokemonListView: View {
     @Environment(\.container) private var container
     @Environment(\.modelContext) private var modelContext
     @Namespace private var namespace
-    @Query(sort: \Pokemon.id) private var allPokemon: [Pokemon]
+    @Query private var pokemonOfType: [Pokemon]
     @State private var selectedPokemon: Pokemon?
 
+    /// Filters in the store via the query predicate instead of filtering
+    /// the whole corpus on every body evaluation.
+    init(typeName: String) {
+        self.typeName = typeName
+        _pokemonOfType = Query(
+            filter: #Predicate<Pokemon> { pokemon in
+                pokemon.types.contains { $0.type.name == typeName }
+            },
+            sort: \.id
+        )
+    }
+
     var body: some View {
-        PokemonGrid(pokemon: filtered) { pokemon in
+        PokemonGrid(pokemon: pokemonOfType) { pokemon in
             Button {
                 selectedPokemon = pokemon
             } label: {
@@ -33,15 +45,6 @@ struct TypePokemonListView: View {
                 )
             )
             .navigationTransition(.zoom(sourceID: pokemon.id, in: namespace))
-        }
-    }
-}
-
-// MARK: - Private
-private extension TypePokemonListView {
-    var filtered: [Pokemon] {
-        allPokemon.filter { pokemon in
-            pokemon.types.contains { $0.type.name == typeName }
         }
     }
 }

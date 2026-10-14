@@ -99,12 +99,17 @@ extension BattleViewModel: BattleViewModelProtocol {
     var canSelectMove: Bool { engine != nil }
 
     func prepare() async {
+        // Sendable values only: `async let` evaluates in a child task.
+        let playerID = playerPokemon.id
+        let playerSpriteURL = playerPokemon.frontSprite
+        let opponentID = opponentPokemon.id
+        let opponentSpriteURL = opponentPokemon.frontSprite
         async let entrance: Void = playEntrance()
         async let colors: Void = spriteColors.resolve(
-            playerID: playerPokemon.id,
-            playerSpriteURL: playerPokemon.frontSprite,
-            opponentID: opponentPokemon.id,
-            opponentSpriteURL: opponentPokemon.frontSprite,
+            playerID: playerID,
+            playerSpriteURL: playerSpriteURL,
+            opponentID: opponentID,
+            opponentSpriteURL: opponentSpriteURL,
             animator: animator
         )
         _ = await (entrance, colors)

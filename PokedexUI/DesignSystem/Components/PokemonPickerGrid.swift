@@ -40,6 +40,7 @@ struct PokemonPickerGrid: View {
 
     @State private var searchText = ""
     @State private var index: [(pokemon: Pokemon, haystack: String)] = []
+    @State private var filteredPokemon: [Pokemon]?
 
     var body: some View {
         PokemonGrid(pokemon: displayedPokemon) { pokemon in
@@ -54,18 +55,26 @@ struct PokemonPickerGrid: View {
         .searchable(text: $searchText, placement: .toolbar)
         .scrollDismissesKeyboard(.immediately)
         .onAppear(perform: buildIndex)
+        .onChange(of: searchText, updateFilteredPokemon)
     }
 }
 
 // MARK: - Private
 private extension PokemonPickerGrid {
     var displayedPokemon: [Pokemon] {
+        filteredPokemon ?? pokemon
+    }
+
+    func updateFilteredPokemon() {
         let terms = searchText
             .split(whereSeparator: \.isWhitespace)
             .map { $0.normalize }
             .filter { !$0.isEmpty }
-        guard !terms.isEmpty else { return pokemon }
-        return index.compactMap { entry in
+        guard !terms.isEmpty else {
+            filteredPokemon = nil
+            return
+        }
+        filteredPokemon = index.compactMap { entry in
             terms.allSatisfy { entry.haystack.contains($0) } ? entry.pokemon : nil
         }
     }

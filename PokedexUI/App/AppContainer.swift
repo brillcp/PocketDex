@@ -10,8 +10,10 @@ import SwiftData
 /// Owns the shared `ModelContainer`: the UI reads through its main
 /// context (`.modelContainer(...)` / `@Query`) while the
 /// background `PokedexStore` writes through its own context on the same container.
-@MainActor
-final class AppContainer {
+/// `Sendable`: every member is an immutable reference to a Sendable service
+/// (actors, Sendable protocols, the main-actor `MultipeerService`), so the
+/// container can be the nonisolated `@Entry` default.
+final class AppContainer: Sendable {
     let modelContainer: ModelContainer
 
     let repository:         PokedexRepositoryProtocol

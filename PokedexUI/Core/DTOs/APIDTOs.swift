@@ -1,6 +1,9 @@
 /// Sendable decoding payloads for PokeAPI responses. These are what cross
 /// from the network into `PokedexStore`; the `@Model` classes are built
 /// from them on the store's background context.
+///
+/// Property names mirror the JSON in camelCase; `JSONDecoder.pokeAPI()`
+/// maps PokeAPI's snake_case keys, so no `CodingKeys` are needed.
 
 /// Generic `{ name, url }` reference used across PokeAPI payloads.
 struct APIRef: Decodable, Sendable, Hashable {
@@ -17,13 +20,8 @@ struct APIListResponse: Decodable, Sendable {
 /// `/pokemon/{id}` detail payload.
 struct PokemonDTO: Decodable, Sendable {
     struct Sprites: Decodable, Sendable {
-        let front: String
-        let back: String?
-
-        private enum CodingKeys: String, CodingKey {
-            case front = "front_default"
-            case back = "back_default"
-        }
+        let frontDefault: String
+        let backDefault: String?
     }
 
     struct Cries: Decodable, Sendable {
@@ -45,14 +43,11 @@ struct PokemonDTO: Decodable, Sendable {
     struct BaseStat: Decodable, Sendable {
         let baseStat: Int
         let stat: APIRef
-
-        private enum CodingKeys: String, CodingKey {
-            case stat
-            case baseStat = "base_stat"
-        }
     }
 
     let id: Int
+    /// Raw API name (lowercase, e.g. "mr-mime"); capitalized when the
+    /// `Pokemon` row is built.
     let name: String
     let weight: Int
     let height: Int
@@ -62,24 +57,6 @@ struct PokemonDTO: Decodable, Sendable {
     let moves: [MoveSlot]
     let types: [TypeSlot]
     let stats: [BaseStat]
-
-    private enum CodingKeys: String, CodingKey {
-        case id, name, weight, height, cries, sprites, abilities, moves, types, stats
-    }
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        id = try container.decode(Int.self, forKey: .id)
-        name = try container.decode(String.self, forKey: .name).capitalized
-        weight = try container.decode(Int.self, forKey: .weight)
-        height = try container.decode(Int.self, forKey: .height)
-        cries = try container.decode(Cries.self, forKey: .cries)
-        sprites = try container.decode(Sprites.self, forKey: .sprites)
-        abilities = try container.decode([AbilitySlot].self, forKey: .abilities)
-        moves = try container.decode([MoveSlot].self, forKey: .moves)
-        types = try container.decode([TypeSlot].self, forKey: .types)
-        stats = try container.decode([BaseStat].self, forKey: .stats)
-    }
 }
 
 /// `/item/{id}` detail payload.
@@ -91,11 +68,6 @@ struct ItemDetailDTO: Decodable, Sendable {
     struct EffectEntry: Decodable, Sendable {
         let shortEffect: String
         let language: APIRef
-
-        private enum CodingKeys: String, CodingKey {
-            case shortEffect = "short_effect"
-            case language
-        }
     }
 
     let id: Int
@@ -103,11 +75,6 @@ struct ItemDetailDTO: Decodable, Sendable {
     let sprites: Sprites?
     let category: APIRef
     let effectEntries: [EffectEntry]
-
-    private enum CodingKeys: String, CodingKey {
-        case id, name, sprites, category
-        case effectEntries = "effect_entries"
-    }
 
     /// English effect texts. PokeAPI ships one entry per language, and a
     /// SwiftData to-many relationship doesn't keep order, so only English is

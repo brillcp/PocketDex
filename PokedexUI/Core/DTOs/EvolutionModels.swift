@@ -30,12 +30,6 @@ struct EvolutionLink: Codable, Sendable {
     let species: SpeciesRef
     let evolvesTo: [EvolutionLink]
     let evolutionDetails: [EvolutionDetail]
-
-    private enum CodingKeys: String, CodingKey {
-        case species
-        case evolvesTo = "evolves_to"
-        case evolutionDetails = "evolution_details"
-    }
 }
 
 /// Trigger metadata for an evolution edge (level, item, friendship, etc.).
@@ -62,15 +56,6 @@ struct EvolutionDetail: Codable, Sendable {
             return "Friendship"
         }
         return nil
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case minLevel = "min_level"
-        case trigger
-        case item
-        case heldItem = "held_item"
-        case timeOfDay = "time_of_day"
-        case minHappiness = "min_happiness"
     }
 }
 

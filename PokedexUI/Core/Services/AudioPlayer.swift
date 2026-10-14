@@ -10,6 +10,8 @@ protocol AudioPlaying: Sendable {
     func stop() async
 }
 
+/// Owns the `AVPlayer` on its own executor so stream setup and buffering
+/// never block the main thread.
 actor AudioPlayer {
     private var player: AVPlayer?
 

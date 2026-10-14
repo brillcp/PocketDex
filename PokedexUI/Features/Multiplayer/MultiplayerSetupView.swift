@@ -6,13 +6,11 @@ import PokeBattleKit
 /// Tapping a trainer invites them; on connect a sheet walks both
 /// players through pokemon + move selection before launching the battle.
 struct MultiplayerSetupView: View {
-    @Environment(\.container) private var container
-
     @State var viewModel: MultiplayerSetupViewModel
 
     var body: some View {
         NavigationStack {
-            discoveryView
+            MultiplayerDiscoveryView(viewModel: viewModel)
                 .applyPokedexStyling(title: "Gym")
                 .foregroundStyle(.white)
                 .task { viewModel.startListening() }
@@ -32,17 +30,20 @@ struct MultiplayerSetupView: View {
                 }
                 .alert(
                     "Battle challenge!",
-                    isPresented: pendingInvitationBinding,
+                    isPresented: $viewModel.isShowingInvitation,
                     presenting: viewModel.pendingInvitation
                 ) { _ in
                     Button("Accept", role: .confirm, action: viewModel.acceptInvitation)
                     Button("Decline", role: .cancel, action: viewModel.declineInvitation)
                 } message: { invite in
-                    Text("\(invite.peerName) wants to challenge you to a 1v1 battle.")
+                    Text(
+                        "\(invite.peerName) wants to challenge you to a 1v1 battle.",
+                        comment: "Invitation alert message. The variable is the challenger's device name."
+                    )
                 }
                 .alert(
                     "Error",
-                    isPresented: errorBinding,
+                    isPresented: $viewModel.isShowingError,
                     presenting: viewModel.errorMessage
                 ) { _ in
                     Button("OK") { viewModel.dismissError() }
@@ -53,23 +54,14 @@ struct MultiplayerSetupView: View {
     }
 }
 
-// MARK: - Private
-private extension MultiplayerSetupView {
-    var pendingInvitationBinding: Binding<Bool> {
-        Binding(
-            get: { viewModel.pendingInvitation != nil },
-            set: { _ in }
-        )
-    }
+// MARK: - Discovery
 
-    var errorBinding: Binding<Bool> {
-        Binding(
-            get: { viewModel.errorMessage != nil },
-            set: { _ in }
-        )
-    }
+/// Nearby-trainer list or empty/connecting state. Separate View struct so
+/// peer list and invite changes don't re-evaluate the lobby's modifier chain.
+private struct MultiplayerDiscoveryView: View {
+    var viewModel: MultiplayerSetupViewModel
 
-    var discoveryView: some View {
+    var body: some View {
         Group {
             if viewModel.discoveredPeers.isEmpty {
                 VStack(spacing: 16) {
@@ -158,14 +150,26 @@ private struct MultiplayerPickerSheet: View {
                 MultiplayerMovePickerView(viewModel: viewModel, pokemon: pokemon)
             }
         }
-        .onChange(of: viewModel.phase) { _, newPhase in
-            if newPhase == .launching {
-                dismiss()
+        .modifier(PickerSheetAutoDismiss(viewModel: viewModel))
+    }
+}
+
+/// Dismisses the picker sheet on launch or error. Isolated in a modifier so
+/// `phase` / `errorMessage` changes don't re-evaluate the picker grid.
+private struct PickerSheetAutoDismiss: ViewModifier {
+    @Environment(\.dismiss) private var dismiss
+    var viewModel: MultiplayerSetupViewModel
+
+    func body(content: Content) -> some View {
+        content
+            .onChange(of: viewModel.phase) { _, newPhase in
+                if newPhase == .launching {
+                    dismiss()
+                }
             }
-        }
-        .onChange(of: viewModel.errorMessage) { _, error in
-            if error != nil { dismiss() }
-        }
+            .onChange(of: viewModel.errorMessage) { _, error in
+                if error != nil { dismiss() }
+            }
     }
 }
 

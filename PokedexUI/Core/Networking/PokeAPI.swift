@@ -68,7 +68,7 @@ struct PokeAPIClient: Sendable {
     /// never on the caller's actor (including the main actor).
     @concurrent
     func fetch<T: Decodable & Sendable>(_ request: PokeAPIRequest, as type: T.Type = T.self) async throws -> T {
-        try JSONDecoder().decode(T.self, from: try await fetchData(request))
+        try JSONDecoder.pokeAPI().decode(T.self, from: try await fetchData(request))
     }
 
     func fetchData(_ request: PokeAPIRequest) async throws -> Data {
@@ -98,6 +98,27 @@ struct PokeAPIClient: Sendable {
             }
             return collected
         }
+    }
+}
+
+extension JSONDecoder {
+    /// Decoder for PokeAPI payloads and cached copies of them: maps the API's
+    /// snake_case keys onto camelCase properties.
+    static func pokeAPI() -> JSONDecoder {
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return decoder
+    }
+}
+
+extension JSONEncoder {
+    /// Encodes cached payloads back in PokeAPI's snake_case shape, so they
+    /// round-trip through `JSONDecoder.pokeAPI()` and match chains already
+    /// stored on device.
+    static func pokeAPI() -> JSONEncoder {
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        return encoder
     }
 }
 
