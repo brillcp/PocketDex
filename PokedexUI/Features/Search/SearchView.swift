@@ -188,7 +188,7 @@ private struct RecentSearchesSection: View {
 
 /// Small icon + title header used by the empty-state sections.
 private struct SearchSectionHeader: View {
-    let title: LocalizedStringResource
+    let title: String
     let systemImage: String
 
     var body: some View {

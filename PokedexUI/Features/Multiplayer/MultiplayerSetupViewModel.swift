@@ -210,10 +210,7 @@ private extension MultiplayerSetupViewModel {
         switch message {
         case .hello(let version, _, _):
             if version != MultipeerProtocol.version {
-                errorMessage = String(
-                    localized: "Opponent uses a different protocol version.",
-                    comment: "Error alert message when the connected peer runs an incompatible app version."
-                )
+                errorMessage = "Opponent uses a different protocol version."
                 multipeer.disconnect()
                 showPicker = false
                 reset()
@@ -226,10 +223,7 @@ private extension MultiplayerSetupViewModel {
             }
         case .challengeDeclined:
             let name = connectedPeerName ?? Self.opponentFallbackName
-            errorMessage = String(
-                localized: "\(name) declined the challenge.",
-                comment: "Error alert message. The variable is the opponent's device name."
-            )
+            errorMessage = "\(name) declined the challenge."
             showPicker = false
             reset()
         case .disconnect:
@@ -249,16 +243,10 @@ private extension MultiplayerSetupViewModel {
 
     /// Peer we invited declined (MC disconnected while connecting).
     func inviteDeclined() {
-        let name = invitedPeer?.name ?? String(
-            localized: "Trainer",
-            comment: "Fallback name for an invited nearby player whose device name is unknown."
-        )
+        let name = invitedPeer?.name ?? "Trainer"
         invitedPeer = nil
         phase = .discovering
-        errorMessage = String(
-            localized: "\(name) declined the battle.",
-            comment: "Error alert message. The variable is the invited player's device name."
-        )
+        errorMessage = "\(name) declined the battle."
         startDiscovery()
     }
 
@@ -281,10 +269,7 @@ private extension MultiplayerSetupViewModel {
         let selfMoves = selection.selectedMoves
         let peerMoves = peerChallenge.moveNames.compactMap { PokeBattleKit.move(named: $0) }
         guard peerMoves.count == selection.maxSelections else {
-            errorMessage = String(
-                localized: "Opponent sent an invalid loadout.",
-                comment: "Error alert message when the peer's chosen moves can't be resolved."
-            )
+            errorMessage = "Opponent sent an invalid loadout."
             showPicker = false
             reset()
             return
@@ -303,15 +288,12 @@ private extension MultiplayerSetupViewModel {
     }
 
     static var opponentFallbackName: String {
-        String(localized: "Opponent", comment: "Fallback name for the connected player whose device name is unknown.")
+        "Opponent"
     }
 
     func canceledMessage() -> String {
         let name = connectedPeerName ?? Self.opponentFallbackName
-        return String(
-            localized: "\(name) canceled.",
-            comment: "Error alert message when the opponent leaves. The variable is the opponent's device name."
-        )
+        return "\(name) canceled."
     }
 
     func reset() {

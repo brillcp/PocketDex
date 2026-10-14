@@ -37,8 +37,7 @@ struct MultiplayerSetupView: View {
                     Button("Decline", role: .cancel, action: viewModel.declineInvitation)
                 } message: { invite in
                     Text(
-                        "\(invite.peerName) wants to challenge you to a 1v1 battle.",
-                        comment: "Invitation alert message. The variable is the challenger's device name."
+                        "\(invite.peerName) wants to challenge you to a 1v1 battle."
                     )
                 }
                 .alert(

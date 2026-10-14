@@ -8,10 +8,7 @@ struct BattleView<ViewModel: BattleViewModelProtocol>: View {
     var body: some View {
         content
             .applyPokedexStyling(
-                title: LocalizedStringResource(
-                    "\(viewModel.playerName) vs \(viewModel.opponentName)",
-                    comment: "Battle screen title. The first variable is the player's Pokémon, the second the opponent's."
-                ),
+                title: "\(viewModel.playerName) vs \(viewModel.opponentName)",
                 navColor: .darkGrey
             )
             .foregroundStyle(.white)

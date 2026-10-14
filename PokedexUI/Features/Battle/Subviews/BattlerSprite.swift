@@ -75,7 +75,7 @@ private struct DamagePopup: View {
     @State private var opacity: Double = 0
 
     var body: some View {
-        Text("-\(amount)", comment: "Floating damage label above a battle sprite. The variable is the HP lost.")
+        Text("-\(amount)")
             .font(.pixel14)
             .foregroundStyle(Color.pokedexRed)
             .shadow(color: .black.opacity(0.6), radius: 1, x: 0, y: 1)

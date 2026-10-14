@@ -20,7 +20,7 @@ struct DetailButton: View {
 /// Titled section with glass-effect card. Used for Data, Stats, and Evolution
 /// sections in the detail view.
 struct DetailSection<Content: View>: View {
-    var title: LocalizedStringResource?
+    var title: String?
     @ViewBuilder let content: () -> Content
 
     var body: some View {
@@ -68,7 +68,7 @@ struct SpeciesHeader: View {
 /// Generic "Label: value" row with fixed-width labels for alignment.
 /// Use `.vertical` axis for stacked label/value layout (abilities, moves).
 struct DetailRow: View {
-    var title: LocalizedStringResource?
+    var title: String?
     let subtitle: String
     var axis: Axis = .horizontal
 

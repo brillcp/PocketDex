@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 /// Items tab showing a paginated list of every PokeAPI item.
 struct ItemListView<ViewModel: ItemListViewModelProtocol>: View {

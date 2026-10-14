@@ -138,10 +138,7 @@ private extension MultiplayerBattleViewModel {
         case .battleEnded(let w):
             self.winner = role == .host ? w : w?.opposite
         case .disconnect:
-            errorMessage = String(
-                localized: "Opponent disconnected.",
-                comment: "Battle error message shown when the other player leaves mid-battle."
-            )
+            errorMessage = "Opponent disconnected."
             winner = nil
         case .hello, .challengeProposed, .challengeAccepted, .challengeDeclined, .rematch:
             break

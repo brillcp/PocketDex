@@ -30,13 +30,11 @@ struct GenderRow: View {
                     .frame(height: 10)
                     HStack {
                         Text(
-                            "♂ \(male, format: Self.percentFormat)",
-                            comment: "Male share of a Pokemon species. The variable is a percentage."
+                            "♂ \(male, format: Self.percentFormat)"
                         )
                         Spacer()
                         Text(
-                            "♀ \(female, format: Self.percentFormat)",
-                            comment: "Female share of a Pokemon species. The variable is a percentage."
+                            "♀ \(female, format: Self.percentFormat)"
                         )
                     }
                     .font(.pixel12)

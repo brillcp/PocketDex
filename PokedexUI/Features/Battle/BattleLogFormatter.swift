@@ -38,157 +38,89 @@ struct BattleLogFormatter {
         }
         switch event {
         case .used(let side, let moveName):
-            return AttributedString(
-                localized: "\(nameAttr(side)) used \(bold(moveName))",
-                comment: "Battle log line. The first variable is the attacking Pokémon, the second is the move name."
-            )
+            return nameAttr(side) + plain(" used ") + bold(moveName)
         case .missed(let side):
-            return AttributedString(
-                localized: "\(nameAttr(side))'s attack missed",
-                comment: "Battle log line. The variable is the Pokémon whose attack missed."
-            )
+            return nameAttr(side) + plain("'s attack missed")
         case .damaged(let side, let amount, let effectiveness, let crit):
             if effectiveness == 0 {
-                return AttributedString(
-                    localized: "It had no effect on \(nameAttr(side))",
-                    comment: "Battle log line for an immune target. The variable is the defending Pokémon."
-                )
+                return plain("It had no effect on ") + nameAttr(side)
             }
-            let damage = colored(
-                AttributedString(localized: "\(String(amount)) dmg", comment: "Damage amount in the battle log. The variable is HP lost."),
-                Color.pokedexRed
-            )
-            var line = AttributedString(
-                localized: "\(nameAttr(side)) took \(damage)",
-                comment: "Battle log line. The first variable is the damaged Pokémon, the second is the damage amount."
-            )
+            var line = nameAttr(side) + plain(" took ") + colored("\(amount) dmg", Color.pokedexRed)
             if crit {
-                line += colored(AttributedString(localized: " (critical hit)", comment: "Battle log suffix for a critical hit."), .yellow)
+                line += colored(" (critical hit)", .yellow)
             }
             if effectiveness >= 2 {
-                line += colored(AttributedString(localized: " (super effective)", comment: "Battle log suffix for a super effective hit."), .green)
+                line += colored(" (super effective)", .green)
             } else if effectiveness < 1 {
-                line += colored(AttributedString(localized: " (not very effective)", comment: "Battle log suffix for a not very effective hit."), .gray)
+                line += colored(" (not very effective)", .gray)
             }
             return line
         case .statusApplied(let side, let status):
-            return AttributedString(
-                localized: "\(nameAttr(side)) was inflicted with \(colored(status.displayName, statusColor(status)))",
-                comment: "Battle log line. The first variable is the Pokémon, the second is the status condition."
-            )
+            return nameAttr(side) + plain(" was inflicted with ") + colored(status.displayName, statusColor(status))
         case .statusTick(let side, let status, let amount):
-            return AttributedString(
-                localized: "\(nameAttr(side)) hurt by \(colored(status.displayName, statusColor(status))) (\(colored("-\(amount)", Color.pokedexRed)))",
-                comment: "Battle log line. The first variable is the Pokémon, the second is the status condition, the third is HP lost."
-            )
+            return nameAttr(side) + plain(" hurt by ") + colored(status.displayName, statusColor(status))
+                + plain(" (") + colored("-\(amount)", Color.pokedexRed) + plain(")")
         case .statChanged(let side, let stat, let delta):
             let pretty = stat.replacingOccurrences(of: "-", with: " ").capitalized
             let tint: Color = delta > 0 ? .green : Color.pokedexRed
-            let sharp = abs(delta) >= 2
-            if delta > 0 {
-                let rose = colored(AttributedString(localized: "rose", comment: "Battle log verb for a raised stat."), tint)
-                return sharp
-                    ? AttributedString(localized: "\(nameAttr(side))'s \(pretty) sharply \(rose)", comment: "Battle log line for a stat raised by two or more stages. The first variable is the Pokémon, the second is the stat, the third is the word \"rose\".")
-                    : AttributedString(localized: "\(nameAttr(side))'s \(pretty) \(rose)", comment: "Battle log line for a raised stat. The first variable is the Pokémon, the second is the stat, the third is the word \"rose\".")
-            }
-            let fell = colored(AttributedString(localized: "fell", comment: "Battle log verb for a lowered stat."), tint)
-            return sharp
-                ? AttributedString(localized: "\(nameAttr(side))'s \(pretty) sharply \(fell)", comment: "Battle log line for a stat lowered by two or more stages. The first variable is the Pokémon, the second is the stat, the third is the word \"fell\".")
-                : AttributedString(localized: "\(nameAttr(side))'s \(pretty) \(fell)", comment: "Battle log line for a lowered stat. The first variable is the Pokémon, the second is the stat, the third is the word \"fell\".")
+            let sharp = abs(delta) >= 2 ? "sharply " : ""
+            let verb = delta > 0 ? "rose" : "fell"
+            return nameAttr(side) + plain("'s \(pretty) \(sharp)") + colored(verb, tint)
         case .healed(let side, let amount):
-            let hp = colored(AttributedString(localized: "\(String(amount)) HP", comment: "Healed amount in the battle log. The variable is HP restored."), .green)
-            return AttributedString(
-                localized: "\(nameAttr(side)) restored \(hp)",
-                comment: "Battle log line. The first variable is the Pokémon, the second is the HP restored."
-            )
+            return nameAttr(side) + plain(" restored ") + colored("\(amount) HP", .green)
         case .recoil(let side, let amount):
-            let recoil = colored(AttributedString(localized: "\(String(amount)) recoil", comment: "Recoil amount in the battle log. The variable is HP lost."), Color.pokedexRed)
-            return AttributedString(
-                localized: "\(nameAttr(side)) took \(recoil) damage",
-                comment: "Battle log line. The first variable is the Pokémon, the second is the recoil amount."
-            )
+            return nameAttr(side) + plain(" took ") + colored("\(amount) recoil", Color.pokedexRed) + plain(" damage")
         case .wokeUp(let side):
-            return AttributedString(
-                localized: "\(nameAttr(side)) woke up",
-                comment: "Battle log line. The variable is the Pokémon that woke up."
-            )
+            return nameAttr(side) + plain(" woke up")
         case .fastAsleep(let side):
-            let asleep = colored(AttributedString(localized: "fast asleep", comment: "Battle log status phrase for a sleeping Pokémon."), statusColor(.sleep))
-            return AttributedString(
-                localized: "\(nameAttr(side)) is \(asleep)",
-                comment: "Battle log line. The first variable is the Pokémon, the second is the phrase \"fast asleep\"."
-            )
+            return nameAttr(side) + plain(" is ") + colored("fast asleep", statusColor(.sleep))
         case .recharging(let side):
-            let recharge = colored(AttributedString(localized: "recharge", comment: "Battle log verb for a Pokémon that must skip a turn."), .gray)
-            return AttributedString(
-                localized: "\(nameAttr(side)) must \(recharge)",
-                comment: "Battle log line. The first variable is the Pokémon, the second is the word \"recharge\"."
-            )
+            return nameAttr(side) + plain(" must ") + colored("recharge", .gray)
         case .fullyParalyzed(let side):
-            let paralyzed = colored(AttributedString(localized: "fully paralyzed", comment: "Battle log status phrase for a paralyzed Pokémon."), statusColor(.paralysis))
-            return AttributedString(
-                localized: "\(nameAttr(side)) is \(paralyzed)",
-                comment: "Battle log line. The first variable is the Pokémon, the second is the phrase \"fully paralyzed\"."
-            )
+            return nameAttr(side) + plain(" is ") + colored("fully paralyzed", statusColor(.paralysis))
         case .lostFocus(let side):
-            let focus = colored(AttributedString(localized: "focus", comment: "Battle log noun for a Pokémon losing concentration."), .gray)
-            return AttributedString(
-                localized: "\(nameAttr(side)) lost its \(focus)",
-                comment: "Battle log line. The first variable is the Pokémon, the second is the word \"focus\"."
-            )
+            return nameAttr(side) + plain(" lost its ") + colored("focus", .gray)
         case .fainted(let side):
-            return tinted(
-                AttributedString(localized: "\(nameAttr(side)) fainted!", comment: "Battle log line. The variable is the Pokémon that fainted."),
-                Color.pokedexRed
-            )
+            return nameAttr(side) + colored(" fainted!", Color.pokedexRed)
         case .ended(let w):
             guard let winner = w else {
-                return AttributedString(localized: "It's a draw.", comment: "Battle log line when neither side wins.")
+                return plain("It's a draw.")
             }
-            return tinted(
-                AttributedString(localized: "\(nameAttr(winner)) wins!", comment: "Battle log line. The variable is the winning Pokémon."),
-                .green
-            )
+            return nameAttr(winner) + colored(" wins!", .green)
         }
     }
 
     func wildAppeared(opponentColor: Color?) -> AttributedString {
         var attr = nameAttr(opponentName, color: opponentColor)
         attr.inlinePresentationIntent = .stronglyEmphasized
-        return AttributedString(
-            localized: "A wild \(attr) appeared!",
-            comment: "Battle log line when the battle starts. The variable is the opponent Pokémon."
-        )
+        return plain("A wild ") + attr + plain(" appeared!")
     }
 
     /// Multiplayer-flavored entrance line shown when a peer's pokemon arrives.
     func opponentReady(opponentColor: Color?) -> AttributedString {
         var attr = nameAttr(opponentName, color: opponentColor)
         attr.inlinePresentationIntent = .stronglyEmphasized
-        return AttributedString(
-            localized: "\(attr) is ready to battle!",
-            comment: "Multiplayer battle log line. The variable is the opponent's Pokémon."
-        )
+        return attr + plain(" is ready to battle!")
     }
 
     /// Placeholder line shown after the local player commits a move while
     /// the remote peer's commit is still in flight.
     func waitingForOpponent() -> AttributedString {
-        var str = AttributedString(localized: "Waiting for opponent", comment: "Multiplayer battle log line while the other player picks a move.")
-        str.foregroundColor = .gray
-        return str
+        colored("Waiting for opponent", .gray)
     }
 
     /// Prompt shown when the peer has already committed and is waiting on us.
     func chooseMove() -> AttributedString {
-        var str = AttributedString(localized: "Pick a move", comment: "Multiplayer battle log prompt asking the player to choose a move.")
-        str.foregroundColor = .yellow
-        return str
+        colored("Pick a move", .yellow)
     }
 }
 
 // MARK: - Private
 private extension BattleLogFormatter {
+    func plain(_ text: String) -> AttributedString {
+        AttributedString(text)
+    }
+
     func nameAttr(_ name: String, color: Color?) -> AttributedString {
         var str = AttributedString(name)
         str.foregroundColor = legibleColor(color ?? .white)
@@ -208,16 +140,6 @@ private extension BattleLogFormatter {
     func colored(_ text: AttributedString, _ color: Color) -> AttributedString {
         var str = text
         str.foregroundColor = color
-        return str
-    }
-
-    /// Colors every run of a localized line that doesn't already carry a
-    /// color (the interpolated name keeps its own tint).
-    func tinted(_ text: AttributedString, _ color: Color) -> AttributedString {
-        var str = text
-        for run in str.runs where run.foregroundColor == nil {
-            str[run.range].foregroundColor = color
-        }
         return str
     }
 

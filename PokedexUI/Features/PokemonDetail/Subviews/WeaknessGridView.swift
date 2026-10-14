@@ -69,7 +69,7 @@ private extension WeaknessGridView {
     // MARK: Shared UI
 
     @ViewBuilder
-    func matchupSection(title: LocalizedStringResource, buckets: [(label: String, types: [String])]) -> some View {
+    func matchupSection(title: String, buckets: [(label: String, types: [String])]) -> some View {
         if !buckets.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
                 Text(title)

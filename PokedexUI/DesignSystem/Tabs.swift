@@ -6,7 +6,7 @@ enum Tabs: Int {
 }
 
 extension Tabs {
-    var title: LocalizedStringResource {
+    var title: String {
         switch self {
             case .pokedex: "PocketDex+"
             case .items: "Items"

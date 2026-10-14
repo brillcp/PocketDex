@@ -20,7 +20,7 @@ enum SortDirection: Hashable {
         self = self == .ascending ? .descending : .ascending
     }
 
-    var label: LocalizedStringResource {
+    var label: String {
         switch self {
         case .ascending: "Ascending"
         case .descending: "Descending"
@@ -39,7 +39,7 @@ enum SortDirection: Hashable {
 enum Stats: String, CaseIterable {
     case hp, attack, defense, speed
 
-    var displayName: LocalizedStringResource {
+    var displayName: String {
         switch self {
         case .hp: "Hp"
         case .attack: "Attack"
@@ -50,7 +50,7 @@ enum Stats: String, CaseIterable {
 }
 
 extension SortType {
-    var title: LocalizedStringResource {
+    var title: String {
         switch self {
         case .number: "Number"
         case .name: "Name"
