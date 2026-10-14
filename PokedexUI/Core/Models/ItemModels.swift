@@ -2,29 +2,13 @@ import SwiftData
 
 /// One individual PokeAPI item with sprite, category, and effect list.
 @Model
-final class ItemDetail: Decodable {
+final class ItemDetail {
     @Attribute(.unique) var id: Int
     var name: String
     var prettyName: String = ""
     var sprites: ItemSprite?
     var category: APIItem
     @Relationship var effect: [Effect]
-
-    private enum CodingKeys: String, CodingKey {
-        case id, name, sprites, category
-        case effect = "effect_entries"
-    }
-
-    required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try container.decode(Int.self, forKey: .id)
-        let decodedName = try container.decode(String.self, forKey: .name)
-        self.name = decodedName
-        self.prettyName = decodedName.pretty
-        self.sprites = try container.decodeIfPresent(ItemSprite.self, forKey: .sprites)
-        self.category = try container.decode(APIItem.self, forKey: .category)
-        self.effect = try container.decode([Effect].self, forKey: .effect)
-    }
 
     init(id: Int, name: String, sprites: ItemSprite?, category: APIItem, effect: [Effect]) {
         self.id = id
@@ -33,6 +17,18 @@ final class ItemDetail: Decodable {
         self.sprites = sprites
         self.category = category
         self.effect = effect
+    }
+}
+
+extension ItemDetail {
+    convenience init(dto: ItemDetailDTO) {
+        self.init(
+            id: dto.id,
+            name: dto.name,
+            sprites: dto.sprites.map { ItemSprite(default: $0.default) },
+            category: APIItem(dto.category),
+            effect: dto.englishEffects.map(Effect.init(effect:))
+        )
     }
 }
 
@@ -64,17 +60,8 @@ extension ItemData {
 
 /// Optional default sprite URL for an item.
 @Model
-final class ItemSprite: Decodable {
+final class ItemSprite {
     var `default`: String?
-
-    private enum CodingKeys: String, CodingKey {
-        case `default` = "default"
-    }
-
-    required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.default = try container.decodeIfPresent(String.self, forKey: .default)
-    }
 
     init(default: String?) {
         self.default = `default`
@@ -83,23 +70,12 @@ final class ItemSprite: Decodable {
 
 /// Short-form effect text for an item.
 @Model
-final class Effect: Decodable {
+final class Effect {
     var effect: String
     var prettyEffect: String = ""
 
     @Relationship(inverse: \ItemDetail.effect)
     var itemDetail: ItemDetail?
-
-    private enum CodingKeys: String, CodingKey {
-        case effect = "short_effect"
-    }
-
-    required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let decoded = try container.decode(String.self, forKey: .effect)
-        self.effect = decoded
-        self.prettyEffect = decoded.pretty
-    }
 
     init(effect: String) {
         self.effect = effect

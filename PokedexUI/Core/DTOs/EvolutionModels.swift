@@ -92,7 +92,7 @@ struct SpeciesRef: Codable, Sendable, Hashable {
 }
 
 extension EvolutionChain {
-    struct Stage: Identifiable {
+    struct Stage: Identifiable, Sendable {
         let species: SpeciesRef
         let trigger: EvolutionDetail?
         var id: String { species.name }

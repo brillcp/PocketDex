@@ -11,11 +11,7 @@ struct PokedexUIApp: App {
         WindowGroup {
             RootView()
         }
-        .modelContainer(for: [
-            Pokemon.self,
-            ItemData.self,
-            EvolutionChainEntity.self
-        ])
+        .modelContainer(AppContainer.live.modelContainer)
     }
 }
 

@@ -3,7 +3,6 @@ import PokeBattleKit
 /// SwiftData bridge: builds a ``Candidate`` from a persistence
 /// model. The struct itself lives in PokeBattleKit.
 extension Candidate {
-    @MainActor
     init(pokemon: Pokemon, fallbackTypes: [String] = []) {
         let types = pokemon.types.map(\.type.name)
         self.init(

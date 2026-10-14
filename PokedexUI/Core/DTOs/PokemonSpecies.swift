@@ -1,7 +1,7 @@
 import Foundation
 
 /// `/pokemon-species/{id}` payload. Merged into a `Pokemon` row by
-/// `PokemonService.requestFullPokemon(id:)` so the detail view can read
+/// `PokedexStore` at import time so the detail view can read
 /// habitat, flavor text, evolution chain id, genus, gender + capture rate,
 /// and the legendary/mythical flags from one model.
 struct PokemonSpecies: Decodable, Sendable {
