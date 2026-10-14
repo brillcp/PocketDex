@@ -18,7 +18,7 @@ struct PrimaryCapsuleButton: View {
             tapTrigger.toggle()
             action()
         } label: {
-            HStack(spacing: 8) {
+            HStack(spacing: DesignKit.Spacing.Primitive.s8) {
                 if isLoading {
                     PixelSpinner(color: .white)
                 } else {
@@ -29,7 +29,7 @@ struct PrimaryCapsuleButton: View {
             .font(.pixel16)
             .frame(height: 24)
             .frame(maxWidth: .infinity)
-            .padding(.vertical)
+            .padding(.vertical, DesignKit.Spacing.Primitive.s16)
             .foregroundStyle(.white)
         }
         .glassEffect(.regular.tint(.pokedexRed.opacity(0.8)).interactive())
@@ -53,8 +53,8 @@ struct SecondaryCapsuleButton: View {
         Button(action: action) {
             Label(title, systemImage: icon)
                 .font(.pixel14)
-                .padding(.vertical, 11)
-                .padding(.horizontal)
+                .padding(.vertical, DesignKit.Spacing.Primitive.s12)
+                .padding(.horizontal, DesignKit.Spacing.Primitive.s16)
                 .foregroundStyle(color)
         }
         .glassEffect(.clear.interactive())

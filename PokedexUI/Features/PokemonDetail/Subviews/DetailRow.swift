@@ -11,7 +11,7 @@ struct DetailButton: View {
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 24.0, height: 24.0)
-                .padding(10)
+                .padding(DesignKit.Spacing.Primitive.s12)
         }
         .glassEffect(.clear.interactive(), in: Circle())
     }
@@ -27,14 +27,14 @@ struct DetailSection<Content: View>: View {
         VStack(alignment: .leading) {
             if let title {
                 Text(title)
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, DesignKit.Spacing.Primitive.s24)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
 
-            VStack(spacing: 32) {
+            VStack(spacing: DesignKit.Spacing.Primitive.s32) {
                 content()
             }
-            .padding(24.0)
+            .padding(DesignKit.Spacing.Primitive.s24)
             .glassEffect(.clear, in: Rectangle())
         }
     }
@@ -61,7 +61,7 @@ struct SpeciesHeader: View {
             if isLegendary { Chip("LEGENDARY", style: .primary) }
             if isMythical { Chip("MYTHICAL", style: .primary) }
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, DesignKit.Spacing.Primitive.s24)
     }
 }
 
@@ -75,7 +75,7 @@ struct DetailRow: View {
     var body: some View {
         switch axis {
         case .horizontal:
-            HStack(alignment: .top, spacing: 16) {
+            HStack(alignment: .top, spacing: DesignKit.Spacing.Primitive.s16) {
                 if let title {
                     Text(title)
                         .frame(width: 82, alignment: .leading)
@@ -103,7 +103,7 @@ struct TypesRow: View {
     @State private var tapTrigger = false
 
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
+        HStack(alignment: .top, spacing: DesignKit.Spacing.Primitive.s16) {
             Text("Types")
                 .frame(width: 82, alignment: .leading)
             HStack {

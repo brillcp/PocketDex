@@ -9,7 +9,7 @@ struct MovePickerGrid: View {
     var opponentTypes: [String] = []
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s8) {
             MovePickerHeader(
                 selectedCount: moveSelection.selectedNames.count,
                 maxSelections: moveSelection.maxSelections
@@ -52,7 +52,7 @@ private struct MovePickerHeader: View {
         Text("\(selectedCount)/\(maxSelections)")
             .font(.pixel12)
             .foregroundStyle(.secondary)
-            .padding(.horizontal)
+            .padding(.horizontal, DesignKit.Spacing.Primitive.s16)
     }
 }
 

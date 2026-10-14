@@ -11,7 +11,7 @@ struct HPCard: View, Equatable {
     let status: Status
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s8) {
             HStack {
                 Text(name).font(.pixel14)
                 if status != .none {
@@ -27,8 +27,8 @@ struct HPCard: View, Equatable {
                 .contentTransition(.numericText(value: Double(currentHP)))
                 .animation(.easeOut(duration: 0.4), value: currentHP)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 12)
+        .padding(.horizontal, DesignKit.Spacing.Primitive.s12)
+        .padding(.vertical, DesignKit.Spacing.Primitive.s12)
         .glassEffect(.clear, in: RoundedRectangle.card)
     }
 }

@@ -13,7 +13,7 @@ struct MoveLoadoutView<BottomBar: View>: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 16) {
+            VStack(spacing: DesignKit.Spacing.Primitive.s16) {
                 MoveLoadoutSummary(pokemon: pokemon)
                 MovePickerGrid(
                     moveSelection: moveSelection,
@@ -41,13 +41,13 @@ private struct MoveLoadoutSummary: View {
     let pokemon: Pokemon
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DesignKit.Spacing.Primitive.s12) {
             SpriteImage(url: pokemon.frontSprite)
                 .frame(width: 80, height: 80)
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s4) {
                 Text(pokemon.name)
                     .font(.pixel14)
-                HStack(spacing: 4) {
+                HStack(spacing: DesignKit.Spacing.Primitive.s4) {
                     ForEach(pokemon.types) { type in
                         Chip.type(type)
                     }
@@ -55,7 +55,7 @@ private struct MoveLoadoutSummary: View {
             }
             Spacer()
         }
-        .padding()
+        .padding(DesignKit.Spacing.Primitive.s16)
         .background(Color.cardBackground)
     }
 }

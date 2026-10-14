@@ -20,7 +20,7 @@ struct PokedexGridView: View {
         PokemonGrid(
             pokemon: pokemon,
             grid: grid,
-            contentPadding: .init(top: 2.0, leading: 0, bottom: 2.0, trailing: 0)
+            contentPadding: .init(top: DesignKit.Spacing.Primitive.s2, leading: DesignKit.Spacing.Primitive.s0, bottom: DesignKit.Spacing.Primitive.s2, trailing: DesignKit.Spacing.Primitive.s0)
         ) { pokemon in
             PokedexGridItem(
                 pokemon: pokemon,
@@ -53,7 +53,7 @@ private struct IndexingOverlay: View {
     let progress: Double
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: DesignKit.Spacing.Primitive.s16) {
             PixelSpinner()
                 .opacity(progress >= 1.0 ? 1.0 : 0.0)
             ProgressView(value: progress)
@@ -131,11 +131,11 @@ private struct CardOverlay: View {
                 Spacer()
                 Text("#\(id)")
             }
-            .padding(8)
+            .padding(DesignKit.Spacing.Primitive.s8)
             Spacer()
             Text(name)
         }
-        .padding(.bottom, 10)
+        .padding(.bottom, DesignKit.Spacing.Primitive.s12)
         .foregroundStyle(isLight ? Color.darkGrey : .white)
     }
 }

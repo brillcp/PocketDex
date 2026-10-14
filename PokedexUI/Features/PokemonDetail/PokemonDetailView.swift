@@ -26,7 +26,7 @@ struct PokemonDetailView<ViewModel: PokemonDetailViewModelProtocol>: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 16.0) {
+            VStack(spacing: DesignKit.Spacing.Primitive.s16) {
                 // Reserve room for the backdrop sprite, which stays fixed
                 // behind the content and blurs as it scrolls over it.
                 Spacer().frame(height: 320)
@@ -107,7 +107,7 @@ private extension PokemonDetailView {
     }
 
     func loadedContent(pokemon: PokemonViewModel) -> some View {
-        VStack(spacing: 32) {
+        VStack(spacing: DesignKit.Spacing.Primitive.s32) {
             actionButtons(pokemon: pokemon)
             SpeciesHeader(
                 genus: pokemon.genus,
@@ -173,7 +173,7 @@ private extension PokemonDetailView {
                 }
             }
         }
-        .padding(.bottom, 32.0)
+        .padding(.bottom, DesignKit.Spacing.Primitive.s32)
         .foregroundStyle(textColor)
         .lineHeight(.loose)
         .font(.pixel14)
@@ -197,7 +197,7 @@ private extension PokemonDetailView {
             }
         }
         .tint(textColor)
-        .padding(.horizontal, 24)
+        .padding(.horizontal, DesignKit.Spacing.Primitive.s24)
     }
 }
 

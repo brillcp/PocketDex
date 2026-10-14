@@ -11,15 +11,15 @@ struct GenderRow: View {
     private static let percentFormat: FloatingPointFormatStyle<Double>.Percent = .pixelPercent(rounding: .towardZero)
 
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
+        HStack(alignment: .top, spacing: DesignKit.Spacing.Primitive.s16) {
             Text("Gender")
                 .frame(width: 82, alignment: .leading)
             if rate > 0 {
                 let female = Double(rate) / 8.0
                 let male = 1.0 - female
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s4) {
                     GeometryReader { proxy in
-                        HStack(spacing: 0) {
+                        HStack(spacing: DesignKit.Spacing.Primitive.s0) {
                             Rectangle()
                                 .fill(.blue)
                                 .frame(width: proxy.size.width * male)

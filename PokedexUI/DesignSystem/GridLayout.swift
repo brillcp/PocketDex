@@ -10,7 +10,7 @@ enum GridLayout: Int {
 }
 
 extension GridLayout {
-    var spacing: CGFloat { 2.0 }
+    var spacing: CGFloat { DesignKit.Spacing.Primitive.s2 }
 
     var layout: [GridItem] {
         Array(repeating: GridItem(.flexible(maximum: .infinity), spacing: spacing), count: rawValue)

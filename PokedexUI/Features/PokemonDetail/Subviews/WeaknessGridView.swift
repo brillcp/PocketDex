@@ -15,7 +15,7 @@ struct WeaknessGridView: View {
         // The type chart loads asynchronously at app launch; render nothing
         // until it's available rather than showing a wrong matchup.
         if PokeBattleKit.isInitialized {
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s24) {
                 matchupSection(title: "Strengths", buckets: offensiveBuckets)
                 matchupSection(title: "Weaknesses", buckets: defensiveBuckets)
             }
@@ -77,10 +77,10 @@ private extension WeaknessGridView {
     @ViewBuilder
     func matchupSection(title: String, buckets: [(label: String, types: [String])]) -> some View {
         if !buckets.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s8) {
                 Text(title)
                 ForEach(buckets, id: \.label) { row in
-                    HStack(alignment: .top, spacing: 12) {
+                    HStack(alignment: .top, spacing: DesignKit.Spacing.Primitive.s12) {
                         Text(row.label)
                             .frame(width: 48, alignment: .leading)
                             .foregroundStyle(textColor)
@@ -92,7 +92,7 @@ private extension WeaknessGridView {
     }
 
     func typeChips(_ types: [String]) -> some View {
-        FlowLayout(spacing: 6) {
+        FlowLayout(spacing: DesignKit.Spacing.Primitive.s6) {
             ForEach(types, id: \.self) { type in
                 Button {
                     tapTrigger.toggle()

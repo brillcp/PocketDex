@@ -12,8 +12,8 @@ extension DesignKit.Spacing {
     /// Raw spacing scale in points: fine 2pt steps up to 8, then 12 and 16,
     /// then 8pt increments up to 56. Each name matches its value.
 ///
-/// Primitives are the raw scale; prefer them over literal numbers so
-/// spacing stays on the scale. Many existing views still use literals.
+/// Primitives are the raw scale. Every padding and stack spacing in the app
+/// uses them instead of literal numbers, so spacing stays on the scale.
     enum Primitive {
         static let s0: CGFloat = 0
         static let s2: CGFloat = 2

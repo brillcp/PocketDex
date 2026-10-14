@@ -6,7 +6,7 @@ struct ItemDetailView<ViewModel: ItemDetailViewModelProtocol>: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: 2) {
+            LazyVStack(spacing: DesignKit.Spacing.Primitive.s2) {
                 ForEach(viewModel.items, id: \.id, content: ItemDetailRowView.init)
             }
         }

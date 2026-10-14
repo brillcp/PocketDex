@@ -22,14 +22,14 @@ struct MoveCell: View, Equatable {
     }
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DesignKit.Spacing.Primitive.s12) {
             if case .loadout(let selected) = mode, selected {
                 Image(systemName: "checkmark.circle.fill")
                     .resizable()
                     .foregroundStyle(.white)
                     .frame(width: 18, height: 18)
             }
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s4) {
                 HStack {
                     header
                     if let effectiveness, (move.power ?? 0) > 0 {
@@ -40,7 +40,7 @@ struct MoveCell: View, Equatable {
                 footer
             }
         }
-        .padding()
+        .padding(DesignKit.Spacing.Primitive.s16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(background)
         .overlay { overlay }
@@ -59,7 +59,7 @@ private extension MoveCell {
     }
 
     var footer: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DesignKit.Spacing.Primitive.s12) {
             Chip.type(move.typeName)
             switch mode {
             case .battle:

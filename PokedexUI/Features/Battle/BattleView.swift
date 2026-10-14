@@ -43,7 +43,7 @@ private extension BattleView {
                 .foregroundStyle(.secondary)
                 .font(.pixel14)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding()
+                .padding(DesignKit.Spacing.Primitive.s16)
                 .lineHeight(.loose)
         } else if let state = viewModel.state {
             battleLayout(state: state)
@@ -51,20 +51,20 @@ private extension BattleView {
     }
 
     func battleLayout(state: BattleState) -> some View {
-        VStack(spacing: 0) {
+        VStack(spacing: DesignKit.Spacing.Primitive.s0) {
             Spacer()
             BattleArena(
                 state: state,
                 animator: viewModel.animator,
                 winner: viewModel.winner
             )
-            .padding()
+            .padding(DesignKit.Spacing.Primitive.s16)
             BattleLogFeed(log: viewModel.log)
-                .padding(.horizontal)
+                .padding(.horizontal, DesignKit.Spacing.Primitive.s16)
             moveGrid(state: state)
         }
         .frame(maxHeight: .infinity)
-        .padding(.bottom, 24.0)
+        .padding(.bottom, DesignKit.Spacing.Primitive.s24)
     }
 
     /// `MoveCell` is equatable, so only the enabled/disabled change during a
@@ -97,16 +97,16 @@ private struct BattleArena: View {
     let winner: Side?
 
     var body: some View {
-        VStack(spacing: 42.0) {
+        VStack(spacing: DesignKit.Spacing.Primitive.s40) {
             HStack(alignment: .top) {
                 hpCard(state.opponent, side: .opponent)
                 Spacer(minLength: 28)
                 sprite(url: state.opponent.frontSpriteURL, side: .opponent)
-                    .padding(.horizontal)
+                    .padding(.horizontal, DesignKit.Spacing.Primitive.s16)
             }
             HStack(alignment: .bottom) {
                 sprite(url: playerSpriteURL, side: .player)
-                    .padding(.horizontal)
+                    .padding(.horizontal, DesignKit.Spacing.Primitive.s16)
                 Spacer(minLength: 28)
                 hpCard(state.player, side: .player)
             }
@@ -139,7 +139,7 @@ private extension BattleArena {
     }
 
     func hpCard(_ c: Combatant, side: Side) -> some View {
-        VStack(alignment: side == .opponent ? .leading : .trailing, spacing: 8) {
+        VStack(alignment: side == .opponent ? .leading : .trailing, spacing: DesignKit.Spacing.Primitive.s8) {
             if side == .opponent {
                 typeChips(c.typeNames)
             }

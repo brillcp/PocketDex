@@ -73,7 +73,7 @@ private extension BattleSetupView {
     func errorState(_ message: String) -> some View {
         Text(message)
             .font(.pixel14)
-            .padding()
+            .padding(DesignKit.Spacing.Primitive.s16)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
@@ -101,7 +101,7 @@ private extension BattleSetupView {
     }
 
     var matchupRow: some View {
-        HStack(alignment: .top, spacing: 2) {
+        HStack(alignment: .top, spacing: DesignKit.Spacing.Primitive.s2) {
             if let player = viewModel.playerPokemon {
                 fighterCard(pokemon: player, summary: viewModel.playerSummary)
             }
@@ -117,7 +117,7 @@ private extension BattleSetupView {
     }
 
     func fighterCard(pokemon: PokemonViewModel, summary: Pokemon) -> some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DesignKit.Spacing.Primitive.s12) {
             SpriteImage(url: summary.frontSprite)
                 .frame(height: 96)
 
@@ -126,7 +126,7 @@ private extension BattleSetupView {
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
 
-            HStack(spacing: 4) {
+            HStack(spacing: DesignKit.Spacing.Primitive.s4) {
                 ForEach(pokemon.typeNames, id: \.self) { type in
                     Chip.type(type)
                 }
@@ -134,7 +134,7 @@ private extension BattleSetupView {
 
             statGrid(pokemon: pokemon)
         }
-        .padding()
+        .padding(DesignKit.Spacing.Primitive.s16)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.cardBackground)
     }
@@ -149,12 +149,12 @@ private extension BattleSetupView {
             ("SPD", byName["special-defense"] ?? 0),
             ("SPE", byName["speed"] ?? 0)
         ]
-        return VStack(spacing: 2) {
+        return VStack(spacing: DesignKit.Spacing.Primitive.s2) {
             ForEach(0..<2) { rowIdx in
-                HStack(spacing: 4) {
+                HStack(spacing: DesignKit.Spacing.Primitive.s4) {
                     ForEach(0..<3) { colIdx in
                         let (label, value) = entries[rowIdx * 3 + colIdx]
-                        HStack(spacing: 2) {
+                        HStack(spacing: DesignKit.Spacing.Primitive.s2) {
                             Text(label)
                                 .foregroundStyle(.secondary)
                             Text(value, format: .number)
@@ -170,13 +170,13 @@ private extension BattleSetupView {
     // MARK: - Type matchup
 
     var typeMatchup: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s8) {
             Text("Type matchup")
                 .font(.pixel12)
                 .foregroundStyle(.secondary)
-                .padding(.horizontal)
+                .padding(.horizontal, DesignKit.Spacing.Primitive.s16)
 
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s8) {
                 matchupLine(
                     fromName: viewModel.playerSummary.name,
                     fromTypes: viewModel.playerPokemon?.typeNames ?? [],
@@ -190,17 +190,17 @@ private extension BattleSetupView {
                     toTypes: viewModel.playerPokemon?.typeNames ?? []
                 )
             }
-            .padding()
+            .padding(DesignKit.Spacing.Primitive.s16)
             .background(Color.cardBackground)
         }
-        .padding(.vertical)
+        .padding(.vertical, DesignKit.Spacing.Primitive.s16)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     func matchupLine(fromName: String, fromTypes: [String], toName: String, toTypes: [String]) -> some View {
         let multipliers = fromTypes.map { PokeBattleKit.typeChart.multiplier(attacking: $0, defenders: toTypes) }
         let best = multipliers.max() ?? 1
-        return HStack(spacing: 6) {
+        return HStack(spacing: DesignKit.Spacing.Primitive.s6) {
             Text(fromName)
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -237,8 +237,8 @@ private extension BattleSetupView {
                 ? startBattle
                 : { Task { await viewModel.requestOpponentLoadout() } }
         )
-        .padding(.horizontal, 28)
-        .padding(.bottom, 8)
+        .padding(.horizontal, DesignKit.Spacing.Primitive.s32)
+        .padding(.bottom, DesignKit.Spacing.Primitive.s8)
     }
 }
 

@@ -79,8 +79,8 @@ private extension OpponentPickerView {
             isLoading: isAIThinking,
             action: pickSmart
         )
-        .padding(.horizontal, 28)
-        .padding(.bottom, 8)
+        .padding(.horizontal, DesignKit.Spacing.Primitive.s32)
+        .padding(.bottom, DesignKit.Spacing.Primitive.s8)
     }
 
     func pickSmart() {

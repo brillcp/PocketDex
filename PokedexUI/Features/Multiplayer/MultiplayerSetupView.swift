@@ -67,7 +67,7 @@ private struct MultiplayerDiscoveryView: View {
     var body: some View {
         Group {
             if viewModel.discoveredPeers.isEmpty {
-                VStack(spacing: 16) {
+                VStack(spacing: DesignKit.Spacing.Primitive.s16) {
                     Spacer()
                     if viewModel.phase == .connecting {
                         PixelSpinner(text: "Connecting")
@@ -86,11 +86,11 @@ private struct MultiplayerDiscoveryView: View {
                 .frame(maxWidth: .infinity)
             } else {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s8) {
                         Label("Nearby trainers", systemImage: "antenna.radiowaves.left.and.right")
                             .font(.pixel12)
                             .foregroundStyle(.secondary)
-                            .padding(.horizontal)
+                            .padding(.horizontal, DesignKit.Spacing.Primitive.s16)
                         ForEach(viewModel.discoveredPeers) { peer in
                             let isInvited = viewModel.invitedPeer == peer
                             Button {
@@ -109,7 +109,7 @@ private struct MultiplayerDiscoveryView: View {
                                         .foregroundStyle(.secondary)
                                 }
                                 .font(.pixel14)
-                                .padding()
+                                .padding(DesignKit.Spacing.Primitive.s16)
                                 .frame(maxWidth: .infinity)
                                 .background(Color.cardBackground)
                             }
@@ -117,7 +117,7 @@ private struct MultiplayerDiscoveryView: View {
                             .disabled(viewModel.phase == .connecting)
                         }
                     }
-                    .padding(.vertical)
+                    .padding(.vertical, DesignKit.Spacing.Primitive.s16)
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -211,7 +211,7 @@ private extension MultiplayerMovePickerView {
             isLoading: viewModel.phase == .waitingForOpponent,
             action: viewModel.submitLoadout
         )
-        .padding(.horizontal, 28)
-        .padding(.bottom, 8)
+        .padding(.horizontal, DesignKit.Spacing.Primitive.s32)
+        .padding(.bottom, DesignKit.Spacing.Primitive.s8)
     }
 }

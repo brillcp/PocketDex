@@ -377,7 +377,7 @@ Decoding happens in parallel off the main thread, the import runs on the backgro
 
 Pixel font, gameboy-style aesthetic, glass effects:
 
-- **`DesignKit.Spacing.Primitive`**: the spacing scale (`s0`, `s2`, `s4`, `s6`, `s8`, `s12`, `s16`, then 8-point steps up to `s56`).
+- **`DesignKit.Spacing.Primitive`**: the spacing scale (`s0`, `s2`, `s4`, `s6`, `s8`, `s12`, `s16`, then 8-point steps up to `s56`). Every padding and stack spacing in the app uses it instead of literal numbers.
 - **`Chip`**: small inline pill used for type tags, generation badges, status pills, effectiveness markers. Always a 2-point corner radius (capsules look too modern next to the pixel font).
 - **`MoveCell`**: shared between the battle move grid and the loadout move picker, switched via a `Mode` enum.
 - **`TypeColor`**: centralized type-to-color map used by every move chip, type tag, and weakness grid row.

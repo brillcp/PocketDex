@@ -7,7 +7,7 @@ struct PokemonSpriteCard: View, Equatable {
     let pokemon: Pokemon
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DesignKit.Spacing.Primitive.s12) {
             SpriteImage(url: pokemon.frontSprite)
                 .frame(height: 92)
             Text(pokemon.name)
@@ -19,7 +19,7 @@ struct PokemonSpriteCard: View, Equatable {
                 }
             }
         }
-        .padding()
+        .padding(DesignKit.Spacing.Primitive.s16)
         .frame(maxWidth: .infinity)
         .background(Color.cardBackground)
         .foregroundStyle(.white)

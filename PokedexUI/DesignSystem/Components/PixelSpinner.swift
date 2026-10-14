@@ -33,7 +33,7 @@ struct PixelSpinner: View {
     var body: some View {
         Group {
             if let text {
-                VStack(spacing: 16) {
+                VStack(spacing: DesignKit.Spacing.Primitive.s16) {
                     spinnerView
                     Text(text)
                         .font(.pixel14)
@@ -80,12 +80,12 @@ private extension PixelSpinner {
 }
 
 #Preview {
-    VStack(spacing: 32) {
+    VStack(spacing: DesignKit.Spacing.Primitive.s32) {
         PixelSpinner()
         PixelSpinner(text: "Loading items")
         PixelSpinner(size: 48, color: .yellow, lineWidth: 3, lineLength: 12)
         PixelSpinner(size: 64, color: .white, lineCount: 16, lineWidth: 2, lineLength: 14)
     }
-    .padding()
+    .padding(DesignKit.Spacing.Primitive.s16)
     .background(Color.black)
 }

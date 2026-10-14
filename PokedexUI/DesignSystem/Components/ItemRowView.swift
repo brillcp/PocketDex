@@ -5,7 +5,7 @@ struct ItemRowView: View {
     let item: ItemData
 
     var body: some View {
-        HStack(spacing: 16.0) {
+        HStack(spacing: DesignKit.Spacing.Primitive.s16) {
             SpriteImage(url: item.icon)
                 .frame(width: 38)
             Text(item.prettyTitle)
@@ -13,7 +13,7 @@ struct ItemRowView: View {
             Text(">")
                 .foregroundStyle(.secondary)
         }
-        .padding()
+        .padding(DesignKit.Spacing.Primitive.s16)
         .background(Color.cardBackground)
     }
 }

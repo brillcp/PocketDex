@@ -28,7 +28,7 @@ struct BattleLogFeed: View {
                         }
                 }
             }
-            .padding(.vertical)
+            .padding(.vertical, DesignKit.Spacing.Primitive.s16)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .scrollIndicators(.hidden)
@@ -44,7 +44,7 @@ struct BattleLogFeed: View {
 private enum Layout {
     static let lineCount = 6
     static let lineHeight: CGFloat = 16
-    static let lineSpacing: CGFloat = 4
+    static let lineSpacing: CGFloat = DesignKit.Spacing.Primitive.s4
     static let fadeDistance: CGFloat = 22
     static let minScale: CGFloat = 0.96
 

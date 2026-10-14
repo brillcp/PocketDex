@@ -10,7 +10,7 @@ struct ItemListView<ViewModel: ItemListViewModelProtocol>: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                LazyVStack(spacing: 2) {
+                LazyVStack(spacing: DesignKit.Spacing.Primitive.s2) {
                     ForEach(viewModel.items, id: \.title, content: itemRow)
                 }
             }

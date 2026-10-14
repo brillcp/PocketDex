@@ -7,7 +7,7 @@ struct EvolutionChainView: View {
     let onSelect: (Int) -> Void
 
     var body: some View {
-        HStack(alignment: .center, spacing: 0) {
+        HStack(alignment: .center, spacing: DesignKit.Spacing.Primitive.s0) {
             ForEach(stages.enumerated(), id: \.element.id) { index, stage in
                 stageCell(stage)
                     .frame(maxWidth: .infinity)
@@ -29,7 +29,7 @@ private extension EvolutionChainView {
                 onSelect(id)
             }
         } label: {
-            VStack(spacing: 4) {
+            VStack(spacing: DesignKit.Spacing.Primitive.s4) {
                 if let id = stage.species.id {
                     SpriteImage(url: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/\(id).png")
                         .frame(width: 72, height: 72)
@@ -47,7 +47,7 @@ private extension EvolutionChainView {
     }
 
     func arrow(for detail: EvolutionDetail?) -> some View {
-        VStack(spacing: 2) {
+        VStack(spacing: DesignKit.Spacing.Primitive.s2) {
             Image(systemName: "arrow.right")
                 .font(.pixel12)
             if let label = detail?.triggerLabel {

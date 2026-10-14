@@ -68,7 +68,7 @@ struct SearchView<ViewModel: SearchViewModelProtocol>: View {
 private extension SearchView {
     var emptyState: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24.0) {
+            VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s24) {
                 if !viewModel.suggestedPokemon.isEmpty {
                     SuggestedPokemonSection(pokemon: viewModel.suggestedPokemon, namespace: namespace)
                 }
@@ -83,13 +83,13 @@ private extension SearchView {
                     Text("Search Pokemon, types, habitats or abilities")
                         .frame(maxWidth: .infinity, alignment: .center)
                         .multilineTextAlignment(.center)
-                        .padding(.top, 80.0)
-                        .padding(.horizontal)
+                        .padding(.top, DesignKit.Spacing.Primitive.s56 + DesignKit.Spacing.Primitive.s24)
+                        .padding(.horizontal, DesignKit.Spacing.Primitive.s16)
                         .lineHeight(.loose)
                         .foregroundStyle(.secondary)
                 }
             }
-            .padding(.top)
+            .padding(.top, DesignKit.Spacing.Primitive.s16)
         }
         .scrollIndicators(.hidden)
         .navigationDestination(for: Pokemon.self) { pokemon in
@@ -116,9 +116,9 @@ private struct SuggestedTermsSection: View {
     let onSelect: (String) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8.0) {
+        VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s8) {
             SearchSectionHeader(title: "Try searching for", systemImage: "magnifyingglass")
-            FlowLayout(spacing: 6.0) {
+            FlowLayout(spacing: DesignKit.Spacing.Primitive.s6) {
                 ForEach(terms, id: \.self) { term in
                     Button {
                         onSelect(term)
@@ -129,7 +129,7 @@ private struct SuggestedTermsSection: View {
                 }
             }
         }
-        .padding(.horizontal)
+        .padding(.horizontal, DesignKit.Spacing.Primitive.s16)
     }
 }
 
@@ -139,9 +139,9 @@ private struct SuggestedPokemonSection: View {
     let namespace: Namespace.ID
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8.0) {
+        VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s8) {
             SearchSectionHeader(title: "Suggested", systemImage: "sparkles.2")
-                .padding(.horizontal)
+                .padding(.horizontal, DesignKit.Spacing.Primitive.s16)
             LazyVGrid(columns: GridLayout.two.layout, spacing: GridLayout.two.spacing) {
                 ForEach(pokemon, id: \.id) { pokemon in
                     NavigationLink(value: pokemon) {
@@ -161,7 +161,7 @@ private struct RecentSearchesSection: View {
     let onClear: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8.0) {
+        VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s8) {
             HStack {
                 SearchSectionHeader(title: "Recent", systemImage: "clock.arrow.circlepath")
                 Spacer()
@@ -171,8 +171,8 @@ private struct RecentSearchesSection: View {
                         .foregroundStyle(Color.pokedexRed)
                 }
             }
-            .padding(.horizontal)
-            VStack(spacing: 2.0) {
+            .padding(.horizontal, DesignKit.Spacing.Primitive.s16)
+            VStack(spacing: DesignKit.Spacing.Primitive.s2) {
                 ForEach(terms, id: \.self) { term in
                     Button {
                         onSelect(term)
@@ -182,7 +182,7 @@ private struct RecentSearchesSection: View {
                                 .foregroundStyle(.white)
                             Spacer()
                         }
-                        .padding()
+                        .padding(DesignKit.Spacing.Primitive.s16)
                         .frame(maxWidth: .infinity)
                         .background(Color.cardBackground)
                     }

@@ -72,15 +72,15 @@ extension Chip {
 
         var horizontalPadding: CGFloat {
             switch self {
-            case .small:  return 6
-            case .medium: return 8
+            case .small:  return DesignKit.Spacing.Primitive.s6
+            case .medium: return DesignKit.Spacing.Primitive.s8
             }
         }
 
         var verticalPadding: CGFloat {
             switch self {
-            case .small:  return 2
-            case .medium: return 4
+            case .small:  return DesignKit.Spacing.Primitive.s2
+            case .medium: return DesignKit.Spacing.Primitive.s4
             }
         }
     }

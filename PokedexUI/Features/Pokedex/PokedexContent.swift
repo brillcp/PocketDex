@@ -51,7 +51,7 @@ struct PokedexContent<ViewModel: PokedexViewModelProtocol>: View {
     }
 
     private var sideBySide: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: DesignKit.Spacing.Primitive.s0) {
             PokedexDetailColumn(selection: selection)
                 // New identity per selection: fresh detail state and a reset
                 // stack (evolutions, type lists, battles pushed inside it).
