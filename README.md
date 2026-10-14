@@ -394,7 +394,13 @@ Pixel font, gameboy-style aesthetic, glass effects:
 
 # Modernized with Apple's Xcode agent skills 🧠
 
-The codebase has been reviewed and modernized with the **agent skills Apple ships for Xcode's coding assistant**. These are Apple-written guides that an agent loads before reviewing or writing code:
+The codebase has been reviewed and modernized with the **agent skills Apple ships for Xcode's coding assistant**. These are Apple-written guides that an agent loads before reviewing or writing code. Export them to disk with:
+
+```sh
+xcrun agent skills export --output-dir xcode-skills
+```
+
+Each skill is a folder with a `SKILL.md` and a `references/` directory. The ones applied here:
 
 | Skill | Applied to |
 | --- | --- |
