@@ -11,11 +11,16 @@ protocol AudioPlaying: Sendable {
 }
 
 /// Owns the `AVPlayer` on its own executor so stream setup and buffering
-/// never block the main thread.
+/// never block the main thread. An actor (rather than a stateless struct
+/// like `SpriteLoader`) because `player` is mutable state that `play` and
+/// `stop` must not race on. No `@concurrent` is needed: actor methods
+/// already run off the caller's actor.
 actor AudioPlayer {
     private var player: AVPlayer?
 
     init() {
+        // `.playback` so cries are audible with the silent switch on;
+        // `.mixWithOthers` so they don't stop the user's music.
         try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: .mixWithOthers)
     }
 }

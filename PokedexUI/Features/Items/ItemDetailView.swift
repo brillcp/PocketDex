@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Full description list for a single item.
+/// Every item in one category, with its effect text.
 struct ItemDetailView<ViewModel: ItemDetailViewModelProtocol>: View {
     @State var viewModel: ViewModel
 

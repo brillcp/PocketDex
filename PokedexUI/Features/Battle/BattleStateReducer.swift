@@ -3,6 +3,12 @@ import PokeBattleKit
 /// Applies a battle event to a state snapshot and posts damage cues to the
 /// animator. Shared by both single-player and multiplayer battle VMs to
 /// eliminate duplicated state-mutation logic.
+///
+/// This lets the HUD update event by event as the turn plays out (HP drops
+/// as each hit lands) instead of jumping to the end-of-round state. The
+/// engine stays the source of truth where one exists: single-player and the
+/// multiplayer host re-sync to its state after the turn. The multiplayer
+/// guest has no engine, so for it the reduced state is the state.
 @MainActor
 enum BattleStateReducer {
     static func apply(_ event: Event, to state: inout BattleState, animator: BattleAnimator) {

@@ -4,6 +4,10 @@ import SwiftData
 /// Root tab host for pokedex, items, favourites, and search. Each tab
 /// builds its own view model inline; only the pokedex view model is
 /// hoisted here so its grid + sort state survives tab switches.
+///
+/// The inline view models are safe to construct in `body`: each tab view
+/// stores its model in `@State`, which keeps the first instance for the
+/// view's lifetime and ignores the new ones built on later evaluations.
 struct RootTabView<PokedexViewModel: PokedexViewModelProtocol>: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.container) private var container

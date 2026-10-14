@@ -21,6 +21,8 @@ struct PokemonSpecies: Decodable, Sendable {
         varieties.first(where: \.isDefault) ?? varieties.first
     }
 
+    /// First English entry, with PokeAPI's embedded line and form-feed
+    /// breaks (left over from the games' text boxes) flattened to spaces.
     var englishFlavorText: String? {
         flavorTextEntries
             .first(where: { $0.language.name == "en" })?
@@ -41,7 +43,8 @@ struct APINamed: Decodable, Sendable {
 }
 
 /// One pokedex flavor-text entry. PokeAPI ships one per game version per
-/// language; we filter to English at read time via `englishFlavorText`.
+/// language; only the English text (`englishFlavorText`) is kept on the
+/// `Pokemon` row at import.
 struct FlavorTextEntry: Decodable, Sendable {
     let flavorText: String
     let language: APINamed

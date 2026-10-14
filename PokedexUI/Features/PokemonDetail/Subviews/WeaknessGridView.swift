@@ -12,6 +12,8 @@ struct WeaknessGridView: View {
     @State private var tapTrigger = false
 
     var body: some View {
+        // The type chart loads asynchronously at app launch; render nothing
+        // until it's available rather than showing a wrong matchup.
         if PokeBattleKit.isInitialized {
             VStack(alignment: .leading, spacing: 24) {
                 matchupSection(title: "Strengths", buckets: offensiveBuckets)
@@ -27,6 +29,8 @@ private extension WeaknessGridView {
 
     // MARK: Defensive (what hits this Pokemon)
 
+    /// Combined multiplier against all of this Pokémon's types (so dual
+    /// types can produce x4 or x0.25). Neutral matchups are omitted.
     var defensiveBuckets: [(label: String, types: [String])] {
         let defenders = typeNames
         let chart = PokeBattleKit.typeChart
@@ -46,6 +50,8 @@ private extension WeaknessGridView {
 
     // MARK: Offensive (what this Pokemon hits)
 
+    /// Uses the best multiplier across this Pokémon's own types, since it
+    /// can pick whichever STAB type suits the defender.
     var offensiveBuckets: [(label: String, types: [String])] {
         let attackers = typeNames
         guard !attackers.isEmpty else { return [] }

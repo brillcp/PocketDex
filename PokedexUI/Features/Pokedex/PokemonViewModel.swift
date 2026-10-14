@@ -2,6 +2,11 @@ import Foundation
 import PokeBattleKit
 
 /// Display-ready data for a single Pokemon, computed eagerly on init.
+///
+/// A value snapshot of the SwiftData `Pokemon`, so detail subviews read
+/// precomputed strings instead of re-walking relationships on every body
+/// evaluation. Conforms to PokeBattleKit's `PokemonData` so the same value
+/// can seed a battle.
 struct PokemonViewModel {
     let id: Int
     let name: String
@@ -84,6 +89,8 @@ extension PokemonViewModel: Hashable {
     }
 }
 
+/// Anything with an API `name` (types, abilities), so one helper can turn a
+/// list of them into a capitalized, comma-separated display string.
 private protocol NameProvidable {
     var name: String { get }
 }

@@ -28,6 +28,11 @@ protocol PokemonDetailViewModelProtocol {
 }
 
 /// Concrete implementation of `PokemonDetailViewModelProtocol`.
+///
+/// Created by the presenting view and owned by `PokemonDetailView` as
+/// `@State`. Services come from the `AppContainer`; sprite download and
+/// color analysis run inside those services, and only the finished `Image`
+/// and `Color` are assigned here on the main actor.
 @MainActor
 @Observable
 final class PokemonDetailViewModel {
@@ -73,6 +78,8 @@ extension PokemonDetailViewModel: PokemonDetailViewModelProtocol {
         }
     }
 
+    /// Re-fetches the model by id in the main context rather than holding
+    /// on to it, then mirrors the new value into the display snapshot.
     func toggleBookmark() {
         let id = pokemon.id
         let descriptor = FetchDescriptor<Pokemon>(predicate: #Predicate { $0.id == id })

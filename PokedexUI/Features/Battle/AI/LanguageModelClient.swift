@@ -4,6 +4,11 @@ import FoundationModels
 /// Owns the on-device Foundation Models session and per-decision instruction
 /// text. Each call to `decide(...)` makes one structured-generation request
 /// and falls back to the heuristic on error or model unavailability.
+///
+/// Uses FoundationModels guided generation (`@Generable` output types) only;
+/// no tools are registered, since every fact the model needs is in the
+/// prompt. An actor so availability checks and inference stay off the main
+/// actor.
 actor LanguageModelClient {
     private let model = SystemLanguageModel(guardrails: .permissiveContentTransformations)
 
@@ -24,6 +29,9 @@ extension LanguageModelClient {
         temperature: Double,
         instructions: Instructions
     ) async throws -> T {
+        // A fresh session per decision: turns are independent, and not
+        // carrying a transcript keeps the context small and avoids earlier
+        // answers biasing later ones.
         let session = LanguageModelSession(model: model, instructions: instructions.text)
         return try await session.respond(
             to: prompt,
@@ -34,6 +42,12 @@ extension LanguageModelClient {
 
     /// Structured decision: tries @Generable generation,
     /// falls back to heuristic if the model is unavailable or fails.
+    ///
+    /// `resolve` maps the raw model output onto a real option (or `nil` if
+    /// it named something invalid). `adjust` runs on whichever pick wins,
+    /// model or fallback, so deterministic guardrails apply to both. The
+    /// prompt is an autoclosure so it isn't built when the model is
+    /// unavailable.
     func decide<Pick, Result: Generable>(
         fallback: Pick,
         prompt: @autoclosure () -> String,

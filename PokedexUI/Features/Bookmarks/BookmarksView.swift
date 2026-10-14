@@ -1,7 +1,9 @@
 import SwiftUI
 import SwiftData
 
-/// Bookmarks tab showing Pokemon rows filtered by `isBookmarked`.
+/// Favourites sheet (opened from the pokedex toolbar) showing bookmarked
+/// Pokemon. The `@Query` predicate filters in the store and keeps the grid
+/// live: unbookmarking in a pushed detail view removes the cell on return.
 struct BookmarksView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.container) private var container

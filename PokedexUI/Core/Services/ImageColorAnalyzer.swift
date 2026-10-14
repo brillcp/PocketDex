@@ -7,9 +7,13 @@ protocol ImageColorAnalyzing: Sendable {
     func dominantColor(for id: Int, image: UIImage) async -> Color?
 }
 
-/// The actor only guards the cache. The pixel scan itself is `@concurrent`,
-/// so many grid cells analyse their sprites in parallel off the main thread
-/// instead of serialising on the actor.
+/// An actor because it owns a mutable cache, but the actor only guards that
+/// cache. The pixel scan itself is a `@concurrent` static function, so the
+/// actor is free while it runs (it suspends at `await Self.analyze`) and many
+/// grid cells analyse their sprites in parallel off the main thread instead
+/// of serialising on the actor. Two cells racing on the same id may both
+/// scan; the result is identical, so that's cheaper than tracking in-flight
+/// work.
 actor ImageColorAnalyzer {
     private var cache = [Int: Color]()
 
@@ -29,6 +33,10 @@ extension ImageColorAnalyzer: ImageColorAnalyzing {
 
 // MARK: - Private
 private extension ImageColorAnalyzer {
+    /// Downsample to 50×50, histogram the opaque pixels (bytes are read as
+    /// BGRA), drop rare colors, and return the most frequent one. Near-black
+    /// and near-white (sprite outlines and highlights) are skipped when any
+    /// other color qualifies.
     @concurrent
     static func analyze(_ image: UIImage) async -> Color? {
         guard let cgImage = image.resize(to: CGSize(width: 50, height: 50))?.cgImage,

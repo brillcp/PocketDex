@@ -1,4 +1,8 @@
 import Foundation
+// `@preconcurrency`: MultipeerConnectivity predates Swift concurrency and
+// its types (`MCPeerID`, `MCSession`, …) aren't annotated `Sendable`. This
+// downgrades the resulting diagnostics for values (like peer IDs) that are
+// handed from MC's delegate queue to the main actor.
 @preconcurrency import MultipeerConnectivity
 import SwiftUI
 
@@ -8,8 +12,10 @@ struct PendingInvitation: Identifiable, Equatable {
     let peerName: String
 }
 
-/// Role this device plays in the session. Advertiser = `.host`, browser =
-/// `.guest`. Decided at the moment a peer chooses to host or browse.
+/// Role this device plays in the session. Both devices advertise and browse
+/// at once, so the role is decided by the invitation: the device that
+/// accepts an invite becomes `.host` (it runs the battle engine), the one
+/// that sent it becomes `.guest`.
 enum MultipeerRole: Sendable {
     case host
     case guest
@@ -32,6 +38,11 @@ enum MultipeerEvent {
 /// Process-wide MultipeerConnectivity wrapper. Owns the `MCSession`,
 /// advertiser, and browser; emits typed `MultipeerEvent`s via AsyncStream
 /// for consumption by view models.
+///
+/// Isolation: the class is `@MainActor` so its state and the view models
+/// that observe it live on one actor. MultipeerConnectivity calls its
+/// delegates on a private queue, so every delegate method is `nonisolated`
+/// and forwards to the main actor through `onMain` before touching state.
 @MainActor
 @Observable
 final class MultipeerService: NSObject {
@@ -57,6 +68,9 @@ final class MultipeerService: NSObject {
     private var myPeerID: MCPeerID { resolvedConnection().peerID }
     private var session: MCSession { resolvedConnection().session }
 
+    /// Lazily builds the peer ID and session on first access, so one
+    /// identity is reused for the whole process. `.required` encryption
+    /// keeps battle traffic private between the two devices.
     private func resolvedConnection() -> (peerID: MCPeerID, session: MCSession) {
         if let connection { return connection }
         let name = UIDevice.current.name
@@ -74,6 +88,8 @@ final class MultipeerService: NSObject {
         let id = UUID()
         return AsyncStream { continuation in
             self.subscribers[id] = continuation
+            // `onTermination` can fire on any thread, so hop to the main
+            // actor before mutating `subscribers`.
             continuation.onTermination = { [weak self] _ in
                 Task { @MainActor [weak self] in
                     self?.subscribers.removeValue(forKey: id)
@@ -141,8 +157,9 @@ final class MultipeerService: NSObject {
     }
 
     /// Send a typed message to all connected peers. Encoding or transport
-    /// failures are logged but not thrown; the receive stream's `.disconnect`
-    /// path covers loss-of-peer recovery.
+    /// failures are logged but not thrown; the `.peerDisconnected` event
+    /// covers loss-of-peer recovery. Uses `.reliable` delivery because the
+    /// battle protocol depends on every message arriving, in order.
     func send(_ message: BattleMessage) {
         guard !session.connectedPeers.isEmpty else { return }
         do {
@@ -155,7 +172,9 @@ final class MultipeerService: NSObject {
         }
     }
 
-    /// Tear down the session and all discovery. Idempotent.
+    /// Tear down the session and all discovery. Idempotent. Sends
+    /// `.disconnect` first so the other peer can tell a deliberate exit from
+    /// a dropped connection.
     func disconnect() {
         send(.disconnect)
         stopDiscovery()
@@ -173,7 +192,11 @@ private extension MultipeerService {
     }
 
     /// Hop a delegate callback (delivered on MultipeerConnectivity's private
-    /// queue) onto the main actor. `DispatchQueue.main` keeps events FIFO.
+    /// queue) onto the main actor. `DispatchQueue.main` keeps events FIFO;
+    /// a `Task { @MainActor in }` per callback gives no ordering guarantee,
+    /// so e.g. a `.message` could overtake the `.peerConnected` before it.
+    /// `assumeIsolated` is safe because the main queue is the main actor's
+    /// executor.
     nonisolated func onMain(_ work: @escaping @MainActor () -> Void) {
         DispatchQueue.main.async { MainActor.assumeIsolated(work) }
     }
@@ -198,6 +221,7 @@ extension MultipeerService: MCSessionDelegate {
     }
 
     nonisolated func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
+        // Decode on MC's queue and hop only the Sendable `BattleMessage`.
         guard let message = try? JSONDecoder().decode(BattleMessage.self, from: data) else {
             #if DEBUG
             print("MultipeerService: dropped undecodable payload (\(data.count) bytes)")
@@ -220,6 +244,8 @@ extension MultipeerService: MCNearbyServiceAdvertiserDelegate {
         withContext context: Data?,
         invitationHandler: @escaping (Bool, MCSession?) -> Void
     ) {
+        // Park the reply until the user answers the alert; see
+        // `acceptInvitation()` / `declineInvitation()`.
         let reply = InvitationReply(invitationHandler)
         onMain {
             let session = self.session

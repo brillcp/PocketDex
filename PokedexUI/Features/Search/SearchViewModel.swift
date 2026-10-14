@@ -28,6 +28,12 @@ protocol SearchViewModelProtocol {
 }
 
 /// Concrete implementation of `SearchViewModelProtocol` fed from SearchView's `@Query`.
+///
+/// Building a haystack (name, types, abilities, habitat, ... normalized into
+/// one string) for 1,000+ Pokémon is the expensive part, so the store does it
+/// in the background and returns `Sendable` id/haystack pairs. This class
+/// joins them back to the main-context models by id, and per-keystroke
+/// filtering is then just substring checks on the main actor.
 @MainActor
 @Observable
 final class SearchViewModel {
@@ -40,6 +46,7 @@ final class SearchViewModel {
         "electric bug", "ghost dark"
     ]
 
+    /// Main-context models paired with their background-built haystack.
     private var index: [(pokemon: Pokemon, haystack: String)] = []
     private let repository: PokedexRepositoryProtocol
     private let defaults: UserDefaults
@@ -77,6 +84,7 @@ extension SearchViewModel: SearchViewModelProtocol {
             .map { $0.normalize }
             .filter { !$0.isEmpty }
 
+        // Every term must match (AND), so "electric bug" narrows results.
         guard !queryTerms.isEmpty else {
             filtered = []
             return

@@ -1,6 +1,10 @@
 import SwiftUI
 
 /// Reusable grid column layouts used across Pokemon and move grids.
+///
+/// The raw value is the column count. Columns are equal `.flexible` items,
+/// so cells stretch to fill any width (iPhone, the narrow grid column on
+/// iPad/unfolded iPhone Duo, resized windows) without per-device sizes.
 enum GridLayout: Int {
     case two = 2, three, four
 }
@@ -20,6 +24,7 @@ extension GridLayout {
         }
     }
 
+    /// Icon for the layout `toggle()` switches to (toolbar button image).
     var otherIcon: String {
         switch self {
             case .two: "square.grid.3x3.fill"

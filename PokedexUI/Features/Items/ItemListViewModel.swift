@@ -1,19 +1,22 @@
 import Foundation
 import SwiftData
 
-/// Protocol for an observable view model that manages items and supports searching.
+/// Protocol for the observable view model behind the items tab.
 @MainActor
 protocol ItemListViewModelProtocol {
-    /// The current list of items being displayed.
+    /// Item categories, sorted by title.
     var items: [ItemData] { get }
     /// A flag indicating whether data is currently being fetched.
     var isLoading: Bool { get }
 
-    /// Loads all items asynchronously from the data source.
+    /// Imports items on first launch if needed, then reads them from the store.
+    /// No-op once items are loaded.
     func loadItems() async
 }
 
-/// View model that manages the retrieval, searching, and storage of items.
+/// Concrete implementation of `ItemListViewModelProtocol`. The repository
+/// writes to the store in the background; this class only reads the result
+/// through the main `ModelContext`.
 @MainActor
 @Observable
 final class ItemListViewModel {

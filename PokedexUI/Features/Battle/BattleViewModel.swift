@@ -2,12 +2,19 @@ import SwiftUI
 import PokeBattleKit
 
 /// Drives `BattleView` as a conductor over engine, animator, log, and audio.
+///
+/// Two conformers: `BattleViewModel` (local `BattleEngine` vs. AI) and
+/// `MultiplayerBattleViewModel` (events resolved by the host peer). Both
+/// apply events through `BattleStateReducer` and cue the same
+/// `BattleAnimator`, so the screen behaves identically either way.
 @MainActor
 protocol BattleViewModelProtocol: AnyObject {
     var playerName: String { get }
     var opponentName: String { get }
     var animator: BattleAnimator { get }
     var state: BattleState? { get }
+    /// Whether a move can be chosen right now (engine ready in single-player;
+    /// no move already committed and no turn playing in multiplayer).
     var canSelectMove: Bool { get }
     var log: [BattleLogEntry] { get }
     var isResolvingTurn: Bool { get }
@@ -15,7 +22,9 @@ protocol BattleViewModelProtocol: AnyObject {
     var errorMessage: String? { get }
     var displayMoves: [Move] { get }
 
+    /// Entrance animation, sprite colors, and any setup; run from `.task`.
     func prepare() async
+    /// Play one turn with the player's `move`, animating events in order.
     func submit(_ move: Move) async
 
     /// Type effectiveness of `move` against current opponent.
@@ -29,7 +38,13 @@ extension BattleViewModelProtocol {
     }
 }
 
-/// Concrete `BattleViewModelProtocol` implementation.
+/// Concrete `BattleViewModelProtocol` implementation for single-player
+/// battles against an AI opponent.
+///
+/// Each turn: ask `BattleAIDriver` for the opponent's move (may call the
+/// on-device model), resolve the round synchronously with the value-type
+/// `BattleEngine`, then replay the resulting events one by one: format a log
+/// line, reduce into `state`, and await the matching animation.
 @MainActor
 @Observable
 final class BattleViewModel {
@@ -46,6 +61,8 @@ final class BattleViewModel {
     let animator:        BattleAnimator
     let displayMoves:    [Move]
 
+    /// Authoritative battle state. `state` is the displayed copy that events
+    /// are reduced into while they animate, then reset to the engine's.
     private var engine: BattleEngine?
     var state:  BattleState?
     var log:    [BattleLogEntry] = []
@@ -79,6 +96,7 @@ final class BattleViewModel {
         let p = Combatant(
             pokemon: player,
             moves: playerMoves.map { MoveSnapshot(from: $0) },
+            // Small HP edge for the player against the AI.
             hpBonus: 1.2
         )
         let o = Combatant(
@@ -120,6 +138,7 @@ extension BattleViewModel: BattleViewModelProtocol {
         animator.attackTick += 1
         isResolvingTurn = true
 
+        // "..." while the AI thinks; removed once its move is in.
         log.append(.placeholder)
 
         let opponentMove = await aiDriver.nextOpponentMove(
@@ -134,6 +153,7 @@ extension BattleViewModel: BattleViewModelProtocol {
             log.removeAll { $0.kind == .placeholder }
         }
 
+        // `BattleEngine` is a struct: mutate a copy, then store it back.
         let events = eng.resolveRound(playerMove: move, opponentMove: opponentMove)
         self.engine = eng
 
@@ -147,11 +167,14 @@ extension BattleViewModel: BattleViewModelProtocol {
             await animator.play(event)
             try? await Task.sleep(for: .milliseconds(650))
             if case .ended(let w) = event {
+                // A draw is shown as a player win.
                 winner = w ?? .player
                 await playWinnerCry()
                 break
             }
         }
+        // Re-sync with the engine so bookkeeping the reducer doesn't mirror
+        // (sleep counters, recharge flags) can't drift from the display.
         state = eng.state
         aiDriver.recordPlayerUsed(move.name, in: events)
         isResolvingTurn = false

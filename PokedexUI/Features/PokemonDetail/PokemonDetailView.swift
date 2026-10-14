@@ -2,6 +2,11 @@ import SwiftUI
 import SwiftData
 
 /// Pokemon detail screen with stats, evolution, weaknesses, and battle entry.
+///
+/// Navigation out of the screen (evolutions, type lists, battles) is
+/// item-driven local state, so the same view works inside any parent
+/// `NavigationStack`: the compact pokedex stack, the regular-width detail
+/// column, search, and bookmarks.
 struct PokemonDetailView<ViewModel: PokemonDetailViewModelProtocol>: View {
     @Environment(\.container) private var container
     @Environment(\.modelContext) private var modelContext
@@ -11,6 +16,8 @@ struct PokemonDetailView<ViewModel: PokemonDetailViewModelProtocol>: View {
     @State private var battleLaunch: BattleLaunch?
     @State private var evolutionTarget: Pokemon?
     @State private var selectedType: String?
+    /// Written on every scroll frame; only `DetailSpriteBackdrop` reads it
+    /// (through a binding), so the rest of the body isn't re-evaluated.
     @State private var spriteBlur: CGFloat = 0
 
     init(viewModel: ViewModel) {
@@ -20,6 +27,8 @@ struct PokemonDetailView<ViewModel: PokemonDetailViewModelProtocol>: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 16.0) {
+                // Reserve room for the backdrop sprite, which stays fixed
+                // behind the content and blurs as it scrolls over it.
                 Spacer().frame(height: 320)
                 loadedContent(pokemon: viewModel.pokemon)
             }
@@ -28,6 +37,7 @@ struct PokemonDetailView<ViewModel: PokemonDetailViewModelProtocol>: View {
         .onScrollGeometryChange(for: CGFloat.self) { geo in
             geo.contentOffset.y + geo.contentInsets.top
         } action: { _, offset in
+            // No blur for the first 160pt, then ramp up to a 32pt cap.
             spriteBlur = min(32, max(0, (offset - 160) / 12))
         }
         .background {
@@ -195,7 +205,8 @@ private extension PokemonDetailView {
 
 /// Large sprite behind the scroll content. Takes the blur as a binding so
 /// only this view, not the whole detail body, re-evaluates on every scroll
-/// frame.
+/// frame: the parent body never reads `spriteBlur`, so it isn't a dependency
+/// of the parent.
 private struct DetailSpriteBackdrop: View {
     let sprite: Image?
     @Binding var blurRadius: CGFloat

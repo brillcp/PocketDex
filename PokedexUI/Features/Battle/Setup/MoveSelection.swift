@@ -3,6 +3,11 @@ import PokeBattleKit
 
 /// Mutable selection state for picking moves before battle. Used by both
 /// single-player and multiplayer setup flows.
+///
+/// Its own observable object (rather than fields on each setup view model)
+/// so `MovePickerGrid` can observe just the selection, and so both flows
+/// share the toggle/limit/order rules. Selection order is kept so the
+/// battle's move grid matches the order the player tapped.
 @MainActor
 @Observable
 final class MoveSelection {

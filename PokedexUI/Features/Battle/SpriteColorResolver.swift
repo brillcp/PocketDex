@@ -3,7 +3,8 @@ import PokeBattleKit
 
 /// One-shot helper that pulls sprite images for both combatants, extracts
 /// dominant colors, and writes them onto the animator's per-side cues so
-/// HP bars and hit flashes tint to match each Pokemon.
+/// log names tint to match each Pokemon. Both sprites download in parallel;
+/// the color analyzer caches by Pokémon id.
 @MainActor
 struct SpriteColorResolver {
     let spriteLoader: SpriteLoading

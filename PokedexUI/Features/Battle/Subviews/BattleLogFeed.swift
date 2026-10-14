@@ -9,6 +9,8 @@ struct BattleLogFeed: View {
         // Captured as values: the `visualEffect` closure runs off the main actor.
         let fadeDistance = Layout.fadeDistance
         let minScale = Layout.minScale
+        // Bottom-anchored, so new entries keep the latest line in view
+        // without a ScrollViewReader.
         ScrollView {
             LazyVStack(alignment: .leading, spacing: Layout.lineSpacing) {
                 ForEach(log) { entry in
@@ -36,6 +38,9 @@ struct BattleLogFeed: View {
     }
 }
 
+/// Fixed metrics for the feed. Every row has the same height, so the
+/// visible window is exactly `lineCount` lines and the log area doesn't
+/// resize as entries arrive.
 private enum Layout {
     static let lineCount = 6
     static let lineHeight: CGFloat = 16

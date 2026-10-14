@@ -1,6 +1,9 @@
 import SwiftData
 
 /// One individual PokeAPI item with sprite, category, and effect list.
+/// Built from `ItemDetailDTO` by `PokedexStore.importItems`. Display
+/// strings (`prettyName`, `Effect.prettyEffect`) are computed once at import
+/// and stored, so list rendering doesn't reformat them on every redraw.
 @Model
 final class ItemDetail {
     @Attribute(.unique) var id: Int
@@ -33,6 +36,9 @@ extension ItemDetail {
 }
 
 extension ItemDetail {
+    /// To-many relationships are unordered, so "first" is only meaningful
+    /// because the import keeps just the English entries (see
+    /// `ItemDetailDTO.englishEffects`).
     var prettyEffect: String {
         effect.first?.prettyEffect ?? ""
     }
@@ -53,6 +59,7 @@ final class ItemData {
 }
 
 extension ItemData {
+    /// Category icon: the sprite of any item in it (every stored item has one).
     var icon: String? {
         items.first?.sprites?.default
     }
@@ -84,6 +91,7 @@ final class Effect {
 }
 
 extension ItemDetail {
+    /// Sample row for previews. Not inserted into any context.
     static var common: ItemDetail {
         .init(
             id: 0,

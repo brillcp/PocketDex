@@ -2,6 +2,11 @@ import SwiftUI
 import PokeBattleKit
 
 /// Loadout screen for picking 4 moves before battle.
+///
+/// Flow: pick four moves, tap Start (asks the AI for the opponent's
+/// loadout), and the battle launches automatically once `phase` reaches
+/// `.readyToStart`. The `BattleViewModel` is built here and passed up
+/// through `onStart` in a `BattleLaunch`.
 struct BattleSetupView<ViewModel: BattleSetupViewModelProtocol>: View {
     @Environment(\.container) private var container
 

@@ -3,6 +3,10 @@ import PokeBattleKit
 /// Per-battle wrapper around `BattleAIServiceProtocol` that tracks the
 /// opponent's recent picks (for recency penalty) and which player moves
 /// have been observed (so the next AI prompt only sees scouted threats).
+///
+/// One driver per battle, owned by `BattleViewModel` on the main actor, so
+/// this per-battle memory needs no locking. The stateless, shared
+/// `BattleAIService` actor does the actual thinking.
 @MainActor
 final class BattleAIDriver {
     private let service: BattleAIServiceProtocol

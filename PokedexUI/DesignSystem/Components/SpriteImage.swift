@@ -1,6 +1,11 @@
 import SwiftUI
 
 /// Async sprite loader backed by the shared `SpriteLoader` cache.
+///
+/// Loading is tied to `.task(id: url)`, so it is cancelled when a lazy grid
+/// cell scrolls away and restarted if the URL changes. `onLoaded` runs
+/// with the decoded image before it's shown, so callers (e.g. pokedex
+/// cells) can derive a tint color from the same download.
 struct SpriteImage: View {
     enum Style { case circle, plain }
 

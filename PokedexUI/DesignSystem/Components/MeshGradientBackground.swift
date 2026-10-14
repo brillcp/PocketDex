@@ -7,6 +7,10 @@ import SwiftUI
 /// the gradient drifts slowly; corners stay pinned so the gradient never
 /// bleeds outside its bounds. Intended as a full-bleed background behind
 /// detail screens.
+///
+/// `TimelineView(.animation)` redraws every frame, but only this view: the
+/// noise and time offset are `@State` set once, so each instance looks
+/// different and nothing upstream is invalidated.
 struct MeshGradientBackground: View {
     let color: Color
 

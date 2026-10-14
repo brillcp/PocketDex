@@ -1,7 +1,9 @@
 import SwiftUI
 import PokeBattleKit
 
-/// HP gauge card for one battle combatant.
+/// HP gauge card for one battle combatant. `Equatable` (used with
+/// `.equatable()`) so animator ticks that rebuild the arena skip cards whose
+/// HP and status didn't change.
 struct HPCard: View, Equatable {
     let name: String
     let currentHP: Int

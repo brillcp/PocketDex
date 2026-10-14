@@ -8,6 +8,10 @@ import PokeBattleKit
 ///
 /// Create it from a nonisolated context (see `PokedexStore.make`): a model
 /// actor initialised on the main thread executes on the main thread.
+///
+/// `PokedexRepository` and `EvolutionService` each lazily create one store
+/// on the shared `ModelContainer`; the UI never talks to it directly and
+/// instead sees saved rows through the main context / `@Query`.
 @ModelActor
 actor PokedexStore {
     /// Create the store off the main thread so its context, and therefore
@@ -23,6 +27,9 @@ actor PokedexStore {
         (try? modelContext.fetchCount(FetchDescriptor<Pokemon>())) ?? 0
     }
 
+    /// Insert one row per detail payload, merging in its species (if it
+    /// downloaded), and save once so the UI sees the whole pokedex appear
+    /// in a single change.
     func importPokemon(_ details: [PokemonDTO], species: [Int: PokemonSpecies]) throws {
         for dto in details {
             modelContext.insert(Pokemon(dto: dto, species: species[dto.id]))
@@ -37,7 +44,9 @@ actor PokedexStore {
         allPokemon().map { PokemonSearchEntry(id: $0.id, haystack: Pokemon.searchHaystack(for: $0)) }
     }
 
-    /// Battle-matchmaking snapshots for every stored pokemon.
+    /// Battle-matchmaking snapshots for every stored pokemon. `Candidate`
+    /// is a Sendable value copy, so it can leave this actor where the
+    /// `Pokemon` row can't.
     func opponentCandidates() -> [Candidate] {
         allPokemon().map { Candidate(pokemon: $0) }
     }
@@ -53,7 +62,9 @@ actor PokedexStore {
     }
 
     /// Delete every item row (categories, details, sprites, effects, and
-    /// each detail's category `APIItem`) ahead of a re-import.
+    /// each detail's category `APIItem`) ahead of a re-import. Children are
+    /// deleted explicitly because the relationships use the default nullify
+    /// rule, which would otherwise leave orphaned rows behind.
     func deleteAllItems() throws {
         for detail in try modelContext.fetch(FetchDescriptor<ItemDetail>()) {
             modelContext.delete(detail.category)
@@ -66,7 +77,8 @@ actor PokedexStore {
     }
 
     /// Group items with sprites by category and persist one `ItemData` per
-    /// category.
+    /// category. Items without a sprite are skipped because the item grid
+    /// has nothing to show for them.
     func importItems(_ details: [ItemDetailDTO]) throws {
         let withSprites = details.filter { $0.sprites?.default != nil }
         let grouped = Dictionary(grouping: withSprites, by: \.category.name)
@@ -77,6 +89,10 @@ actor PokedexStore {
     }
 
     // MARK: Evolution chains
+
+    // Chains are stored as the raw (snake_case) JSON payload rather than as
+    // a model graph: the tree is only ever read whole, so `EvolutionService`
+    // decodes it on demand with `JSONDecoder.pokeAPI()`.
 
     func storedChainIds() -> Set<String> {
         let rows = (try? modelContext.fetch(FetchDescriptor<EvolutionChainEntity>())) ?? []

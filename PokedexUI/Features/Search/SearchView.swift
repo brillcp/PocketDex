@@ -2,6 +2,10 @@ import SwiftUI
 import SwiftData
 
 /// Search tab backed by its own SwiftData `@Query` against the full corpus.
+///
+/// The view owns the query (so SwiftData pushes store changes to it) and
+/// hands each new result to the view model, which matches the typed text
+/// against precomputed haystacks.
 struct SearchView<ViewModel: SearchViewModelProtocol>: View {
     @FocusState private var isSearchFocused: Bool
     @Namespace private var namespace
@@ -33,10 +37,13 @@ struct SearchView<ViewModel: SearchViewModelProtocol>: View {
             .searchable(text: $viewModel.query)
             .searchFocused($isSearchFocused)
             .onSubmit(of: .search, viewModel.recordSearch)
+            // Re-runs whenever the stored rows change, e.g. once the first
+            // launch import finishes while this tab is already open.
             .task(id: corpus) {
                 await viewModel.updateCorpus(corpus)
             }
             .scrollDismissesKeyboard(.immediately)
+            // Leaving the field counts as a search, like pressing return.
             .onChange(of: isSearchFocused) { old, new in
                 guard old, !new, !viewModel.query.isEmpty else { return }
                 viewModel.recordSearch()

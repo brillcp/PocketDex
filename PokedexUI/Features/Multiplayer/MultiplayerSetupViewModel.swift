@@ -5,10 +5,15 @@ import SwiftUI
 
 /// Discrete states the multiplayer lobby moves through.
 enum MultiplayerSetupPhase: Equatable {
+    /// Advertising and browsing for nearby trainers.
     case discovering
+    /// An invite was sent or accepted; waiting for the session to connect.
     case connecting
+    /// Connected; choosing a Pokémon and moves in the picker sheet.
     case picking
+    /// Own loadout sent; waiting for the peer's.
     case waitingForOpponent
+    /// Both loadouts exchanged; the battle view model is being pushed.
     case launching
 }
 
@@ -31,6 +36,14 @@ struct MultiplayerLaunch: Identifiable, Hashable {
 /// lifecycle, the local pokemon + move selection, the wire handshake, and
 /// the assembly of the live battle view model once both peers have submitted
 /// their loadouts.
+///
+/// Handshake: whichever side finishes picking first sends its
+/// `ChallengePayload` (host as `.challengeProposed`, guest as
+/// `.challengeAccepted`) and waits; when a device holds both its own and the
+/// peer's payload it builds a `MultiplayerBattleViewModel` locally. Roles
+/// come from `MultipeerService` (the device that accepted the invite hosts).
+/// Only a `PokemonSummary` snapshot and move names cross the wire; each
+/// device rebuilds `Move`s from its own PokeBattleKit data.
 @MainActor
 @Observable
 final class MultiplayerSetupViewModel {
@@ -74,14 +87,14 @@ final class MultiplayerSetupViewModel {
 
 // MARK: - Lobby actions
 extension MultiplayerSetupViewModel {
-    /// Start advertising + browsing. Called when the versus tab appears.
+    /// Start advertising + browsing. Called when the battle tab appears.
     func startDiscovery() {
         guard phase == .discovering else { return }
         discoveredPeers = []
         multipeer.startDiscovery()
     }
 
-    /// Stop advertising + browsing. Called when the versus tab disappears.
+    /// Stop advertising + browsing. Called when the battle tab disappears.
     func stopDiscovery() {
         multipeer.stopDiscovery()
     }

@@ -17,6 +17,8 @@ extension Color {
         self = Color(red: r, green: g, blue: b, opacity: alpha)
     }
 
+    /// Perceived brightness (ITU-R BT.601 weights) above 0.6. Used to choose
+    /// dark vs. white text over sprite-derived colors.
     var isLight: Bool {
         var red: CGFloat = 0
         var green: CGFloat = 0

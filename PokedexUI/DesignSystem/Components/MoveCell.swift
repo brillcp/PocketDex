@@ -2,6 +2,8 @@ import SwiftUI
 import PokeBattleKit
 
 /// Single move cell shared by the battle grid and the loadout picker.
+/// `Equatable` so callers can apply `.equatable()` and skip the body when
+/// the move, mode, and effectiveness are unchanged.
 struct MoveCell: View, Equatable {
     let move: Move
     let mode: Mode
@@ -13,6 +15,7 @@ struct MoveCell: View, Equatable {
         self.effectiveness = effectiveness
     }
 
+    /// `.battle` shows PP; `.loadout` shows power/accuracy and selection.
     enum Mode: Equatable {
         case battle
         case loadout(selected: Bool)

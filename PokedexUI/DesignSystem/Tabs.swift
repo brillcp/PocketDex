@@ -1,6 +1,7 @@
 import Foundation
 
-/// Top-level TabView selection for the root pokedex screen.
+/// Top-level TabView selection for the root pokedex screen. `favourites`
+/// isn't a tab; it's presented as a sheet but shares the title/icon table.
 enum Tabs: Int {
     case pokedex, items, favourites, battle, search
 }

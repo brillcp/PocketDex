@@ -8,6 +8,14 @@ protocol EvolutionServiceProtocol: Sendable {
     func requestChain(id: String) async throws -> EvolutionChain
 }
 
+/// Production `EvolutionServiceProtocol`, shared by detail screens and by
+/// `PokedexRepository` (which prefetches every chain on first launch).
+///
+/// Lookup order: in-memory `cache` → stored payload in SwiftData → network.
+/// The actor serialises access to `cache` and the lazily created store.
+/// Network responses are decoded off the actor (in `PokeAPIClient.fetch` or
+/// task-group children), and only Sendable `EvolutionChain` values and
+/// `Data` payloads cross to and from `PokedexStore`.
 actor EvolutionService {
     private let client: PokeAPIClient
     private let modelContainer: ModelContainer
@@ -37,6 +45,9 @@ extension EvolutionService: EvolutionServiceProtocol {
             return stored
         }
 
+        // Re-encode with the snake_case encoder so the stored payload has
+        // the same shape as the raw API bytes `prefetchChains` saves.
+        // Persisting is best-effort; the chain is returned either way.
         let chain: EvolutionChain = try await client.fetch(.evolutionChain(id))
         cache[id] = chain
         if let data = try? JSONEncoder.pokeAPI().encode(chain) {
@@ -51,6 +62,11 @@ extension EvolutionService: EvolutionServiceProtocol {
 extension EvolutionService {
     /// Download every chain in `ids` that isn't persisted yet and store it.
     /// `onTick` fires once per id (cached ids tick immediately).
+    ///
+    /// Stores the raw response bytes rather than re-encoding, but decodes
+    /// each one first so a malformed payload is never persisted. Failed ids
+    /// are skipped; `requestChain` fetches them on demand later. All
+    /// payloads are saved in one batch at the end.
     func prefetchChains(ids: Set<String>, onTick: (@Sendable () async -> Void)?) async {
         let store = await resolvedStore()
         let persisted = await store.storedChainIds()
@@ -82,7 +98,9 @@ extension EvolutionService {
 
 // MARK: - Private
 private extension EvolutionService {
-    /// Caches the creation task so concurrent first callers share one store.
+    /// Caches the creation task (not the result) so concurrent first callers
+    /// share one store: a second caller arriving while `make` is suspended
+    /// awaits the same task instead of creating another store.
     func resolvedStore() async -> PokedexStore {
         if let storeTask { return await storeTask.value }
         let container = modelContainer

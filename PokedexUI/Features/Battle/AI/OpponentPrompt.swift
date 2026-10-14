@@ -4,10 +4,16 @@ import PokeBattleKit
 
 /// Builds the prompt asking the LLM to pick a fair opponent from a
 /// pre-filtered candidate pool, and parses the model's index reply.
+///
+/// The roster is shuffled before numbering so the model's bias toward the
+/// first listed options doesn't always favor the same Pokémon, and the model
+/// answers with a list number (easier to return exactly than a name).
+/// `indexMap` translates that number back to a Pokémon id.
 enum OpponentPrompt {
 
     struct Output {
         let prompt: String
+        /// 1-based roster number -> Pokémon id.
         let indexMap: [Int: Int]
     }
 
@@ -64,6 +70,8 @@ private extension OpponentPrompt {
         return line
     }
 
+    /// Annotates the matchup in both directions using each side's best
+    /// same-type (STAB) multiplier, e.g. "[SE STAB vs you, mutual threat]".
     static func matchupTag(
         chart: TypeChart,
         candidate: Candidate,

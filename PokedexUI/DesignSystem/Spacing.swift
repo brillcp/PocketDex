@@ -1,6 +1,7 @@
 import CoreGraphics
 
-/// Namespace for design tokens.
+/// Namespace for design tokens. Caseless enums, so tokens are referenced as
+/// `DesignKit.Spacing.Primitive.s16` and nothing can be instantiated.
 enum DesignKit {}
 
 extension DesignKit {
@@ -10,6 +11,9 @@ extension DesignKit {
 extension DesignKit.Spacing {
     /// Raw spacing scale in points: fine 2pt steps up to 8, then 12 and 16,
     /// then 8pt increments up to 56. Each name matches its value.
+///
+/// Primitives are the raw scale; prefer them over literal numbers so
+/// spacing stays on the scale. Many existing views still use literals.
     enum Primitive {
         static let s0: CGFloat = 0
         static let s2: CGFloat = 2

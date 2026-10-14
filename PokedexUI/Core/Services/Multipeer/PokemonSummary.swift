@@ -34,7 +34,9 @@ struct PokemonSummary: Codable, Hashable, Sendable, PokemonData {
 }
 
 extension PokemonSummary {
-    /// Project a hydrated `Pokemon` (SwiftData model) to a wire DTO.
+    /// Project a hydrated `Pokemon` (SwiftData model) to a wire DTO. Call it
+    /// on the actor that owns the model's context; the resulting value is
+    /// Sendable and safe to hand to `MultipeerService`.
     init(pokemon: Pokemon) {
         self.id = pokemon.id
         self.name = pokemon.name

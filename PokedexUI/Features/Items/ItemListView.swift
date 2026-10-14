@@ -1,7 +1,8 @@
 import SwiftUI
 import SwiftData
 
-/// Items tab showing a paginated list of every PokeAPI item.
+/// Items tab listing PokeAPI item categories; tapping one pushes its items.
+/// Shows a spinner behind the (empty) list while the first import runs.
 struct ItemListView<ViewModel: ItemListViewModelProtocol>: View {
     @State var viewModel: ViewModel
     @State private var selectedItem: ItemData?

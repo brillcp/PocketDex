@@ -1,6 +1,6 @@
 import Foundation
 
-/// Protocol for a view model that provides item details and a title for display.
+/// Protocol for the view model behind a single item category's list.
 @MainActor
 protocol ItemDetailViewModelProtocol {
     /// The collection of item details to be displayed.
@@ -9,7 +9,8 @@ protocol ItemDetailViewModelProtocol {
     var title: String { get }
 }
 
-/// View model that provides details and metadata for a single item.
+/// Concrete implementation of `ItemDetailViewModelProtocol` for one
+/// `ItemData` category.
 @MainActor
 @Observable
 final class ItemDetailViewModel {

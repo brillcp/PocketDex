@@ -3,6 +3,11 @@ import SwiftData
 import SwiftUI
 
 /// Observable view model behind the pokedex grid.
+///
+/// Like every screen in the app, the view depends on this protocol rather
+/// than the concrete class, so previews and tests can inject a stub. The
+/// conforming type is a `@MainActor @Observable` class that views hold in
+/// `@State`, so SwiftUI tracks exactly the properties each body reads.
 @MainActor
 protocol PokedexViewModelProtocol {
     /// All fetched Pokemon for the grid.
@@ -20,6 +25,7 @@ protocol PokedexViewModelProtocol {
     /// Ascending or descending.
     var sortDirection: SortDirection { get set }
 
+    /// Drives the favourites sheet presented by `RootTabView`.
     var openFavourites: Bool { get set }
     /// Pokemon sorted by current sort settings.
     var sortedPokemon: [Pokemon] { get }
@@ -40,6 +46,10 @@ extension PokedexViewModelProtocol {
 }
 
 /// Concrete implementation of `PokedexViewModelProtocol`.
+///
+/// Reads `Pokemon` models through the main `ModelContext` handed in by the
+/// view; the repository only writes to the store in the background and
+/// reports progress, so no model objects cross actors.
 @MainActor
 @Observable
 final class PokedexViewModel {
@@ -70,6 +80,7 @@ extension PokedexViewModel: PokedexViewModelProtocol {
     func requestPokemon() async {
         guard !isLoading else { return }
 
+        // Fast path: the store is already populated from a previous launch.
         if let stored = fetchStoredPokemon(), !stored.isEmpty {
             pokemon = stored
             return

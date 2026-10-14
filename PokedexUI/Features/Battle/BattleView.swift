@@ -2,6 +2,15 @@ import SwiftUI
 import PokeBattleKit
 
 /// Gameboy-styled turn-based battle screen.
+///
+/// Shared by single-player (`BattleViewModel`, AI opponent) and multiplayer
+/// (`MultiplayerBattleViewModel`, remote peer): both conform to
+/// `BattleViewModelProtocol`, so this view only renders state, the log, and
+/// animator cues and forwards move taps.
+///
+/// High-frequency animator reads are pushed down into `BattleArena` and
+/// `BattleFeedbackModifier`, so this body only re-evaluates for turn-level
+/// changes (state, log, winner, resolving flag).
 struct BattleView<ViewModel: BattleViewModelProtocol>: View {
     @State var viewModel: ViewModel
 
@@ -58,6 +67,8 @@ private extension BattleView {
         .padding(.bottom, 24.0)
     }
 
+    /// `MoveCell` is equatable, so only the enabled/disabled change during a
+    /// turn re-renders the cells.
     func moveGrid(state: BattleState) -> some View {
         let disabled = !viewModel.canSelectMove || viewModel.isResolvingTurn || viewModel.winner != nil
         return LazyVGrid(columns: GridLayout.two.layout, spacing: GridLayout.two.spacing) {

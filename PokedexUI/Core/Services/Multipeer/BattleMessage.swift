@@ -2,7 +2,9 @@ import Foundation
 import PokeBattleKit
 
 /// Wire protocol version. Bumped on any breaking change to `BattleMessage`
-/// shape or to the per-event payload format. Peers reject mismatches.
+/// shape or to the per-event payload format. Exchanged in `.hello`; peers
+/// reject mismatches (see `MultiplayerSetupViewModel`), so devices running
+/// different app versions fail cleanly instead of misreading messages.
 enum MultipeerProtocol {
     static let version: Int = 1
 }
@@ -21,9 +23,21 @@ struct ChallengePayload: Codable, Sendable {
 /// All messages exchanged between two peers across a multiplayer battle's
 /// lifetime. A single Codable enum keeps the wire surface tight and the
 /// receive switch exhaustive.
+///
+/// The host is authoritative: it runs the battle engine and the guest only
+/// replays the resolved events, so both screens stay in sync without each
+/// device simulating the turn.
+///
+/// Encoded by hand as a flat JSON object with a `"type"` discriminator
+/// (e.g. `{"type":"moveCommitted","moveName":"tackle","turnNumber":3}`)
+/// rather than Swift's synthesized enum coding, so the format is explicit
+/// and stable. The `type` strings and `CodingKeys` are the wire format:
+/// renaming either breaks compatibility with other installs and requires
+/// bumping `MultipeerProtocol.version`.
 enum BattleMessage: Codable, Sendable {
     /// First message both peers send after MC session connects. Establishes
-    /// protocol version and declares each peer's role (advertiser = host).
+    /// protocol version and declares each peer's role (the peer that
+    /// accepted the invitation is the host).
     case hello(protocolVersion: Int, displayName: String, isHost: Bool)
 
     /// Host announces its loadout to the guest.

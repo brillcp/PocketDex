@@ -2,11 +2,14 @@ import Foundation
 import SwiftData
 
 /// Root of a recursive evolution tree from `/evolution-chain/{id}`.
+/// `Codable` (not just `Decodable`) so `EvolutionService` can re-encode a
+/// fetched chain for storage in `EvolutionChainEntity`.
 struct EvolutionChain: Codable, Sendable {
     let chain: EvolutionLink
 }
 
-/// SwiftData-backed cache of one evolution chain response.
+/// SwiftData-backed cache of one evolution chain response, stored as the
+/// snake_case JSON `payload` and decoded on demand by `EvolutionService`.
 @Model
 final class EvolutionChainEntity {
     @Attribute(.unique) var chainId: String
@@ -19,7 +22,8 @@ final class EvolutionChainEntity {
 }
 
 /// Sendable snapshot of one freshly fetched chain. Crosses actor boundaries;
-/// the consumer rehydrates it into an `EvolutionChainEntity` for storage.
+/// `PokedexStore.storeChains` turns it into an `EvolutionChainEntity` on
+/// its own context.
 struct EvolutionChainPayload: Sendable {
     let chainId: String
     let payload: Data
@@ -83,6 +87,8 @@ extension EvolutionChain {
         var id: String { species.name }
     }
 
+    /// Linear stages for display, following only the first branch at each
+    /// node. Branching families (e.g. Eevee) therefore show one path.
     var stages: [Stage] {
         var out: [Stage] = [Stage(species: chain.species, trigger: nil)]
         var node = chain

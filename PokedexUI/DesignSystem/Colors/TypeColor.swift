@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// Centralised type-to-color map for the design system.
+/// Centralised type-to-color map for the design system. Keys are PokeAPI's
+/// lowercase type names; unknown types fall back to gray.
 enum TypeColor {
     static func color(for name: String) -> Color {
         switch name {
@@ -22,7 +23,8 @@ enum TypeColor {
     }
 }
 
-/// Display helpers for a type-effectiveness multiplier.
+/// Display helpers for a type-effectiveness multiplier. All resisted values
+/// (x0.5 and x0.25) share the "×0.5" label to keep the chip short.
 enum TypeEffectiveness {
     static func label(for mult: Double) -> String {
         switch mult {

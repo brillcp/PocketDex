@@ -23,6 +23,17 @@ protocol PokedexRepositoryProtocol: Sendable {
     func opponentCandidates() async -> [Candidate]
 }
 
+/// Production `PokedexRepositoryProtocol`. An actor so its lazily created
+/// `PokedexStore` is shared safely between concurrent callers (the pokedex
+/// and items tabs can load at the same time). The actor itself does little
+/// work: fetching and decoding happen in `PokeAPIClient`'s `@concurrent`
+/// methods and child tasks, and persistence happens on the store.
+///
+/// First-launch pokemon pipeline:
+/// 1. List + every `/pokemon/{id}` detail, in parallel.
+/// 2. Every `/pokemon-species/{id}`, in parallel (failures are skipped).
+/// 3. Every evolution chain referenced by a species, via `EvolutionService`.
+/// 4. One `PokedexStore.importPokemon` that builds and saves all rows.
 actor PokedexRepository {
     private static let pokemonLimit = 1150
     private static let itemLimit = 2048
@@ -52,6 +63,8 @@ extension PokedexRepository: PokedexRepositoryProtocol {
 
         let progress = ProgressCounter(onProgress: onProgress)
         let tick: @Sendable () async -> Void = { await progress.tick() }
+        // Local copy so the child tasks below capture a Sendable value
+        // instead of actor-isolated `self`.
         let client = client
 
         let details = try await client.fetchAll(
@@ -60,8 +73,12 @@ extension PokedexRepository: PokedexRepositoryProtocol {
             detail: PokeAPIRequest.pokemonDetails,
             onTick: tick
         )
+        // Units: one per detail, one per species, the (still estimated)
+        // chains, and the final import.
         await progress.setTotal(details.count * 2 + ProgressCounter.estimatedChainCount + 1)
 
+        // Species are optional enrichment: a failed request yields `nil` and
+        // the pokemon is stored without habitat, flavor text, etc.
         let species = await withTaskGroup(of: (Int, PokemonSpecies)?.self) { group in
             for dto in details {
                 let id = dto.id
@@ -79,14 +96,23 @@ extension PokedexRepository: PokedexRepositoryProtocol {
             return byId
         }
 
+        // Many species share a chain (e.g. Bulbasaur → Venusaur), hence the
+        // `Set`. Now the real chain count is known, so replace the estimate.
         let chainIds = Set(species.values.compactMap(\.evolutionChain?.id))
         await progress.setRemaining(chainIds.count + 1)
         await evolutionService.prefetchChains(ids: chainIds, onTick: tick)
 
+        // Import last: `pokemonCount() == 0` is the "needs download" check,
+        // so an interrupted first launch starts over next time (reusing any
+        // chains that were already saved).
         try await store.importPokemon(details, species: species)
         await progress.finish()
     }
 
+    /// Runs when no items are stored, or once after `itemDataVersion` is
+    /// bumped (the stored version lives in `UserDefaults` under
+    /// `items.dataVersion`). The version is only recorded after a
+    /// successful import, so a failed attempt is retried on the next launch.
     func loadItemsIfNeeded() async throws {
         let store = await resolvedStore()
         let defaults = UserDefaults.standard
@@ -130,7 +156,8 @@ private extension PokedexRepository {
 
 /// Counts download units and forwards progress only when the whole
 /// percentage increases, so the UI sees ~100 monotonic updates instead of
-/// thousands.
+/// thousands. An actor because ticks arrive from many concurrent download
+/// tasks.
 private actor ProgressCounter {
     /// Typical number of evolution chains, used until the real count is
     /// known after the species step.

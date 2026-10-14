@@ -58,6 +58,8 @@ private struct MovePickerHeader: View {
 
 /// Toggleable move card. Takes narrow values so only cards whose selection
 /// or cap state changed re-run their body when the selection updates.
+/// `moveSelection` is only used in the tap action, never read in `body`, so
+/// it doesn't make every card observe the whole selection.
 private struct MovePickerCard: View {
     let move: Move
     let selected: Bool

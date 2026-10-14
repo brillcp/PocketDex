@@ -4,7 +4,11 @@ import SwiftData
 ///
 /// Persistence-only: network payloads decode into `PokemonDTO` and
 /// `PokedexStore` builds these rows on its background context, so model
-/// instances never cross actors.
+/// instances never cross actors. The UI reads them on the main context;
+/// `isBookmarked` is the only field the app changes after import.
+///
+/// The inline defaults let SwiftData's automatic migration fill in fields
+/// for rows stored before those fields existed.
 @Model
 final class Pokemon {
     @Attribute(.unique) var id: Int
@@ -108,7 +112,9 @@ extension Pokemon {
     var backSprite: String? { sprite.back }
 
     /// Normalized haystack for full-text search across name, types,
-    /// genus, habitat, legendary/mythical status, and abilities.
+    /// genus, habitat, legendary/mythical status, and abilities. Walks
+    /// relationships, so `PokedexStore.searchIndex()` calls it on the
+    /// background context and only the resulting strings reach the UI.
     static func searchHaystack(for pokemon: Pokemon) -> String {
         var parts: [String] = [pokemon.name.normalize]
         parts.append(contentsOf: pokemon.types.map(\.type.name.normalize))
@@ -122,6 +128,7 @@ extension Pokemon {
 }
 
 extension Pokemon {
+    /// Sample row for previews. Not inserted into any context.
     static var pikachu: Pokemon {
         Pokemon(
             id: 25,

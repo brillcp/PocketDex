@@ -9,6 +9,7 @@ extension String {
             .replacingOccurrences(of: "\u{202F}", with: " ")
     }
 
+    /// API slug to display text: "master-ball" -> "Master ball".
     var pretty: String {
         self
             .replacingOccurrences(of: "-", with: " ")
@@ -32,6 +33,8 @@ extension FormatStyle where Self == FloatingPointFormatStyle<Double>.Percent {
 extension StringProtocol {
     var firstUppercased: String { prefix(1).uppercased() + dropFirst() }
 
+    /// Case- and diacritic-insensitive form used for search haystacks and
+    /// query terms, so "pokemon" matches "Pokémon".
     var normalize: String {
         folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
           .trimmingCharacters(in: .whitespacesAndNewlines)

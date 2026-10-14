@@ -2,9 +2,13 @@ import SwiftUI
 import SwiftData
 import PokeBattleKit
 
-/// Versus tab root. Shows nearby trainers via MultipeerConnectivity.
+/// Battle ("Gym") tab root. Shows nearby trainers via MultipeerConnectivity.
 /// Tapping a trainer invites them; on connect a sheet walks both
 /// players through pokemon + move selection before launching the battle.
+///
+/// The battle is pushed from this stack (not from the sheet), so the sheet
+/// dismisses itself on launch and popping back from the battle returns both
+/// devices to the lobby.
 struct MultiplayerSetupView: View {
     @State var viewModel: MultiplayerSetupViewModel
 

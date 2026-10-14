@@ -7,9 +7,10 @@ protocol SpriteLoading: Sendable {
     func spriteImage(from urlString: String) async -> UIImage?
 }
 
-/// Stateless (`URLSession` and `URLCache` are thread-safe), so concurrent
-/// loads from many grid cells fetch and decode in parallel off the main
-/// thread rather than queueing behind a single actor.
+/// A `struct`, not an actor: it holds no mutable state of its own
+/// (`URLSession` and `URLCache` are thread-safe and do the caching), so
+/// concurrent loads from many grid cells fetch and decode in parallel off
+/// the main thread rather than queueing behind a single actor.
 struct SpriteLoader: SpriteLoading {
     private let session: URLSession
     private let cache: URLCache
@@ -51,6 +52,8 @@ struct SpriteLoader: SpriteLoading {
 
 // MARK: - Private
 private extension URLCache {
+    /// Store only successful responses, so a transient 404/5xx isn't served
+    /// from cache on the next request.
     func cache(response: URLResponse, withData data: Data, for request: URLRequest) {
         guard let httpResponse = response as? HTTPURLResponse,
               200 ..< 300 ~= httpResponse.statusCode else {

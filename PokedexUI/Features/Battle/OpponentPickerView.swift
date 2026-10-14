@@ -3,6 +3,12 @@ import SwiftData
 import PokeBattleKit
 
 /// Sheet for choosing a battle opponent from the full pokedex.
+///
+/// Opponents can be tapped directly or chosen with "Smart pick": the pool is
+/// narrowed to a balanced set by a deterministic score, then
+/// `BattleAIService` (on-device model, with a deterministic fallback) picks
+/// one from it. The player is excluded both from the `@Query` and from the
+/// candidate snapshots, so neither path can pick a mirror match.
 struct OpponentPickerView: View {
     let player: Pokemon
     let playerTypes: [String]
@@ -96,6 +102,8 @@ private extension OpponentPickerView {
                 typeChart: chart
             )
             isAIThinking = false
+            // Map the id back to a main-context model; fall back to a random
+            // pool member if the AI returned nothing usable.
             if let pickedId, let match = allPokemon.first(where: { $0.id == pickedId }) {
                 setupOpponent = match
             } else if let id = pool.randomElement()?.id,
@@ -106,7 +114,9 @@ private extension OpponentPickerView {
     }
 
     /// Scores the whole candidate pool on the cooperative pool, off the
-    /// main actor.
+    /// main actor. `@concurrent` makes the hop explicit: with the module's
+    /// `nonisolated` default and Approachable Concurrency, a plain async
+    /// function would run on the caller's actor (main) instead.
     @concurrent
     static func balancedPool(from candidates: [Candidate], player: Candidate, chart: TypeChart?) async -> [Candidate] {
         OpponentStrategy.balancedPool(
@@ -117,7 +127,7 @@ private extension OpponentPickerView {
         )
     }
 
-    /// Builds the candidate cache on view appear so a "Random" tap can
+    /// Builds the candidate cache on view appear so a "Smart pick" tap can
     /// jump straight to scoring. The SwiftData traversal runs on the
     /// background store, off the main actor.
     func prebuildCandidatesIfNeeded() async {
@@ -126,7 +136,7 @@ private extension OpponentPickerView {
     }
 
     /// Returns the cached candidates, building them if the prebuild
-    /// hasn't completed yet (fallback for an eager Random tap).
+    /// hasn't completed yet (fallback for an eager "Smart pick" tap).
     func ensureCandidates() async -> [Candidate] {
         if let cached = candidateCache { return cached }
         let built = await opponentCandidates()

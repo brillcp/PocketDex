@@ -2,6 +2,10 @@ import SwiftUI
 
 /// Pixel-art activity indicator with sharp-cornered rectangular spokes.
 /// Pass `text` to render a label beneath the spinner.
+///
+/// Steps in discrete ticks (one spoke per tick, via a periodic
+/// `TimelineView`) instead of rotating smoothly, which matches the pixel-art
+/// look and only redraws `lineCount` times per second.
 struct PixelSpinner: View {
     let size: CGFloat
     let color: Color

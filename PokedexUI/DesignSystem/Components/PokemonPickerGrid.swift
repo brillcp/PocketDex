@@ -3,6 +3,11 @@ import SwiftUI
 /// Generic Pokemon grid. Callers provide column layout and cell content
 /// via `@ViewBuilder`. Handles only scrolling and layout; navigation,
 /// search, and loading overlays are the caller's responsibility.
+///
+/// Rows are identified by Pokémon id, so re-sorting or filtering animates
+/// cells to new positions instead of rebuilding them. One haptic trigger
+/// for the whole grid (via a simultaneous tap gesture) avoids attaching
+/// `.sensoryFeedback` to every cell.
 struct PokemonGrid<Cell: View>: View {
     let pokemon: [Pokemon]
     var grid: GridLayout = .three
@@ -33,6 +38,10 @@ struct PokemonGrid<Cell: View>: View {
 ///
 /// Callers that manage their own search (e.g. SearchView) should use
 /// `PokemonGrid` directly instead.
+///
+/// Unlike the Search tab, the haystacks here are built on the main actor on
+/// first appear, as a one-time pass over the models already passed in
+/// (later keystrokes only run substring checks against it).
 struct PokemonPickerGrid: View {
     let pokemon: [Pokemon]
     var namespace: Namespace.ID?

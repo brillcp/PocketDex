@@ -1,6 +1,8 @@
 import SwiftUI
 
 /// Full-width primary action button with pixel font and red glass tint.
+/// While `isLoading` it swaps the icon for a spinner, shows `loadingTitle`,
+/// and ignores taps.
 struct PrimaryCapsuleButton: View {
     let icon: String
     let title: String
@@ -36,6 +38,10 @@ struct PrimaryCapsuleButton: View {
     }
 }
 
+/// Compact secondary action with clear glass and a caller-supplied tint,
+/// for use over colored backgrounds (e.g. "Battle" on the detail screen,
+/// tinted to match the sprite-derived text color). No loading state or
+/// haptic, unlike `PrimaryCapsuleButton`.
 struct SecondaryCapsuleButton: View {
     let icon: String
     let title: String

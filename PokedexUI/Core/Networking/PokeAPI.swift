@@ -71,12 +71,20 @@ struct PokeAPIClient: Sendable {
         try JSONDecoder.pokeAPI().decode(T.self, from: try await fetchData(request))
     }
 
+    /// Raw response bytes, for callers that persist the payload as-is (see
+    /// `EvolutionService.prefetchChains`). Not `@concurrent`: it only awaits
+    /// the service actor, so it does no real work on the caller's actor.
     func fetchData(_ request: PokeAPIRequest) async throws -> Data {
         try await service.data(request)
     }
 
     /// Fetch a list endpoint, then every detail record it references
     /// concurrently. `onTick` fires once per detail response.
+    ///
+    /// Each detail is a child task, so fetch + decode fan out across the
+    /// cooperative pool. Results are collected (and `onTick` awaited) in
+    /// completion order, not list order. Any failing detail request throws
+    /// and cancels the rest.
     @concurrent
     func fetchAll<T: Decodable & Sendable>(
         _ type: T.Type,
@@ -123,6 +131,9 @@ extension JSONEncoder {
 }
 
 extension Network.Service {
+    /// Shared service for `https://pokeapi.co/api/v2/`, used by every
+    /// `PokeAPIClient` by default. Logging is silenced because first launch
+    /// issues thousands of requests.
     static let pokeAPI: Network.Service = {
         let url = URL(string: "https://pokeapi.co/api/v2/")!
         return Network.Service(server: .basic(baseURL: url), logger: SilentNetworkLogger())

@@ -2,6 +2,9 @@ import SwiftUI
 import PokeBattleKit
 
 /// A single row in the battle log with a stable identity.
+///
+/// `placeholder` ("...") and `prompt` rows are transient: view models remove
+/// them by `kind` once the turn resolves, without touching real log lines.
 struct BattleLogEntry: Identifiable, Equatable {
     enum Kind { case regular, placeholder, prompt }
     let id = UUID()
@@ -22,6 +25,11 @@ struct BattleLogEntry: Identifiable, Equatable {
 }
 
 /// Formats `Event` values into styled `AttributedString` for the log feed.
+///
+/// Builds lines once when an event arrives, so the feed renders
+/// pre-styled text instead of re-deriving colors per frame. Names take each
+/// Pokémon's sprite color (passed in, since colors resolve asynchronously
+/// after the formatter is created).
 struct BattleLogFormatter {
     let playerName:   String
     let opponentName: String
@@ -143,6 +151,8 @@ private extension BattleLogFormatter {
         return str
     }
 
+    /// Falls back to white for sprite colors too dark to read on the
+    /// dark battle background (relative luminance below ~0.32).
     func legibleColor(_ color: Color) -> Color {
         let resolved = color.resolve(in: .init())
         let luminance = 0.2126 * Double(resolved.red) + 0.7152 * Double(resolved.green) + 0.0722 * Double(resolved.blue)

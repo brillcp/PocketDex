@@ -50,6 +50,13 @@ protocol BattleAIServiceProtocol: Sendable {
 /// 1. Strategy produces a deterministic fallback.
 /// 2. Structured generation attempts a smarter pick.
 /// 3. Strategy.adjust runs post-pick corrections against either branch.
+///
+/// The fallback always exists before the model is asked, so a decision is
+/// returned on devices without Apple Intelligence, when the model errors,
+/// or when it names something that isn't on the list. Being an actor keeps
+/// prompt building and inference off the main actor; it holds no
+/// per-battle state (that lives in `BattleAIDriver`), so one instance is
+/// shared app-wide through `AppContainer`.
 actor BattleAIService {
     private let client = LanguageModelClient()
     init() {}
@@ -79,6 +86,8 @@ extension BattleAIService: BattleAIServiceProtocol {
 
         let movesByName = Dictionary(moves.map { ($0.name, $0) }, uniquingKeysWith: { _, last in last })
 
+        // Only moves the player has actually used are revealed, so the AI
+        // plays with the same information a human opponent would have.
         let seen = defenderSeenMoves.isEmpty ? "" : "\nDefender used: \(defenderSeenMoves.joined(separator: ", "))"
         let moveData = moves.map { m in
             let mult = typeChart.multiplier(attacking: m.typeName, defenders: defender.typeNames)
@@ -166,6 +175,8 @@ extension BattleAIService: BattleAIServiceProtocol {
             fighter: fighter, opponent: opponent, moves: moves, typeChart: typeChart
         )
         aiLog("Heuristic fallback: \(fallback.map(\.name).joined(separator: ", "))")
+        // Prompt with a pre-ranked shortlist rather than the full learnset:
+        // smaller prompt, and fewer weak options for the model to pick.
         let shortlist = LoadoutStrategy.shortlist(
             fighter: fighter, opponent: opponent, moves: moves, typeChart: typeChart
         )

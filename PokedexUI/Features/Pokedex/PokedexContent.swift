@@ -8,6 +8,12 @@ import SwiftData
 /// wide windows) the detail sits in a leading column and the grid in a
 /// trailing column. The layout follows the size class rather than the
 /// device, so it adapts live as the window resizes or the device folds.
+///
+/// The regular layout is a plain `HStack` of two `NavigationStack`s rather
+/// than a `NavigationSplitView`, because the split view can only place its
+/// sidebar on the leading edge and the grid is meant to sit on the right.
+/// The open Pokémon lives in `path` (compact) or `selection` (regular), and
+/// is moved between the two whenever the size class changes.
 struct PokedexContent<ViewModel: PokedexViewModelProtocol>: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
@@ -110,6 +116,9 @@ private struct PokedexDetailColumn: View {
 }
 
 /// Pokedex toolbar with grid toggle and sort menu.
+///
+/// Holds the view model in `@State` only to get `$viewModel` bindings for the
+/// sort picker; the parent passes the same long-lived reference each time.
 private struct PokedexToolbar<ViewModel: PokedexViewModelProtocol>: ToolbarContent {
     @State var viewModel: ViewModel
 

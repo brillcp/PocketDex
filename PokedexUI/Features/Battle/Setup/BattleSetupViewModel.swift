@@ -4,11 +4,19 @@ import SwiftUI
 import PokeBattleKit
 
 /// Discrete states the setup screen moves through.
+///
+/// Derived from the view model's inputs rather than stored, so it can never
+/// disagree with them.
 enum BattleSetupPhase: Equatable {
+    /// Building display data and move pools.
     case loading
+    /// Player is choosing; fewer than four moves selected.
     case picking
+    /// Waiting for the AI to choose the opponent's loadout.
     case awaitingAI
+    /// Player's four moves are in; "Start" asks the AI for its loadout.
     case readyToRequest
+    /// Both loadouts are set; the view pushes the battle.
     case readyToStart
 }
 
@@ -92,6 +100,8 @@ extension BattleSetupViewModel: BattleSetupViewModelProtocol {
         self.opponentPool = opponentMoves
     }
 
+    /// Picked after the player locks in, so the AI can counter the player's
+    /// actual moves.
     func requestOpponentLoadout() async {
         guard let player = playerPokemon,
               let opponent = opponentPokemon else { return }

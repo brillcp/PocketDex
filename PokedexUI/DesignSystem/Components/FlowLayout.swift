@@ -1,6 +1,8 @@
 import SwiftUI
 
 /// Wrapping horizontal layout where rows break when available width is exceeded.
+/// Subviews are measured at their ideal size (chips don't stretch); rows are
+/// recomputed in both passes since the layout keeps no cache.
 struct FlowLayout: Layout {
     var spacing: CGFloat
 

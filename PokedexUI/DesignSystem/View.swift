@@ -1,6 +1,9 @@
 import SwiftUI
 
 extension View {
+    /// Shared navigation-bar look: pixel-font inline title, opaque tinted
+    /// bar, and a full-bleed background. Pass `background: nil` for screens
+    /// that draw their own (e.g. the detail view's mesh gradient).
     func applyPokedexStyling(
         title: String,
         navColor: Color = Color.pokedexRed,

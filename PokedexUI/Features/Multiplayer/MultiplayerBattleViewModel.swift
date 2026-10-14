@@ -5,6 +5,15 @@ import PokeBattleKit
 /// across two devices over `MultipeerService`. Host runs the engine and
 /// broadcasts resolved events; guest renders received events with sides
 /// flipped so its own pokemon always appears as `.player`.
+///
+/// Turn protocol (commit, collect, resolve):
+/// 1. Each side commits a move with `.moveCommitted(turnNumber:)`.
+/// 2. The host waits until it holds both its own and the peer's move for
+///    the same turn, then resolves the round with its `BattleEngine`.
+/// 3. The host broadcasts `.roundResolved(events:turnNumber:)` and both
+///    sides play the identical event list, so damage rolls and crits can't
+///    diverge between devices.
+/// Turn numbers let each side ignore stale or out-of-order messages.
 @MainActor
 @Observable
 final class MultiplayerBattleViewModel {
@@ -18,7 +27,9 @@ final class MultiplayerBattleViewModel {
     private let selfMoves: [Move]
     private let peerMoves: [Move]
     private var typeChart: TypeChart?
+    /// Host only; the guest never resolves rounds locally.
     private var engine: BattleEngine?
+    /// Incremented on each local commit; both peers stay in lockstep.
     private var turnNumber: Int = 0
     private var pendingSelfMove: Move?
     private var pendingPeerMoveName: String?
@@ -115,6 +126,9 @@ extension MultiplayerBattleViewModel: BattleViewModelProtocol {
 
 // MARK: - Message handling
 private extension MultiplayerBattleViewModel {
+    /// Consumes the multipeer event stream for the lifetime of the screen.
+    /// `[weak self]` lets the view model deinit (and the task end) when the
+    /// battle is popped.
     func startListening() {
         guard listenTask == nil else { return }
 
@@ -136,6 +150,7 @@ private extension MultiplayerBattleViewModel {
         case .roundResolved(let events, let turn):
             await receiveResolution(events: events, turn: turn)
         case .battleEnded(let w):
+            // The host's `Side` is from its own perspective; flip for the guest.
             self.winner = role == .host ? w : w?.opposite
         case .disconnect:
             errorMessage = "Opponent disconnected."
@@ -149,6 +164,9 @@ private extension MultiplayerBattleViewModel {
         if pendingSelfMove == nil {
             log.append(.prompt(formatter.chooseMove()))
         }
+        // Host accepts the peer's move for the current turn, or for the next
+        // turn when the peer committed first (host hasn't bumped `turnNumber`
+        // yet). The guest only shows the prompt and waits for the resolution.
         guard role == .host,
               turn == turnNumber || turn == turnNumber + (pendingSelfMove == nil ? 1 : 0)
         else { return }
@@ -168,6 +186,8 @@ private extension MultiplayerBattleViewModel {
         isResolvingTurn = false
     }
 
+    /// Resolves only once both moves for the turn are in; called after
+    /// either side's commit arrives, whichever comes last does the work.
     func tryResolveHostTurn() async {
         guard role == .host,
               let selfMove = pendingSelfMove,
@@ -179,6 +199,7 @@ private extension MultiplayerBattleViewModel {
         removePromptLines()
         let events = eng.resolveRound(playerMove: selfMove, opponentMove: peerMove)
         self.engine = eng
+        // Send before animating so both devices play the turn together.
         multipeer.send(.roundResolved(events: events, turnNumber: turnNumber))
         await play(events: events)
         pendingSelfMove = nil
@@ -240,6 +261,7 @@ private extension MultiplayerBattleViewModel {
         }
     }
 
+    /// Mirrors an event from the host's perspective to the guest's.
     func flip(_ event: Event) -> Event {
         switch event {
         case .used(let s, let m): .used(s.opposite, moveName: m)

@@ -1,6 +1,10 @@
 import SwiftUI
 
 /// Small inline pill used for type chips, badges, and status tags.
+///
+/// One component with a `Style` (colors) and `Size` (font and padding)
+/// instead of ad-hoc capsules, so every tag in the app stays consistent.
+/// Use `Chip.type(_:)` for Pokémon types, which picks the type's color.
 struct Chip: View {
     let text: String
     let style: Style
@@ -19,6 +23,8 @@ struct Chip: View {
             .padding(.horizontal, size.horizontalPadding)
             .padding(.vertical, size.verticalPadding)
             .foregroundStyle(style.foreground)
+            // Every style is softened the same way, so custom colors
+            // (type colors, sprite tints) read like the built-in ones.
             .background(style.background.opacity(0.7))
             .clipShape(RoundedRectangle.chip)
     }
@@ -90,7 +96,7 @@ extension Chip {
         )
     }
 
-    /// Convenience for Pokemon type chips with auto color.
+    /// Convenience for Pokemon type chips with auto color, from a `Type` model.
     static func type(_ type: Type, size: Size = .small) -> Chip {
         Chip(
             type.name.uppercased(),

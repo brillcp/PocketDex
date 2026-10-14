@@ -2,6 +2,11 @@ import SwiftUI
 import PokeBattleKit
 
 /// Per-side animation cue bundle.
+///
+/// The `...Tick` counters are triggers, not values: bumping one fires a
+/// one-shot effect even when the same amount repeats. `shakeTick` animates
+/// `ShakeEffect` through one full wave and drives hit haptics; `damageTick`
+/// gives each `DamagePopup` a fresh identity so it replays.
 struct SideCues: Equatable {
     var shakeTick: Int = 0
     var damageAmount: Int?
@@ -10,6 +15,12 @@ struct SideCues: Equatable {
 }
 
 /// Owns all animation cues the battle UI reads.
+///
+/// Kept separate from the battle state so the view models can drive
+/// presentation (who's lunging, who fainted, sprite tint) without touching
+/// the engine's `BattleState`. Each `play...` method sets a cue and then
+/// sleeps for roughly the animation's length, so the view model's `await`
+/// sequences events one after another.
 @MainActor
 @Observable
 final class BattleAnimator {

@@ -2,6 +2,9 @@ import SwiftUI
 import PokeBattleKit
 
 /// One combatant's animated sprite with lunge, shake, faint, and victory effects.
+///
+/// Takes plain values (not the animator) so it only re-renders when its
+/// own side's cues change.
 struct BattlerSprite: View {
     let url: String?
     let side: Side
@@ -42,6 +45,7 @@ struct BattlerSprite: View {
 
 // MARK: - Private
 private extension BattlerSprite {
+    /// Off-screen toward the owner's edge before entrance and after fainting.
     var entryOffset: CGFloat {
         if isFainted {
             return side == .player ? -200 : 200
