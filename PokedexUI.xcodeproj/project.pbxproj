@@ -954,7 +954,7 @@
 			repositoryURL = "https://github.com/brillcp/pokebattlekit";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 0.1.4;
+				minimumVersion = 0.1.6;
 			};
 		};
 		D57366012E2114C100FE4ED0 /* XCRemoteSwiftPackageReference "Networking" */ = {

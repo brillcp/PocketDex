@@ -1,5 +1,5 @@
 {
-  "originHash" : "38d2a1e62d35a9e8c4813b7e9c5db8185a6476449ad679b23bef9a0aaa1c0e2c",
+  "originHash" : "c82393c4cd21ddfe9a03485b390469a74d753f026509db41a05f0a0f393fdf54",
   "pins" : [
     {
       "identity" : "networking",
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/brillcp/pokebattlekit",
       "state" : {
-        "revision" : "362830011915776d84936a4a22dd30a5a0a1f7fa",
-        "version" : "0.1.4"
+        "revision" : "7c22482223f4afd0fa5e54b22bfdd34edad354d9",
+        "version" : "0.1.6"
       }
     }
   ],
