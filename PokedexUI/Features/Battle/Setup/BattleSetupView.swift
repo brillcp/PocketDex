@@ -9,6 +9,7 @@ import PokeBattleKit
 /// through `onStart` in a `BattleLaunch`.
 struct BattleSetupView<ViewModel: BattleSetupViewModelProtocol>: View {
     @Environment(\.container) private var container
+    @AppStorage(BattleDifficulty.key) private var difficulty = BattleDifficulty.defaultValue
 
     @State private var viewModel: ViewModel
     private let onStart: (BattleLaunch) -> Void
@@ -41,6 +42,7 @@ private extension BattleSetupView {
             opponent: opponent,
             playerMoves: viewModel.selection.selectedMoves,
             opponentMoves: opponentMoves,
+            difficulty: difficulty,
             container: container
         )
         onStart(BattleLaunch(viewModel: battleViewModel))
@@ -49,14 +51,11 @@ private extension BattleSetupView {
     var content: some View {
         Group {
             if let error = viewModel.errorMessage {
-                errorState(error)
-                    .transition(.opacity)
+                errorState(error).transition(.opacity)
             } else if viewModel.phase == .loading {
-                loadingState
-                    .transition(.opacity)
+                loadingState.transition(.opacity)
             } else {
-                loadout
-                    .transition(.opacity)
+                loadout.transition(.opacity)
             }
         }
         .animation(.easeInOut(duration: 0.2), value: viewModel.phase)
@@ -92,18 +91,14 @@ private extension BattleSetupView {
         .opacity(busy ? Opacity.disabled : 1)
         .animation(.easeInOut(duration: 0.2), value: busy)
         .scrollIndicators(.hidden)
-        .safeAreaBar(edge: .bottom) {
-            if viewModel.selection.isFull {
-                battleButton.transition(.move(edge: .bottom).combined(with: .blurReplace))
-            }
-        }
+        .safeAreaBar(edge: .bottom) { bottomBar }
         .animation(.snappy(duration: 0.2), value: viewModel.selection.isFull)
     }
 
     var matchupRow: some View {
         HStack(alignment: .top, spacing: DesignKit.Spacing.Primitive.s2) {
             if let player = viewModel.playerPokemon {
-                fighterCard(pokemon: player, summary: viewModel.playerSummary)
+                fighterCard(pokemon: player, summary: viewModel.playerSummary, level: container.battleRules.level)
             }
             VStack {
                 Spacer()
@@ -111,12 +106,16 @@ private extension BattleSetupView {
                 Spacer()
             }
             if let opponent = viewModel.opponentPokemon {
-                fighterCard(pokemon: opponent, summary: viewModel.opponentSummary)
+                fighterCard(
+                    pokemon: opponent,
+                    summary: viewModel.opponentSummary,
+                    level: container.battleRules.opponentLevel(for: difficulty)
+                )
             }
         }
     }
 
-    func fighterCard(pokemon: PokemonViewModel, summary: Pokemon) -> some View {
+    func fighterCard(pokemon: PokemonViewModel, summary: Pokemon, level: Int) -> some View {
         VStack(spacing: DesignKit.Spacing.Primitive.s12) {
             SpriteImage(url: summary.frontSprite)
                 .frame(height: 96)
@@ -125,6 +124,12 @@ private extension BattleSetupView {
                 .font(.pixel14)
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
+
+            Text("Lv.\(level)")
+                .font(.pixel12)
+                .foregroundStyle(.secondary)
+                .contentTransition(.numericText(value: Double(level)))
+                .animation(.snappy, value: level)
 
             HStack(spacing: DesignKit.Spacing.Primitive.s4) {
                 ForEach(pokemon.typeNames, id: \.self) { type in
@@ -224,7 +229,20 @@ private extension BattleSetupView {
         )
     }
 
-    // MARK: - Battle button
+    // MARK: - Bottom bar
+
+    /// Difficulty menu, plus the Start button once four moves are picked.
+    var bottomBar: some View {
+        HStack(spacing: DesignKit.Spacing.Primitive.s12) {
+            if viewModel.selection.isFull {
+                battleButton.transition(.move(edge: .bottom).combined(with: .blurReplace))
+            }
+            DifficultyMenu()
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .padding(.horizontal, DesignKit.Spacing.Primitive.s32)
+        .padding(.bottom, DesignKit.Spacing.Primitive.s8)
+    }
 
     var battleButton: some View {
         let phase = viewModel.phase
@@ -235,10 +253,8 @@ private extension BattleSetupView {
             isLoading: phase == .awaitingAI,
             action: phase == .readyToStart
                 ? startBattle
-                : { Task { await viewModel.requestOpponentLoadout() } }
+                : { Task { await viewModel.requestOpponentLoadout(difficulty: difficulty) } }
         )
-        .padding(.horizontal, DesignKit.Spacing.Primitive.s32)
-        .padding(.bottom, DesignKit.Spacing.Primitive.s8)
     }
 }
 
@@ -248,7 +264,8 @@ private extension BattleSetupView {
     let vm = BattleSetupViewModel(
         player: player,
         opponent: opponent,
-        aiService: BattleAIService()
+        aiService: BattleAIService(),
+        rules: .standard
     )
     let pikachuVM = PokemonViewModel(pokemon: .pikachu)
     vm.playerPokemon   = pikachuVM

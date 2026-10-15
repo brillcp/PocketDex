@@ -13,6 +13,8 @@ struct PokemonSummary: Codable, Hashable, Sendable, PokemonData {
     let typeNames: [String]
     let statLookup: [String: Int]
     let cryURL: String?
+    /// For weight-based moves (Low Kick, Heavy Slam).
+    let weightInHectograms: Int?
 
     init(
         id: Int,
@@ -21,7 +23,8 @@ struct PokemonSummary: Codable, Hashable, Sendable, PokemonData {
         backSprite: String?,
         typeNames: [String],
         statLookup: [String: Int],
-        cryURL: String?
+        cryURL: String?,
+        weightInHectograms: Int? = nil
     ) {
         self.id = id
         self.name = name
@@ -30,6 +33,7 @@ struct PokemonSummary: Codable, Hashable, Sendable, PokemonData {
         self.typeNames = typeNames
         self.statLookup = statLookup
         self.cryURL = cryURL
+        self.weightInHectograms = weightInHectograms
     }
 }
 
@@ -47,5 +51,6 @@ extension PokemonSummary {
             uniqueKeysWithValues: pokemon.stats.map { ($0.stat.name, $0.baseStat) }
         )
         self.cryURL = pokemon.cries.latest
+        self.weightInHectograms = pokemon.weight
     }
 }

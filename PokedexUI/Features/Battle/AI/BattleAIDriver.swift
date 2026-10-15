@@ -11,12 +11,15 @@ import PokeBattleKit
 final class BattleAIDriver {
     private let service: BattleAIServiceProtocol
     private let historyLimit: Int
+    /// The difficulty this battle is played at, fixed when it starts.
+    private let difficulty: Difficulty
     private var history: [String] = []
     private var turnNumber: Int = 0
     private(set) var playerSeenMoves: Set<String> = []
 
-    init(service: BattleAIServiceProtocol, historyLimit: Int = 4) {
+    init(service: BattleAIServiceProtocol, difficulty: Difficulty, historyLimit: Int = 4) {
         self.service = service
+        self.difficulty = difficulty
         self.historyLimit = historyLimit
     }
 
@@ -38,7 +41,8 @@ final class BattleAIDriver {
             defenderSeenMoves: Array(playerSeenMoves),
             typeChart:         typeChart,
             recentMoves:       history,
-            turnNumber:        turnNumber
+            turnNumber:        turnNumber,
+            difficulty:        difficulty
         )
         history.append(pick.name)
         if history.count > historyLimit { history.removeFirst() }

@@ -84,10 +84,20 @@ struct BattleLogFormatter {
             return nameAttr(side) + plain(" is ") + colored("fast asleep", statusColor(.sleep))
         case .recharging(let side):
             return nameAttr(side) + plain(" must ") + colored("recharge", .gray)
+        case .frozenSolid(let side):
+            return nameAttr(side) + plain(" is ") + colored("frozen solid", statusColor(.freeze))
+        case .thawed(let side):
+            return nameAttr(side) + colored(" thawed out", statusColor(.freeze))
         case .fullyParalyzed(let side):
             return nameAttr(side) + plain(" is ") + colored("fully paralyzed", statusColor(.paralysis))
         case .lostFocus(let side):
             return nameAttr(side) + plain(" lost its ") + colored("focus", .gray)
+        case .flinched(let side):
+            return nameAttr(side) + colored(" flinched", .gray) + plain(" and couldn't move")
+        case .failed:
+            return plain("But it ") + colored("failed", .gray)
+        case .hitCount(_, let count):
+            return plain("Hit ") + bold("\(count) times") + plain("!")
         case .fainted(let side):
             return nameAttr(side) + colored(" fainted!", Color.pokedexRed)
         case .ended(let w):
@@ -166,6 +176,7 @@ private extension BattleLogFormatter {
         case .burn: .orange
         case .poison: .purple
         case .sleep: .gray
+        case .freeze: .cyan
         }
     }
 }

@@ -58,7 +58,8 @@ struct OpponentPickerView: View {
                         viewModel: BattleSetupViewModel(
                             player: player,
                             opponent: opp,
-                            aiService: container.battleAI
+                            aiService: container.battleAI,
+                            rules: container.battleRules
                         ), onStart: { launch in
                             dismiss()
                             onStart(launch)
@@ -94,37 +95,23 @@ private extension OpponentPickerView {
         Task {
             let candidates = await ensureCandidates()
 
-            let pool = await Self.balancedPool(from: candidates, player: playerCandidate, chart: chart)
-
+            // The AI service filters the fair pool itself, off the main
+            // actor (it's an actor).
             let pickedId = await aiService.chooseOpponent(
                 player: playerCandidate,
-                candidates: pool,
+                candidates: candidates,
                 typeChart: chart
             )
             isAIThinking = false
             // Map the id back to a main-context model; fall back to a random
-            // pool member if the AI returned nothing usable.
+            // candidate if the AI returned nothing usable.
             if let pickedId, let match = allPokemon.first(where: { $0.id == pickedId }) {
                 setupOpponent = match
-            } else if let id = pool.randomElement()?.id,
+            } else if let id = candidates.randomElement()?.id,
                       let match = allPokemon.first(where: { $0.id == id }) {
                 setupOpponent = match
             }
         }
-    }
-
-    /// Scores the whole candidate pool on the cooperative pool, off the
-    /// main actor. `@concurrent` makes the hop explicit: with the module's
-    /// `nonisolated` default and Approachable Concurrency, a plain async
-    /// function would run on the caller's actor (main) instead.
-    @concurrent
-    static func balancedPool(from candidates: [Candidate], player: Candidate, chart: TypeChart?) async -> [Candidate] {
-        OpponentStrategy.balancedPool(
-            from: candidates,
-            playerBST: player.baseStatTotal,
-            playerTypes: player.typeNames,
-            chart: chart
-        )
     }
 
     /// Builds the candidate cache on view appear so a "Smart pick" tap can

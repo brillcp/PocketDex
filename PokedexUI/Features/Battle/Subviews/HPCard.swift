@@ -6,6 +6,7 @@ import PokeBattleKit
 /// HP and status didn't change.
 struct HPCard: View, Equatable {
     let name: String
+    let level: Int
     let currentHP: Int
     let maxHP: Int
     let status: Status
@@ -14,6 +15,9 @@ struct HPCard: View, Equatable {
         VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s8) {
             HStack {
                 Text(name).font(.pixel14)
+                Text("Lv.\(level)")
+                    .font(.pixel12)
+                    .foregroundStyle(.secondary)
                 if status != .none {
                     Chip(status.displayName, style: .custom(background: statusColor.opacity(0.4), foreground: statusColor))
                 }
@@ -48,6 +52,7 @@ private extension HPCard {
         case .burn:      return .orange
         case .poison:    return .purple
         case .sleep:     return .gray
+        case .freeze:    return .cyan
         case .none:      return .clear
         }
     }

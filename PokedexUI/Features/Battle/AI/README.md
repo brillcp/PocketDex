@@ -1,58 +1,22 @@
 # Battle AI
 
-On-device AI that picks moves, loadouts, and opponents for the bot side of
-a battle. The LLM is a sprinkle on top of a deterministic heuristic, not the
-core decision-maker — the game plays fine with the model unavailable.
+The AI opponent, built entirely on [PokeBattleKit](https://github.com/brillcp/PokeBattleKit)'s
+rule-based AI. There's no language model.
 
-## Architecture
-
-Three decisions, each with the same shape:
-
-| Decision | File | What it picks |
+| Decision | Method | How |
 |---|---|---|
-| In-battle move | `MoveAI.swift` | One of the AI's 4 moves each turn |
-| Opponent | `OpponentAI.swift` | A Pokemon to face the player |
-| Pre-battle loadout | `LoadoutAI.swift` | 4 moves from the AI's full pool |
-
-Each per-decision file contains:
-
-1. **Strategy** — deterministic heuristic fallback + post-pick corrections.
-   Always runs.
-2. **Prompt** — builds the LLM prompt and parses the model's reply.
-
-The orchestrator `BattleAIService.swift` glues the two together via
-`LanguageModelClient.decide(...)`: heuristic produces a fallback, prompt
-runs the LLM, `Strategy.adjust` corrects the result. If the LLM is
-unavailable or replies with junk, the adjusted heuristic fallback is
-returned.
+| Opponent | `chooseOpponent` | `OpponentStrategy.pick`: a random fair matchup by simulated strength (`PokemonStrength`), favouring tense ones, skipping recent opponents |
+| Loadout | `chooseLoadout` | `LoadoutStrategy.heuristicPick` + the difficulty's handicap |
+| Move each turn | `chooseMove` | `MoveStrategy.heuristicPick` for the difficulty + `MoveStrategy.adjust` |
 
 ## Files
 
 ```
 AI/
-  BattleAIService.swift           ← protocol + actor façade
-  LanguageModelClient.swift       ← Foundation Models wrapper + decide<T>
-  MoveAI.swift                    ← MoveStrategy + MoveScoring + MovePrompt
-  OpponentAI.swift                ← OpponentStrategy + OpponentPrompt
-  LoadoutAI.swift                 ← LoadoutStrategy + LoadoutPrompt
-  BattleContext.swift             ← shared MoveRow renderer + battle context
-  OpponentCandidate.swift         ← Sendable Pokemon DTO for opponent pick
-  LLMInstructions/                ← instruction .md files loaded at runtime
+  BattleAIService.swift           protocol + actor, the three decisions
+  BattleAIDriver.swift            per-battle history and scouted player moves
+  Candidate+Pokemon.swift         Sendable Pokémon DTO for opponent picks
 ```
 
-`BattleKit` (separate Swift package) owns the damage formula, type
-effectiveness, status, and stat-stage mechanics. The AI module only does
-strategy on top.
-
-## Scoring weights
-
-All heuristic scoring weights live in `MoveScoring.Weights` (in
-`MoveAI.swift`) as a single named-constants block. Tune the AI by editing
-that block, not by hunting magic numbers.
-
-## How to add a new decision type
-
-1. Add a new `*.swift` file alongside the existing AI files.
-2. Mirror the Strategy + Prompt shape inside it.
-3. Add a method to `BattleAIServiceProtocol`.
-4. Implement using `client.decide(...)`.
+Everything that decides how well the AI plays lives in PokeBattleKit, where
+its tests check it across the whole Pokédex. Change the AI there, not here.

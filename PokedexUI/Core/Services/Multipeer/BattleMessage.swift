@@ -6,7 +6,10 @@ import PokeBattleKit
 /// reject mismatches (see `MultiplayerSetupViewModel`), so devices running
 /// different app versions fail cleanly instead of misreading messages.
 enum MultipeerProtocol {
-    static let version: Int = 1
+    /// 2: level-50 stats, new events (flinched, failed, hitCount) and new
+    /// move fields. 3: freeze (frozenSolid, thawed), situational move power,
+    /// smaller loadouts, and Pokémon weight in `PokemonSummary`.
+    static let version: Int = 3
 }
 
 /// Pokemon + chosen moves sent by each side during the lobby handshake.

@@ -25,11 +25,14 @@ enum BattleStateReducer {
                 $0.status = status
                 if status == .sleep { $0.sleepTurns = 2 }
             }
+        case .thawed(let side):
+            mutate(side, in: &state) { $0.status = Status.none }
         case .wokeUp(let side):
             mutate(side, in: &state) { $0.status = Status.none; $0.sleepTurns = 0 }
         case .statChanged(let side, let stat, let delta):
             mutate(side, in: &state) { $0.applyStage(stat, delta: delta) }
-        case .used, .missed, .fullyParalyzed, .fastAsleep, .recharging, .lostFocus, .fainted, .ended:
+        case .used, .missed, .fullyParalyzed, .fastAsleep, .frozenSolid, .recharging, .lostFocus,
+             .flinched, .failed, .hitCount, .fainted, .ended:
             break
         }
     }

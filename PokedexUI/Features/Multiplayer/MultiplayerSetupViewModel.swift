@@ -281,7 +281,9 @@ private extension MultiplayerSetupViewModel {
         else { return }
         let selfMoves = selection.selectedMoves
         let peerMoves = peerChallenge.moveNames.compactMap { PokeBattleKit.move(named: $0) }
-        guard peerMoves.count == selection.maxSelections else {
+        // The peer's Pokémon may know fewer than four usable moves.
+        guard !peerMoves.isEmpty, peerMoves.count == peerChallenge.moveNames.count,
+              peerMoves.count <= selection.loadoutSize else {
             errorMessage = "Opponent sent an invalid loadout."
             showPicker = false
             reset()

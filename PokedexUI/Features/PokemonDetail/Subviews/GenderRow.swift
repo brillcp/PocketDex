@@ -29,7 +29,7 @@ struct GenderRow: View {
                         }
                         .clipShape(Capsule())
                     }
-                    .frame(height: 10)
+                    .frame(height: DesignKit.Spacing.Primitive.s12)
                     HStack {
                         Text(
                             "♂ \(male, format: Self.percentFormat)"

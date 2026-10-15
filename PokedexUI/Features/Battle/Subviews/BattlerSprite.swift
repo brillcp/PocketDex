@@ -71,7 +71,7 @@ private extension BattlerSprite {
 
 /// Single-shot floating damage label that animates up and fades on appear.
 private struct DamagePopup: View {
-    private let baseOffset: CGSize = CGSize(width: 0, height: 24)
+    private let baseOffset: CGSize = CGSize(width: 0, height: DesignKit.Spacing.Primitive.s24)
 
     let amount: Int
 

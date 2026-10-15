@@ -76,7 +76,7 @@ private struct MultiplayerDiscoveryView: View {
                         Image(systemName: "iphone.gen3.radiowaves.left.and.right")
                             .resizable()
                             .aspectRatio(contentMode: .fill)
-                            .frame(width: 28, height: 28)
+                            .frame(width: DesignKit.Spacing.Primitive.s24, height: DesignKit.Spacing.Primitive.s24)
                         Text("No trainers nearby")
                     }
                     Spacer()
@@ -101,7 +101,7 @@ private struct MultiplayerDiscoveryView: View {
                                         PixelSpinner()
                                     } else {
                                         Image(systemName: "person.fill")
-                                            .frame(width: 24, height: 24)
+                                            .frame(width: DesignKit.Spacing.Primitive.s24, height: DesignKit.Spacing.Primitive.s24)
                                     }
                                     Text(peer.name)
                                     Spacer()

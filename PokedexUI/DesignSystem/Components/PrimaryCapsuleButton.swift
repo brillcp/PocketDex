@@ -27,7 +27,7 @@ struct PrimaryCapsuleButton: View {
                 Text(isLoading ? loadingTitle : title)
             }
             .font(.pixel16)
-            .frame(height: 24)
+            .frame(height: DesignKit.Spacing.Primitive.s24)
             .frame(maxWidth: .infinity)
             .padding(.vertical, DesignKit.Spacing.Primitive.s16)
             .foregroundStyle(.white)

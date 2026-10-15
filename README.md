@@ -3,16 +3,15 @@
 ![swift](https://img.shields.io/badge/Swift-6-orange)
 ![release](https://img.shields.io/github/v/release/brillcp/PocketDex)
 ![platforms](https://img.shields.io/badge/Platforms-iOS%2026%2B-blue)
-![apple-intelligence](https://img.shields.io/badge/Apple%20Intelligence-FoundationModels-purple)
 [![spm](https://img.shields.io/badge/Swift%20Package%20Manager-compatible-green)](#dependencies-)
 [![license](https://img.shields.io/github/license/brillcp/PocketDex)](/LICENSE)
 ![stars](https://img.shields.io/github/stars/brillcp/PocketDex?style=social)
 
 # PocketDex+
 
-PocketDex+ is a SwiftUI app built on top of the [PokeAPI](https://pokeapi.co), with a working turn-based Pokemon battle mode driven by **Apple's on-device FoundationModels framework** and **local multiplayer** over MultipeerConnectivity. Browse the dex, dig into a pokemon, pick a fight against AI or a friend nearby.
+PocketDex+ is a SwiftUI app built on top of the [PokeAPI](https://pokeapi.co), with a working turn-based Pokemon battle mode against a **simulation-tested rule-based AI** and **local multiplayer** over MultipeerConnectivity. Browse the dex, dig into a pokemon, pick a fight against AI or a friend nearby.
 
-If you're a senior iOS engineer looking for a worked example of modern SwiftUI patterns (**Swift 6 strict concurrency**, actors, `@Observable`, SwiftData with a background `@ModelActor`, on-device AI, MultipeerConnectivity), or someone earlier in their iOS journey trying to see how these pieces fit together in a real app, hopefully there's something here for you. Every feature is small enough to read end-to-end, and the code is commented to explain *why* things are built the way they are: data flow, threading choices, and the non-obvious decisions.
+If you're a senior iOS engineer looking for a worked example of modern SwiftUI patterns (**Swift 6 strict concurrency**, actors, `@Observable`, SwiftData with a background `@ModelActor`, a rule-based battle AI checked by whole-Pokédex simulation, MultipeerConnectivity), or someone earlier in their iOS journey trying to see how these pieces fit together in a real app, hopefully there's something here for you. Every feature is small enough to read end-to-end, and the code is commented to explain *why* things are built the way they are: data flow, threading choices, and the non-obvious decisions.
 
 Built by [Viktor Gidlöf](https://viktorgidlof.com).
 
@@ -34,7 +33,7 @@ PocketDex+ is **Protocol-Oriented MVVM** with clear layer boundaries and **Swift
 - ✅ **Type Safety**: generics, `Sendable` snapshots crossing actor boundaries (`PokemonSearchEntry`, `Candidate`, DTOs), `@Attribute(.unique)` on every keyed cache entity (Pokemon by id, EvolutionChainEntity by chainId). Move and type data live in PokeBattleKit's own disk cache.
 - ✅ **Reactive UI**: SwiftUI body re-renders driven entirely by `@Observable` view models, with views split so high-frequency updates only touch the views that read them.
 - ✅ **Adaptive layout**: size-class driven, so the app works on iPhone, iPad, resizable windows, and the foldable iPhone Duo (detail on the left, grid on the right when unfolded).
-- ✅ **On-Device AI**: Apple `FoundationModels` with `@Generable` structured output and rule-based fallbacks via [PokeBattleKit](https://github.com/brillcp/PokeBattleKit) at every call site.
+- ✅ **Battle AI**: rule-based AI from [PokeBattleKit](https://github.com/brillcp/PokeBattleKit), with opponents matched by simulated strength ratings and three difficulty levels.
 - ✅ **Local Multiplayer**: host-authoritative architecture with a typed, versioned `Codable` message protocol over MultipeerConnectivity. The same `BattleViewModelProtocol` drives both AI and peer-to-peer battles with zero view changes.
 
 ### SOLID Compliance Score: 0.94 / 1.0
@@ -93,7 +92,7 @@ PokedexUI/
 │   ├── PokemonDetail/              Detail screen + subviews (stats, evolutions, matchups)
 │   ├── Items/  Search/  Bookmarks/
 │   ├── Battle/                     BattleView, view model, animator, reducer, log
-│   │   ├── AI/                     BattleAIService, LanguageModelClient, prompts, LLM instructions
+│   │   ├── AI/                     BattleAIService (PokeBattleKit's AI), BattleAIDriver
 │   │   ├── Setup/                  Loadout screen
 │   │   └── Subviews/
 │   └── Multiplayer/                Gym lobby, peer battle view model
@@ -124,7 +123,7 @@ UI-facing types opt in to the main actor explicitly; everything else runs in the
 | `PokeAPIClient` | `Sendable` struct, `@concurrent` fetch | JSON decodes in parallel task-group children |
 | `SpriteLoader` | `Sendable` struct, `@concurrent` | Stateless, so grid cells load and decode sprites in parallel |
 | `ImageColorAnalyzer` | `actor` + `@concurrent` scan | The actor only guards the cache; pixel scans run concurrently |
-| `AudioPlayer`, `BattleAIService`, `LanguageModelClient` | `actor` | AVFoundation playback, on-device model sessions |
+| `AudioPlayer`, `BattleAIService` | `actor` | AVFoundation playback, opponent picks over the whole Pokédex off the main actor |
 | `MultipeerService` | `@MainActor @Observable` | MC delegate callbacks are `nonisolated` and hop to the main queue in arrival order |
 | `AppContainer` | `Sendable` | Immutable references to Sendable services, so it can be the `@Entry` environment default |
 
@@ -202,68 +201,62 @@ The open pokemon is carried across size-class changes, so folding or unfolding k
 
 # Battle System ⚔️
 
-The battle screen is a turn-based 1v1 simulator built on top of the real PokeAPI move and type data. Both sides commit to 4 hand-picked moves before the fight starts, then trade turns until one side faints. The Gen-V damage formula drives every hit (level 50, STAB, type effectiveness, crit roll, accuracy roll, burn penalty). The rules come from [PokeBattleKit](https://github.com/brillcp/PokeBattleKit) and follow the main games:
+The battle screen is a turn-based 1v1 simulator built on top of the real PokeAPI move and type data. Both sides commit to up to 4 hand-picked moves before the fight starts, then trade turns until one side faints. Both sides start equal: no HP bonus, no handicap. The rules come from [PokeBattleKit](https://github.com/brillcp/PokeBattleKit) and follow the main games:
 
+- **Level 50**: stats use the real formulas at level 50 with perfect IVs and no EVs, and the Gen-V+ damage formula drives every hit (STAB, uncapped type effectiveness so 4x weaknesses hit 4x, 1-in-24 crits, accuracy and damage rolls, burn penalty).
 - **Turn order**: higher move priority goes first, then higher speed. Speed stat stages count (Agility doubles speed, Icy Wind slows), and paralysis halves it.
-- **Status effects**: burn and poison deal damage at the end of each turn, paralysis can skip a turn, and sleep lasts 1-3 turns (Rest: 2).
-- **Type immunities**: Electric types can't be paralyzed, Fire types can't be burned, and Poison and Steel types can't be poisoned. Thunder Wave fails on Ground types, and a move with no effect (Body Slam into a Ghost type) can't inflict its status either.
+- **Move mechanics**: multi-hit moves (Bullet Seed hits 2-5 times), flinching (Fake Out works on the first turn only), recharge turns, and stat changes on the right side (Close Combat lowers its user's defences). Situational power follows the games: Low Kick by weight, Reversal by HP, Gyro Ball by Speed, Facade/Hex/Venoshock/Payback doubling when their condition holds, Foul Play and Body Press using the right stats, Seismic Toss and Super Fang as fixed damage. Moves the engine can't model faithfully, like confusion-only moves, are left out of the movepool.
+- **Every Pokémon can battle**: a Pokémon that knows fewer than four usable moves fights with what it has, a form with almost no PokeAPI learnset (Mega, G-Max) uses its base species' moves, and a Pokémon with no usable attack gets Struggle.
+- **Status effects**: burn and poison deal damage at the end of each turn (Toxic escalates), paralysis can skip a turn, sleep lasts 1-3 turns (Rest: 2), and a frozen Pokémon has a 20% chance each turn to thaw (Fire attacks thaw it at once).
+- **Type immunities**: Electric types can't be paralyzed, Fire types can't be burned, Ice types can't be frozen, and Poison and Steel types can't be poisoned. Thunder Wave fails on Ground types, and a move with no effect (Body Slam into a Ghost type) can't inflict its status either.
 
-The opponent is driven entirely by **Apple's `FoundationModels` framework**, running fully on-device.
+At real level-50 HP, a one-on-one fight without switching would be over in a hit or two. So every Pokémon gets 4x its level-50 HP while each hit stays real-game size: a neutral same-type attack takes about a tenth of the target's HP and a super-effective one about a fifth, and a battle lasts around six turns. Healing, Rest, and burn and poison damage keep their real-game amounts.
+
+The opponent is driven by [PokeBattleKit](https://github.com/brillcp/PokeBattleKit)'s rule-based AI. There's no language model: every decision is instant, works on every device, and is exactly what the package's whole-Pokédex simulation tests.
 
 ## What the AI does
 
-PocketDex+ uses `SystemLanguageModel` with **structured generation** (`@Generable`) for three decisions:
-
 1. **Opponent picking** ("Smart pick" button in the picker sheet)
-   PokeBattleKit first filters a balanced pool of up to 50 candidates (scored off the main thread). The model receives the player's name, types, and BST plus that pool as a shuffled, numbered roster with matchup annotations, and returns a structured `OpponentPickResult` with the chosen number.
-2. **Loadout selection** (background task during the loadout screen)
-   The model receives both combatants' typings and a shortlisted move pool, annotated with type multipliers and estimated damage, and returns a `LoadoutPickResult` with four move names.
-3. **Per-turn move selection** (every time the player commits a move)
-   The model receives both combatants' current HP, status, and types, plus each available move with its type multiplier, estimated damage, KO flag, and heuristic score. It returns a `MovePickResult` with the chosen move name.
+   Every Pokémon has a **strength rating** from simulated battles (see below). A fair opponent is one you're predicted to beat 35-65% of the time at equal level, with no one-sided type matchup (where one side hits super-effectively and is resisted back). "Smart pick" chooses at random among the fair opponents, favouring tense matchups (close to 50/50, both sides able to hit hard), and skips the last ten opponents your Pokémon faced.
+2. **Loadout selection** (when you lock in your moves)
+   Role-based: the best attack, an attack of a different type, then a status, boost or heal move, or more coverage. On easy, the AI's strongest attack is swapped for a weaker one.
+3. **Per-turn move selection**
+   Every move is valued in HP of damage: attacks by the damage they'll do plus a KO bonus, boosts, statuses and heals by the damage they gain or prevent over the next few turns. It reacts to KO threats from faster opponents with priority moves. The AI only knows your moves once you've used them, as a human opponent would.
 
-Every call degrades gracefully to rule-based heuristics (in [PokeBattleKit](https://github.com/brillcp/PokeBattleKit)) if Apple Intelligence is unavailable, the session is busy, or the model returns an unresolvable result. **The battle UI never blocks waiting on a model response.**
+The player picks the difficulty from the gear menu at the bottom of the loadout screen; the choice is saved and passed to every AI decision. Difficulty works the classic Pokémon way: the opponent is 3 levels below you on easy, the same level on fair, and 4 levels above on hard (calibrated across the whole Pokédex so a good player wins about 80% / 50% / 30%), and the AI plays more loosely on easy and always takes its best move on hard. Levels are shown on the loadout screen and the HP cards.
 
-## Structured generation
+## Strength ratings
 
-Each AI decision uses `@Generable` structs for type-safe output instead of free-text parsing. The model returns typed results (`MovePickResult`, `LoadoutPickResult`, `OpponentPickResult`) that resolve directly to game objects by name or index lookup.
-
-Instead of letting the model call tools, the prompt already contains the numbers it needs: type-effectiveness multipliers and Gen-V damage estimates computed by PokeBattleKit. Every decision uses a fresh `LanguageModelSession`, so turns don't leak context into each other.
-
-System instructions live in [`PokedexUI/Features/Battle/AI/LLMInstructions/`](PokedexUI/Features/Battle/AI/LLMInstructions/), split per task. Each is a single short paragraph guiding tactical priorities.
+Base stat total (BST) is a poor guide to how strong a Pokémon is in battle: it ignores movepools. So PokeBattleKit rates every Pokémon by simulation: each of the 1,351 Pokémon fights 80 random opponents at equal level with the AI on both sides, and the results are fitted to Elo-style ratings (a Bradley-Terry model; 1500 is average, 400 points apart is 10-to-1 odds). They ship as a 24 KB JSON file in the package (`PokemonStrength`) and predict lopsided matchups correctly about 93% of the time. Rerun the generator after changing the rules or the AI.
 
 ## Heuristic strategy layer
 
-The scoring, filtering, and post-pick correction logic lives in [PokeBattleKit](https://github.com/brillcp/PokeBattleKit) as plain rule-based code with no LLM dependency. Scoring and picking are deterministic; the only randomness is a little variety when shuffling the opponent pool and in the loadout fairness handicap:
+- **`MoveScoring`**: values every move in HP of damage, using a short forecast of the fight (each side's damage per turn, who moves first, how many actions each side gets).
+- **`MoveStrategy`**: the pick for the difficulty (weighted random among the near-best moves on fair) and corrections (replace moves that can't work, replace support moves that would do nothing, take a guaranteed KO).
+- **`LoadoutStrategy`**: role-based loadouts.
+- **`OpponentStrategy`** + **`PokemonStrength`**: fair pools and picks by simulated strength.
 
-- **`MoveScoring`**: in-battle and loadout scoring with STAB, type effectiveness, priority, and escalating recency penalties to prevent move spamming.
-- **`MoveStrategy`**: heuristic fallback pick and post-pick adjustments (immune repair, phase-aware switching, KO override, status redundancy).
-- **`LoadoutStrategy`**: shortlisting, heuristic 4-move selection, fill (pad LLM partial picks to 4), and mild fairness handicapping.
-- **`OpponentStrategy`**: BST-tolerant pool filtering, mutual-threat scoring, and heuristic best-opponent ranking.
+## One system for every battle
 
-Every `BattleAIService` method follows the same shape: PokeBattleKit computes a heuristic fallback, the LLM attempts a smarter pick via structured generation, then PokeBattleKit runs post-pick corrections on whichever branch won.
+Battle quality isn't tuned battle by battle. PokeBattleKit's tests run against an offline snapshot of all of PokeAPI (every move and every Pokémon):
+
+- **Move catalogue audit**: every PokeAPI value the engine reads must be one it knows, and every learnable move with an unusual mechanic must be explicitly modeled, approximated or excluded. A new or misread move fails a named test.
+- **Whole-Pokédex simulation**: AI-vs-AI battles with matchups picked the way "Smart pick" picks them, checking battle length, stalls, unusable picks, missed KOs, loadouts without an attack, each difficulty's win rate, and that the strength ratings still predict outcomes. A calibration run finds the difficulty level gaps.
 
 ## Tuning the AI
 
-All scoring weights live in `MoveScoring.Weights` inside PokeBattleKit. They're public static properties, so you can read (and fork) them to experiment with AI behavior:
+The weights live in `MoveScoring.Weights` inside PokeBattleKit. They're public static properties, so you can read (and fork) them to experiment with AI behavior:
 
-| Weight group | What it controls | Examples |
+| Weight | What it controls | Default |
 | --- | --- | --- |
-| **Damage** | How much the AI values raw damage, KO potential, resisted hits | `koBonus` (55), `nearKOBonus` (18), `resistedMult` (0.4) |
-| **Status** | Value of inflicting paralysis, burn, poison, sleep | `paralysisFaster` (28), `burnPhysical` (24), `sleep` (22) |
-| **Stat changes** | Boost/debuff desirability based on matchup context | `statBoostMatching` (10), `statBoostSpeedSlow` (16) |
-| **Recency** | Escalating penalties for repeating the same move | `repeatFirst` (18), `repeatSecond` (40), `repeatThird` (65) |
-| **Low HP** | Survival instinct: healing and priority at low health | `lowHPHealBonus` (35), `lowHPPriorityBonus` (6) |
+| `koBonus` | Bonus for a KO, scaled by its chance | 40 |
+| `twoHitKOBonus` | Bonus for setting up a KO next turn | 10 |
+| `futureDiscount` | Discount on value that pays off in later turns | 0.75 |
+| `horizon` | Future actions boosts, statuses and heals are valued over | 2 |
+| `repeatPenalty` | Mild penalty for repeating a move, to vary near-equal picks | 3 |
+| `supportStreakDecay` | How fast repeated non-attacking moves lose value (prevents stall loops) | 0.5 |
 
-Raising `koBonus` makes the AI more aggressive. Lowering the recency penalties lets it spam its best move. Bumping `lowHPHealBonus` makes it play safer when hurt. The heuristic fallback and LLM post-pick adjustments both flow through these weights, so a single change affects both code paths.
-
-## Why on-device?
-
-- **Zero latency to the network**: every inference happens locally.
-- **Free**: no API tokens, no rate limits.
-- **Private**: battle state never leaves the device.
-- **Available offline**: the app stays playable once the PokeAPI data is cached.
-
-This is the kind of feature `FoundationModels` was built for: small, structured, latency-sensitive decisions on top of well-defined data.
+After a change, run PokeBattleKit's tests to see the effect across the whole Pokédex, then regenerate the ratings and recalibrate the difficulty.
 
 ---
 
@@ -426,7 +419,7 @@ On top of that, the project moved to the Swift 6 language mode with the concurre
 ```swift
 dependencies: [
     .package(url: "https://github.com/brillcp/Networking.git", .upToNextMajor(from: "0.10.1")),
-    .package(url: "https://github.com/brillcp/PokeBattleKit.git", .upToNextMajor(from: "0.1.6"))
+    .package(url: "https://github.com/brillcp/PokeBattleKit.git", .upToNextMajor(from: "0.2.0"))
 ]
 ```
 
@@ -435,7 +428,6 @@ dependencies: [
 # Requirements ❗️
 
 - Xcode 26+
-- iOS 26+ (for the `FoundationModels` framework, `@Observable`, SwiftData)
+- iOS 26+ (for Liquid Glass, `@Observable`, SwiftData)
 - Swift 6 language mode (default actor isolation `nonisolated`, Approachable Concurrency)
-- Apple Intelligence enabled on the device for the AI features (graceful fallback to rule-based heuristics on devices without it)
 - Local Network permission for multiplayer (prompted automatically on first Gym use)

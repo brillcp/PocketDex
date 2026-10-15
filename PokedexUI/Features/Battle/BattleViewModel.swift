@@ -75,6 +75,7 @@ final class BattleViewModel {
         opponent: PokemonViewModel,
         playerMoves: [Move],
         opponentMoves: [Move],
+        difficulty: Difficulty,
         container: AppContainer
     ) {
         self.playerPokemon   = player
@@ -83,7 +84,7 @@ final class BattleViewModel {
         self.playerMoves     = playerMoves
         self.opponentMoves   = opponentMoves
         self.audioPlayer     = container.audioPlayer
-        self.aiDriver        = BattleAIDriver(service: container.battleAI)
+        self.aiDriver        = BattleAIDriver(service: container.battleAI, difficulty: difficulty)
         self.spriteColors    = SpriteColorResolver(
             spriteLoader: container.spriteLoader,
             imageColorAnalyzer: container.imageColorAnalyzer
@@ -93,15 +94,19 @@ final class BattleViewModel {
             playerName: player.name,
             opponentName: opponent.name
         )
+        // Same rules for both sides and no HP edge for the player. The
+        // difficulty sets the opponent's level, the classic way: below the
+        // player's on easy, equal on fair, above on hard.
         let p = Combatant(
             pokemon: player,
             moves: playerMoves.map { MoveSnapshot(from: $0) },
-            // Small HP edge for the player against the AI.
-            hpBonus: 1.2
+            rules: container.battleRules
         )
         let o = Combatant(
             pokemon: opponent,
-            moves: opponentMoves.map { MoveSnapshot(from: $0) }
+            moves: opponentMoves.map { MoveSnapshot(from: $0) },
+            rules: container.battleRules,
+            level: container.battleRules.opponentLevel(for: difficulty)
         )
         let initialState = BattleState(player: p, opponent: o)
         self.state = initialState

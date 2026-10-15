@@ -77,12 +77,12 @@ final class MultiplayerBattleViewModel {
         let selfCombatant = Combatant(
             pokemon: selfSummary,
             moves: selfMoves.map { MoveSnapshot(from: $0) },
-            hpBonus: 1.2
+            rules: container.battleRules
         )
         let peerCombatant = Combatant(
             pokemon: peerSummary,
             moves: peerMoves.map { MoveSnapshot(from: $0) },
-            hpBonus: 1.2
+            rules: container.battleRules
         )
         self.state = BattleState(player: selfCombatant, opponent: peerCombatant)
         if role == .host {
@@ -275,8 +275,13 @@ private extension MultiplayerBattleViewModel {
         case .recharging(let s): .recharging(s.opposite)
         case .wokeUp(let s): .wokeUp(s.opposite)
         case .fastAsleep(let s): .fastAsleep(s.opposite)
+        case .frozenSolid(let s): .frozenSolid(s.opposite)
+        case .thawed(let s): .thawed(s.opposite)
         case .fullyParalyzed(let s): .fullyParalyzed(s.opposite)
         case .lostFocus(let s): .lostFocus(s.opposite)
+        case .flinched(let s): .flinched(s.opposite)
+        case .failed(let s): .failed(s.opposite)
+        case .hitCount(let s, let n): .hitCount(s.opposite, count: n)
         case .fainted(let s): .fainted(s.opposite)
         case .ended(let w): .ended(winner: w?.opposite)
         }

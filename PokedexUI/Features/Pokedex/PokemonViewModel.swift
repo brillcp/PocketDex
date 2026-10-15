@@ -77,7 +77,10 @@ extension PokemonViewModel {
     var isMythical: Bool { pokemon.isMythical }
 }
 
-extension PokemonViewModel: PokemonData {}
+extension PokemonViewModel: PokemonData {
+    /// The raw weight, for weight-based moves (`weight` is the display text).
+    var weightInHectograms: Int? { pokemon.weight }
+}
 
 extension PokemonViewModel: Hashable {
     static func == (lhs: PokemonViewModel, rhs: PokemonViewModel) -> Bool {

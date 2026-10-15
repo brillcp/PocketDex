@@ -10,7 +10,7 @@ struct DetailButton: View {
             Image(systemName: icon)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 24.0, height: 24.0)
+                .frame(width: DesignKit.Spacing.Primitive.s24, height: DesignKit.Spacing.Primitive.s24)
                 .padding(DesignKit.Spacing.Primitive.s12)
         }
         .glassEffect(.clear.interactive(), in: Circle())

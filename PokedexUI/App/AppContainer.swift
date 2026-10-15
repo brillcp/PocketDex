@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import PokeBattleKit
 
 /// Process-wide composition root for dependency injection. Constructed
 /// once at app launch and exposed via `Environment(\.container)`. The
@@ -26,6 +27,10 @@ final class AppContainer: Sendable {
     let audioPlayer:        AudioPlaying
     let battleAI:           BattleAIServiceProtocol
     let multipeerService:   MultipeerService
+    /// Level and battle length for every fight (see PokeBattleKit's
+    /// `BattleRules`). Both sides of a battle, and both peers in
+    /// multiplayer, build their combatants with these.
+    let battleRules:        BattleRules
 
     init(
         modelContainer:     ModelContainer           = AppContainer.makeModelContainer(),
@@ -35,7 +40,8 @@ final class AppContainer: Sendable {
         imageColorAnalyzer: ImageColorAnalyzing      = ImageColorAnalyzer(),
         audioPlayer:        AudioPlaying             = AudioPlayer(),
         battleAI:           BattleAIServiceProtocol  = BattleAIService(),
-        multipeerService:   MultipeerService         = MultipeerService()
+        multipeerService:   MultipeerService         = MultipeerService(),
+        battleRules:        BattleRules              = .standard
     ) {
         // The repository and evolution service default to the same
         // `modelContainer`, and the repository reuses the evolution service
@@ -53,6 +59,7 @@ final class AppContainer: Sendable {
         self.audioPlayer        = audioPlayer
         self.battleAI           = battleAI
         self.multipeerService   = multipeerService
+        self.battleRules        = battleRules
     }
 
     /// Production composition. Reached via `Environment(\.container)`;

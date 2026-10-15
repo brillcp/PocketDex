@@ -145,6 +145,7 @@ private extension BattleArena {
             }
             HPCard(
                 name: c.name,
+                level: c.level,
                 currentHP: c.currentHP,
                 maxHP: c.maxHP,
                 status: c.status
@@ -193,6 +194,7 @@ private extension View {
                     opponent: PokemonViewModel(pokemon: .pikachu),
                     playerMoves: Array(PokeBattleKit.allMoves.prefix(4)),
                     opponentMoves: Array(PokeBattleKit.allMoves.prefix(4)),
+                    difficulty: .fair,
                     container: .live
                 )
             )

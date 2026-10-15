@@ -27,7 +27,7 @@ struct MoveCell: View, Equatable {
                 Image(systemName: "checkmark.circle.fill")
                     .resizable()
                     .foregroundStyle(.white)
-                    .frame(width: 18, height: 18)
+                    .frame(width: DesignKit.Spacing.Primitive.s16, height: DesignKit.Spacing.Primitive.s16)
             }
             VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s4) {
                 HStack {
@@ -55,7 +55,7 @@ private extension MoveCell {
                 .font(.pixel12)
                 .lineLimit(1)
         }
-        .frame(height: 16)
+        .frame(height: DesignKit.Spacing.Primitive.s16)
     }
 
     var footer: some View {

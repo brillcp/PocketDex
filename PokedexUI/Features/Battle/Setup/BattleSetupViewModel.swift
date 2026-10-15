@@ -33,7 +33,8 @@ protocol BattleSetupViewModelProtocol {
     var phase: BattleSetupPhase { get }
 
     func prepare() async
-    func requestOpponentLoadout() async
+    /// Asks the AI for its loadout at `difficulty`.
+    func requestOpponentLoadout(difficulty: Difficulty) async
 }
 
 /// Concrete implementation of `BattleSetupViewModelProtocol`.
@@ -42,6 +43,7 @@ protocol BattleSetupViewModelProtocol {
 final class BattleSetupViewModel {
     private var opponentPool: [Move] = []
     private let aiService:    BattleAIServiceProtocol
+    private let rules:        BattleRules
 
     let playerSummary:   Pokemon
     let opponentSummary: Pokemon
@@ -56,11 +58,13 @@ final class BattleSetupViewModel {
     init(
         player: Pokemon,
         opponent: Pokemon,
-        aiService: BattleAIServiceProtocol
+        aiService: BattleAIServiceProtocol,
+        rules: BattleRules
     ) {
         self.playerSummary   = player
         self.opponentSummary = opponent
         self.aiService       = aiService
+        self.rules           = rules
     }
 }
 
@@ -87,11 +91,11 @@ extension BattleSetupViewModel: BattleSetupViewModelProtocol {
         let playerMoves   = MoveSelection.movesForPokemon(player.pokemon)
         let opponentMoves = MoveSelection.movesForPokemon(opponent.pokemon)
 
-        guard playerMoves.count >= selection.maxSelections else {
+        guard !playerMoves.isEmpty else {
             errorMessage = "Couldn't load \(playerSummary.name)'s movepool. Check your connection and try again."
             return
         }
-        guard opponentMoves.count >= selection.maxSelections else {
+        guard !opponentMoves.isEmpty else {
             errorMessage = "Couldn't load \(opponentSummary.name)'s movepool. Check your connection and try again."
             return
         }
@@ -102,14 +106,14 @@ extension BattleSetupViewModel: BattleSetupViewModelProtocol {
 
     /// Picked after the player locks in, so the AI can counter the player's
     /// actual moves.
-    func requestOpponentLoadout() async {
+    func requestOpponentLoadout(difficulty: Difficulty) async {
         guard let player = playerPokemon,
               let opponent = opponentPokemon else { return }
 
         isPickingLoadout = true
         let chart   = PokeBattleKit.typeChart
-        let fighter = Combatant(pokemon: opponent, moves: [])
-        let foe     = Combatant(pokemon: player,  moves: [])
+        let fighter = Combatant(pokemon: opponent, moves: [], rules: rules, level: rules.opponentLevel(for: difficulty))
+        let foe     = Combatant(pokemon: player,  moves: [], rules: rules)
         let chosen  = selection.selectedMoves
 
         let picks = await aiService.chooseLoadout(
@@ -117,10 +121,11 @@ extension BattleSetupViewModel: BattleSetupViewModelProtocol {
             against: foe,
             moves: opponentPool,
             playerMoves: chosen,
-            typeChart: chart
+            typeChart: chart,
+            difficulty: difficulty
         )
 
-        guard picks.count >= selection.maxSelections else {
+        guard !picks.isEmpty else {
             errorMessage = "Opponent couldn't pick a loadout."
             isPickingLoadout = false
             return
