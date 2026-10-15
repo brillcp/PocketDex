@@ -34,7 +34,7 @@ PocketDex+ is **Protocol-Oriented MVVM** with clear layer boundaries and **Swift
 - ✅ **Type Safety**: generics, `Sendable` snapshots crossing actor boundaries (`PokemonSearchEntry`, `Candidate`, DTOs), `@Attribute(.unique)` on every keyed cache entity (Pokemon by id, EvolutionChainEntity by chainId). Move and type data live in PokeBattleKit's own disk cache.
 - ✅ **Reactive UI**: SwiftUI body re-renders driven entirely by `@Observable` view models, with views split so high-frequency updates only touch the views that read them.
 - ✅ **Adaptive layout**: size-class driven, so the app works on iPhone, iPad, resizable windows, and the foldable iPhone Duo (detail on the left, grid on the right when unfolded).
-- ✅ **On-Device AI**: Apple `FoundationModels` with `@Generable` structured output and deterministic fallbacks via [PokeBattleKit](https://github.com/brillcp/PokeBattleKit) at every call site.
+- ✅ **On-Device AI**: Apple `FoundationModels` with `@Generable` structured output and rule-based fallbacks via [PokeBattleKit](https://github.com/brillcp/PokeBattleKit) at every call site.
 - ✅ **Local Multiplayer**: host-authoritative architecture with a typed, versioned `Codable` message protocol over MultipeerConnectivity. The same `BattleViewModelProtocol` drives both AI and peer-to-peer battles with zero view changes.
 
 ### SOLID Compliance Score: 0.94 / 1.0
@@ -202,7 +202,11 @@ The open pokemon is carried across size-class changes, so folding or unfolding k
 
 # Battle System ⚔️
 
-The battle screen is a turn-based 1v1 simulator built on top of the real PokeAPI move and type data. Both sides commit to 4 hand-picked moves before the fight starts, then trade turns until one side faints. The Gen-V damage formula drives every hit (level 50, STAB, type effectiveness, crit roll, accuracy roll, burn penalty), and status effects (paralysis, burn, poison) tick at end-of-turn.
+The battle screen is a turn-based 1v1 simulator built on top of the real PokeAPI move and type data. Both sides commit to 4 hand-picked moves before the fight starts, then trade turns until one side faints. The Gen-V damage formula drives every hit (level 50, STAB, type effectiveness, crit roll, accuracy roll, burn penalty). The rules come from [PokeBattleKit](https://github.com/brillcp/PokeBattleKit) and follow the main games:
+
+- **Turn order**: higher move priority goes first, then higher speed. Speed stat stages count (Agility doubles speed, Icy Wind slows), and paralysis halves it.
+- **Status effects**: burn and poison deal damage at the end of each turn, paralysis can skip a turn, and sleep lasts 1-3 turns (Rest: 2).
+- **Type immunities**: Electric types can't be paralyzed, Fire types can't be burned, and Poison and Steel types can't be poisoned. Thunder Wave fails on Ground types, and a move with no effect (Body Slam into a Ghost type) can't inflict its status either.
 
 The opponent is driven entirely by **Apple's `FoundationModels` framework**, running fully on-device.
 
@@ -217,7 +221,7 @@ PocketDex+ uses `SystemLanguageModel` with **structured generation** (`@Generabl
 3. **Per-turn move selection** (every time the player commits a move)
    The model receives both combatants' current HP, status, and types, plus each available move with its type multiplier, estimated damage, KO flag, and heuristic score. It returns a `MovePickResult` with the chosen move name.
 
-Every call degrades gracefully to deterministic heuristics (in [PokeBattleKit](https://github.com/brillcp/PokeBattleKit)) if Apple Intelligence is unavailable, the session is busy, or the model returns an unresolvable result. **The battle UI never blocks waiting on a model response.**
+Every call degrades gracefully to rule-based heuristics (in [PokeBattleKit](https://github.com/brillcp/PokeBattleKit)) if Apple Intelligence is unavailable, the session is busy, or the model returns an unresolvable result. **The battle UI never blocks waiting on a model response.**
 
 ## Structured generation
 
@@ -227,9 +231,9 @@ Instead of letting the model call tools, the prompt already contains the numbers
 
 System instructions live in [`PokedexUI/Features/Battle/AI/LLMInstructions/`](PokedexUI/Features/Battle/AI/LLMInstructions/), split per task. Each is a single short paragraph guiding tactical priorities.
 
-## Deterministic strategy layer
+## Heuristic strategy layer
 
-The scoring, filtering, and post-pick correction logic lives in [PokeBattleKit](https://github.com/brillcp/PokeBattleKit) as pure deterministic code with no LLM dependency:
+The scoring, filtering, and post-pick correction logic lives in [PokeBattleKit](https://github.com/brillcp/PokeBattleKit) as plain rule-based code with no LLM dependency. Scoring and picking are deterministic; the only randomness is a little variety when shuffling the opponent pool and in the loadout fairness handicap:
 
 - **`MoveScoring`**: in-battle and loadout scoring with STAB, type effectiveness, priority, and escalating recency penalties to prevent move spamming.
 - **`MoveStrategy`**: heuristic fallback pick and post-pick adjustments (immune repair, phase-aware switching, KO override, status redundancy).
@@ -417,12 +421,12 @@ On top of that, the project moved to the Swift 6 language mode with the concurre
 | Package | What it does |
 | --- | --- |
 | [Networking](https://github.com/brillcp/Networking) | Thin actor-based `URLSession` wrapper with a generic `Requestable` protocol driving every PokeAPI endpoint |
-| [PokeBattleKit](https://github.com/brillcp/PokeBattleKit) | Standalone battle engine: damage calculator, type chart, move/combatant models, and deterministic AI strategies (scoring, heuristics, adjustments) |
+| [PokeBattleKit](https://github.com/brillcp/PokeBattleKit) | Standalone battle engine: damage calculator, type chart, move/combatant models, and heuristic AI strategies (scoring, picking, adjustments) |
 
 ```swift
 dependencies: [
     .package(url: "https://github.com/brillcp/Networking.git", .upToNextMajor(from: "0.10.1")),
-    .package(url: "https://github.com/brillcp/PokeBattleKit.git", .upToNextMajor(from: "0.1.4"))
+    .package(url: "https://github.com/brillcp/PokeBattleKit.git", .upToNextMajor(from: "0.1.6"))
 ]
 ```
 
@@ -433,5 +437,5 @@ dependencies: [
 - Xcode 26+
 - iOS 26+ (for the `FoundationModels` framework, `@Observable`, SwiftData)
 - Swift 6 language mode (default actor isolation `nonisolated`, Approachable Concurrency)
-- Apple Intelligence enabled on the device for the AI features (graceful fallback to deterministic heuristics on devices without it)
+- Apple Intelligence enabled on the device for the AI features (graceful fallback to rule-based heuristics on devices without it)
 - Local Network permission for multiplayer (prompted automatically on first Gym use)
