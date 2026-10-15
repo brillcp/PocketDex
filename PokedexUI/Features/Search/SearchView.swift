@@ -5,10 +5,11 @@ import SwiftData
 ///
 /// The view owns the query (so SwiftData pushes store changes to it) and
 /// hands each new result to the view model, which matches the typed text
-/// against precomputed haystacks. The search field itself belongs to
-/// `RootTabView` (`.searchable` on the tab view), which shares this view
-/// model.
+/// against precomputed haystacks. The search field is applied to the
+/// `NavigationStack`, so in the search tab it sits above the keyboard and
+/// stays out of the other tabs.
 struct SearchView<ViewModel: SearchViewModelProtocol>: View {
+    @FocusState private var isSearchFocused: Bool
     @Namespace private var namespace
     @Environment(\.container) private var container
     @Environment(\.modelContext) private var modelContext
@@ -53,6 +54,13 @@ struct SearchView<ViewModel: SearchViewModelProtocol>: View {
                 )
                 .navigationTransition(.zoom(sourceID: pokemon.id, in: namespace))
             }
+        }
+        .searchable(text: $viewModel.query)
+        .searchFocused($isSearchFocused)
+        .onSubmit(of: .search, viewModel.recordSearch)
+        .onChange(of: isSearchFocused) { old, new in
+            guard old, !new, !viewModel.query.isEmpty else { return }
+            viewModel.recordSearch()
         }
     }
 }

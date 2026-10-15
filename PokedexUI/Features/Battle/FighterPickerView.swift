@@ -8,10 +8,12 @@ import PokeBattleKit
 /// opponent is fixed and the player picks who to send out, as in the games.
 /// User-facing copy says "player", "opponent" or "My team", never
 /// "Pokémon":
-/// - **My team**: team (bookmarked) Pokémon, each tagged with how the matchup
-///   looks (predicted at equal level from the simulated strength ratings).
+/// - **My team**: team (bookmarked) Pokémon.
 /// - **Gen I, Gen II, ...**: everyone by generation, so the player is never
 ///   blocked.
+///
+/// Every cell is tagged with how the matchup looks (predicted at equal
+/// level from the simulated strength ratings).
 ///
 /// "Smart pick" chooses a fair fighter from the team, or from everyone when
 /// no team member is a fair match. The opponent is excluded from both
@@ -102,7 +104,8 @@ private extension FighterPickerView {
                 PokemonGridSection(
                     id: number.map { "gen-\($0)" } ?? "gen-other",
                     title: number.map { "Gen \(Self.romanNumeral($0))" },
-                    pokemon: pokemon
+                    pokemon: pokemon,
+                    showsBadges: true
                 )
             }
     }

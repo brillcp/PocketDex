@@ -2,15 +2,15 @@ import SwiftUI
 import SwiftData
 
 /// Root tab host for pokedex, items, favourites, and search. Each tab
-/// builds its own view model inline; the pokedex view model is hoisted here
-/// so its grid + sort state survives tab switches, and the search view
-/// model so the tab view can own the search field.
+/// builds its own view model inline; only the pokedex view model is
+/// hoisted here so its grid + sort state survives tab switches.
 ///
-/// Search follows the iOS 26 pattern: a `.search` role tab (its own button,
-/// pinned to the trailing edge) with `.searchable` on the `TabView` and
-/// `.searchTabSelection` activation, so selecting it turns the tab bar into
-/// the search field above the keyboard instead of a field in the navigation
-/// bar.
+/// Search follows the iOS 26 pattern: a `.search` role tab with the system
+/// title and symbol and `.searchTabSelection` activation, so it's a
+/// separate button at the trailing edge and selecting it opens the field
+/// above the keyboard. The field is owned by `SearchView` (on its
+/// `NavigationStack`) rather than the `TabView`, so it never shows in the
+/// other tabs' navigation bars.
 ///
 /// The inline view models are safe to construct in `body`: each tab view
 /// stores its model in `@State`, which keeps the first instance for the
@@ -20,32 +20,18 @@ struct RootTabView<PokedexViewModel: PokedexViewModelProtocol>: View {
     @Environment(\.container) private var container
 
     @State var viewModel: PokedexViewModel
-    @State var searchViewModel: SearchViewModel
-    @FocusState private var isSearchFocused: Bool
 
     var body: some View {
         TabView(selection: $viewModel.selectedTab) {
             Tab(Tabs.pokedex.title, systemImage: viewModel.grid.icon, value: Tabs.pokedex, content: pokedexTab)
             Tab(Tabs.battle.title, systemImage: Tabs.battle.icon, value: Tabs.battle, content: battleTab)
             Tab(Tabs.items.title, systemImage: Tabs.items.icon, value: Tabs.items, content: itemsTab)
-            // System title and symbol, so it gets the separate search
-            // button treatment.
             Tab(value: Tabs.search, role: .search, content: searchTab)
         }
-        .searchable(text: $searchViewModel.query)
-        // Selecting the tab focuses the field above the keyboard; dismissing
-        // search returns to the previous tab.
         .tabViewSearchActivation(.searchTabSelection)
-        .searchFocused($isSearchFocused)
-        .onSubmit(of: .search, searchViewModel.recordSearch)
-        // Leaving the field counts as a search, like pressing return.
-        .onChange(of: isSearchFocused) { old, new in
-            guard old, !new, !searchViewModel.query.isEmpty else { return }
-            searchViewModel.recordSearch()
-        }
         .task { await viewModel.requestPokemon() }
         .preferredColorScheme(.dark)
-        .sheet(isPresented: $viewModel.openFavourites, content: BookmarksView.init)
+        .sheet(isPresented: $viewModel.openFavourites, content: MyTeamView.init)
     }
 }
 
@@ -60,7 +46,7 @@ private extension RootTabView {
     }
 
     func searchTab() -> some View {
-        SearchView(viewModel: searchViewModel)
+        SearchView(viewModel: SearchViewModel(repository: container.repository))
     }
 
     func battleTab() -> some View {
@@ -71,8 +57,5 @@ private extension RootTabView {
 #Preview {
     @Previewable
     @Environment(\.modelContext) var modelContext
-    RootTabView(
-        viewModel: PokedexViewModel(modelContext: modelContext, container: .live),
-        searchViewModel: SearchViewModel(repository: AppContainer.live.repository)
-    )
+    RootTabView(viewModel: PokedexViewModel(modelContext: modelContext, container: .live))
 }
