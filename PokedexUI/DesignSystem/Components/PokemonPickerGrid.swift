@@ -153,7 +153,7 @@ struct PokemonPickerGrid: View {
             Button {
                 onSelect(pokemon)
             } label: {
-                PokemonSpriteCard(pokemon: pokemon, hidesName: featureFlags.silhouetteEnabled)
+                PokemonSpriteCard(pokemon: pokemon)
                     .overlay(alignment: .topTrailing) {
                         if section.showsBadges, let chip = badge?(pokemon) {
                             chip.padding(DesignKit.Spacing.Primitive.s6)
