@@ -5,7 +5,7 @@ rule-based AI. There's no language model.
 
 | Decision | Method | How |
 |---|---|---|
-| Opponent | `chooseOpponent` | `OpponentStrategy.pick`: a random fair matchup by simulated strength (`PokemonStrength`), favouring tense ones, skipping recent opponents |
+| Fighter | `chooseFighter` | `OpponentStrategy.pick` from the opponent's side: a random fair matchup by simulated strength (`PokemonStrength`), favouring tense ones, skipping recent suggestions |
 | Loadout | `chooseLoadout` | `LoadoutStrategy.heuristicPick` + the difficulty's handicap |
 | Move each turn | `chooseMove` | `MoveStrategy.heuristicPick` for the difficulty + `MoveStrategy.adjust` |
 

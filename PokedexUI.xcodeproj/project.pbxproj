@@ -61,7 +61,7 @@
 		D5B0CAFE2FC2000000000131 /* String+Formatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5B0CAFE2FC2000000000130 /* String+Formatting.swift */; };
 		D5BA12062E70000000000046 /* BattleViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5BA12052E70000000000045 /* BattleViewModel.swift */; };
 		D5BA12082E70000000000048 /* BattleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5BA12072E70000000000047 /* BattleView.swift */; };
-		D5BA120A2E7000000000004A /* OpponentPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5BA12092E70000000000049 /* OpponentPickerView.swift */; };
+		D5BA120A2E7000000000004A /* FighterPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5BA12092E70000000000049 /* FighterPickerView.swift */; };
 		D5BA12172E70000000000057 /* BattleAnimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5BA12162E70000000000056 /* BattleAnimator.swift */; };
 		D5BA12192E70000000000059 /* BattleLogFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5BA12182E70000000000058 /* BattleLogFormatter.swift */; };
 		D5BA13082E70000000000301 /* BattleSetupViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5BA13092E70000000000302 /* BattleSetupViewModel.swift */; };
@@ -153,7 +153,7 @@
 		D5B0CAFE2FC2000000000130 /* String+Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Formatting.swift"; sourceTree = "<group>"; };
 		D5BA12052E70000000000045 /* BattleViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleViewModel.swift; sourceTree = "<group>"; };
 		D5BA12072E70000000000047 /* BattleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleView.swift; sourceTree = "<group>"; };
-		D5BA12092E70000000000049 /* OpponentPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpponentPickerView.swift; sourceTree = "<group>"; };
+		D5BA12092E70000000000049 /* FighterPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FighterPickerView.swift; sourceTree = "<group>"; };
 		D5BA12162E70000000000056 /* BattleAnimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleAnimator.swift; sourceTree = "<group>"; };
 		D5BA12182E70000000000058 /* BattleLogFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleLogFormatter.swift; sourceTree = "<group>"; };
 		D5BA13092E70000000000302 /* BattleSetupViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleSetupViewModel.swift; sourceTree = "<group>"; };
@@ -445,7 +445,7 @@
 				D5BA12182E70000000000058 /* BattleLogFormatter.swift */,
 				D5E00000000000000000F2F4 /* BattleStateReducer.swift */,
 				D5BA12072E70000000000047 /* BattleView.swift */,
-				D5BA12092E70000000000049 /* OpponentPickerView.swift */,
+				D5BA12092E70000000000049 /* FighterPickerView.swift */,
 				D5E0000000000000000000EB /* Subviews */,
 				D5BA13062E70000000000207 /* AI */,
 				D5BA130C2E70000000000305 /* Setup */,
@@ -638,7 +638,7 @@
 				D5BA130E2E70000000000307 /* BattleLaunch.swift in Sources */,
 				D53B84B2307FE69C00C51FC7 /* Spacing.swift in Sources */,
 				D5BA12082E70000000000048 /* BattleView.swift in Sources */,
-				D5BA120A2E7000000000004A /* OpponentPickerView.swift in Sources */,
+				D5BA120A2E7000000000004A /* FighterPickerView.swift in Sources */,
 				D56F11172FC310000002A450 /* PokemonSpriteCard.swift in Sources */,
 				D56F11132FC302000002A450 /* PokemonPickerGrid.swift in Sources */,
 				D5751CF62E3641EF0090FB5F /* SearchView.swift in Sources */,

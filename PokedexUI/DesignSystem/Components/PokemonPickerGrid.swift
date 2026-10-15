@@ -1,5 +1,19 @@
 import SwiftUI
 
+/// A titled group of Pokémon in a `PokemonGrid`.
+struct PokemonGridSection: Identifiable {
+    let id: String
+    var title: String?
+    let pokemon: [Pokemon]
+    /// Whether cells in this section show the picker's badge.
+    var showsBadges = false
+
+    /// A single untitled section, for plain grids.
+    static func all(_ pokemon: [Pokemon]) -> PokemonGridSection {
+        PokemonGridSection(id: "all", pokemon: pokemon)
+    }
+}
+
 /// Generic Pokemon grid. Callers provide column layout and cell content
 /// via `@ViewBuilder`. Handles only scrolling and layout; navigation,
 /// search, and loading overlays are the caller's responsibility.
@@ -9,19 +23,59 @@ import SwiftUI
 /// for the whole grid (via a simultaneous tap gesture) avoids attaching
 /// `.sensoryFeedback` to every cell.
 struct PokemonGrid<Cell: View>: View {
-    let pokemon: [Pokemon]
+    let sections: [PokemonGridSection]
     var grid: GridLayout = .three
     var contentPadding: EdgeInsets = .init()
-    @ViewBuilder let cell: (Pokemon) -> Cell
+    @ViewBuilder let cell: (Pokemon, PokemonGridSection) -> Cell
 
     @State private var tapTrigger = false
+
+    private struct CellID: Hashable {
+        let section: String
+        let pokemon: Int
+    }
+
+    init(
+        sections: [PokemonGridSection],
+        grid: GridLayout = .three,
+        contentPadding: EdgeInsets = .init(),
+        @ViewBuilder cell: @escaping (Pokemon, PokemonGridSection) -> Cell
+    ) {
+        self.sections = sections
+        self.grid = grid
+        self.contentPadding = contentPadding
+        self.cell = cell
+    }
+
+    init(
+        pokemon: [Pokemon],
+        grid: GridLayout = .three,
+        contentPadding: EdgeInsets = .init(),
+        @ViewBuilder cell: @escaping (Pokemon) -> Cell
+    ) {
+        self.init(sections: [.all(pokemon)], grid: grid, contentPadding: contentPadding) { pokemon, _ in
+            cell(pokemon)
+        }
+    }
 
     var body: some View {
         ScrollView {
             LazyVGrid(columns: grid.layout, spacing: grid.spacing) {
-                ForEach(pokemon, id: \.id) { pokemon in
-                    cell(pokemon)
-                        .simultaneousGesture(TapGesture().onEnded { tapTrigger.toggle() })
+                ForEach(sections) { section in
+                    Section {
+                        // Ids are scoped by section: a lazy grid needs them
+                        // unique across all sections, and a Pokémon can be
+                        // in two (a team member is also in its generation).
+                        ForEach(section.pokemon, id: \.id) { pokemon in
+                            cell(pokemon, section)
+                                .simultaneousGesture(TapGesture().onEnded { tapTrigger.toggle() })
+                                .id(CellID(section: section.id, pokemon: pokemon.id))
+                        }
+                    } header: {
+                        if let title = section.title {
+                            header(title)
+                        }
+                    }
                 }
             }
             .padding(contentPadding)
@@ -30,11 +84,22 @@ struct PokemonGrid<Cell: View>: View {
         .scrollIndicators(.hidden)
         .sensoryFeedback(.impact(weight: .light), trigger: tapTrigger)
     }
+
+    private func header(_ title: String) -> some View {
+        Text(title)
+            .font(.pixel12)
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, DesignKit.Spacing.Primitive.s16)
+            .padding(.top, DesignKit.Spacing.Primitive.s16)
+            .padding(.bottom, DesignKit.Spacing.Primitive.s8)
+    }
 }
 
-/// Searchable Pokemon grid used by opponent picker, multiplayer fighter picker,
-/// and bookmarks. Wraps `PokemonGrid` with a toolbar search bar and
-/// haystack-based filtering.
+/// Searchable Pokemon grid used by the fighter picker, multiplayer fighter
+/// picker, and bookmarks. Wraps `PokemonGrid` with a toolbar search bar and
+/// haystack-based filtering. Search filters every section; sections with no
+/// matches are hidden.
 ///
 /// Callers that manage their own search (e.g. SearchView) should use
 /// `PokemonGrid` directly instead.
@@ -43,20 +108,44 @@ struct PokemonGrid<Cell: View>: View {
 /// first appear, as a one-time pass over the models already passed in
 /// (later keystrokes only run substring checks against it).
 struct PokemonPickerGrid: View {
-    let pokemon: [Pokemon]
+    let sections: [PokemonGridSection]
     var namespace: Namespace.ID?
+    /// Shown on the top-trailing corner of cells in sections with
+    /// `showsBadges`.
+    var badge: ((Pokemon) -> Chip?)?
     let onSelect: (Pokemon) -> Void
 
     @State private var searchText = ""
-    @State private var index: [(pokemon: Pokemon, haystack: String)] = []
-    @State private var filteredPokemon: [Pokemon]?
+    @State private var haystacks: [Int: String] = [:]
+    @State private var filteredSections: [PokemonGridSection]?
+
+    init(
+        sections: [PokemonGridSection],
+        namespace: Namespace.ID? = nil,
+        badge: ((Pokemon) -> Chip?)? = nil,
+        onSelect: @escaping (Pokemon) -> Void
+    ) {
+        self.sections = sections
+        self.namespace = namespace
+        self.badge = badge
+        self.onSelect = onSelect
+    }
+
+    init(pokemon: [Pokemon], namespace: Namespace.ID? = nil, onSelect: @escaping (Pokemon) -> Void) {
+        self.init(sections: [.all(pokemon)], namespace: namespace, onSelect: onSelect)
+    }
 
     var body: some View {
-        PokemonGrid(pokemon: displayedPokemon) { pokemon in
+        PokemonGrid(sections: filteredSections ?? sections) { pokemon, section in
             Button {
                 onSelect(pokemon)
             } label: {
                 PokemonSpriteCard(pokemon: pokemon)
+                    .overlay(alignment: .topTrailing) {
+                        if section.showsBadges, let chip = badge?(pokemon) {
+                            chip.padding(DesignKit.Spacing.Primitive.s6)
+                        }
+                    }
                     .applyTransitionSource(id: pokemon.id, namespace: namespace)
             }
             .buttonStyle(.plain)
@@ -64,33 +153,40 @@ struct PokemonPickerGrid: View {
         .searchable(text: $searchText, placement: .toolbar)
         .scrollDismissesKeyboard(.immediately)
         .onAppear(perform: buildIndex)
-        .onChange(of: searchText, updateFilteredPokemon)
+        .onChange(of: searchText, updateFilteredSections)
     }
 }
 
 // MARK: - Private
 private extension PokemonPickerGrid {
-    var displayedPokemon: [Pokemon] {
-        filteredPokemon ?? pokemon
-    }
-
-    func updateFilteredPokemon() {
+    func updateFilteredSections() {
         let terms = searchText
             .split(whereSeparator: \.isWhitespace)
             .map { $0.normalize }
             .filter { !$0.isEmpty }
         guard !terms.isEmpty else {
-            filteredPokemon = nil
+            filteredSections = nil
             return
         }
-        filteredPokemon = index.compactMap { entry in
-            terms.allSatisfy { entry.haystack.contains($0) } ? entry.pokemon : nil
+        filteredSections = sections.compactMap { section in
+            let matches = section.pokemon.filter { pokemon in
+                let haystack = haystacks[pokemon.id] ?? Pokemon.searchHaystack(for: pokemon)
+                return terms.allSatisfy { haystack.contains($0) }
+            }
+            guard !matches.isEmpty else { return nil }
+            return PokemonGridSection(
+                id: section.id, title: section.title, pokemon: matches, showsBadges: section.showsBadges
+            )
         }
     }
 
     func buildIndex() {
-        guard index.isEmpty else { return }
-        index = pokemon.map { ($0, Pokemon.searchHaystack(for: $0)) }
+        guard haystacks.isEmpty else { return }
+        var built: [Int: String] = [:]
+        for pokemon in sections.flatMap(\.pokemon) where built[pokemon.id] == nil {
+            built[pokemon.id] = Pokemon.searchHaystack(for: pokemon)
+        }
+        haystacks = built
     }
 }
 

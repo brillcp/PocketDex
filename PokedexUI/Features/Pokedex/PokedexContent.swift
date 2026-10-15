@@ -136,7 +136,7 @@ private struct PokedexToolbar<ViewModel: PokedexViewModelProtocol>: ToolbarConte
     }
 
     private var favourites: some View {
-        Button(Tabs.favourites.title, systemImage: Tabs.favourites.icon) {
+        Button(Tabs.myTeam.title, systemImage: Tabs.myTeam.icon) {
             viewModel.openFavourites.toggle()
         }
         .labelStyle(.iconOnly)

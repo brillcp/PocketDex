@@ -29,10 +29,11 @@ protocol BattleAIServiceProtocol: Sendable {
         turnNumber: Int,
         difficulty: Difficulty
     ) async -> Move
-    /// Pick an opponent id from `candidates` (the whole Pokédex is fine:
-    /// the service picks among the fair matchups).
-    func chooseOpponent(
-        player: Candidate,
+    /// Pick the player's fighter id from `candidates` to challenge
+    /// `opponent` with (the whole Pokédex is fine: the service picks among
+    /// the fair matchups).
+    func chooseFighter(
+        against opponent: Candidate,
         candidates: [Candidate],
         typeChart: TypeChart?
     ) async -> Int?
@@ -49,9 +50,10 @@ protocol BattleAIServiceProtocol: Sendable {
 }
 
 /// The AI opponent, built entirely on PokeBattleKit's rule-based AI:
-/// - **Opponents:** `OpponentStrategy.pick`, a random fair matchup by
-///   simulated battle strength (`PokemonStrength`), favouring tense ones
-///   and skipping opponents this Pokémon faced recently.
+/// - **Fighters:** `OpponentStrategy.pick` from the opponent's side, a
+///   random fair matchup by simulated battle strength (`PokemonStrength`),
+///   favouring tense ones and skipping fighters suggested against this
+///   opponent recently.
 /// - **Loadouts:** `LoadoutStrategy`'s role-based pick (two attack types,
 ///   then a status, boost or heal move or more coverage), with easy mode's
 ///   handicap.
@@ -65,14 +67,14 @@ protocol BattleAIServiceProtocol: Sendable {
 /// its only state is the recent-opponents memory, shared app-wide through
 /// `AppContainer`.
 actor BattleAIService {
-    /// Opponents each player's Pokémon faced recently, newest last, so
+    /// Fighters suggested against each opponent recently, newest last, so
     /// "Smart pick" doesn't keep suggesting the same one.
-    private var recentOpponents: [Int: [Int]] = [:]
-    /// How many recent opponents to skip.
-    private let recentOpponentMemory: Int
+    private var recentFighters: [Int: [Int]] = [:]
+    /// How many recent fighters to skip.
+    private let recentFighterMemory: Int
 
-    init(recentOpponentMemory: Int = 10) {
-        self.recentOpponentMemory = recentOpponentMemory
+    init(recentFighterMemory: Int = 10) {
+        self.recentFighterMemory = recentFighterMemory
     }
 }
 
@@ -106,18 +108,21 @@ extension BattleAIService: BattleAIServiceProtocol {
         return final
     }
 
-    func chooseOpponent(
-        player: Candidate,
+    func chooseFighter(
+        against opponent: Candidate,
         candidates: [Candidate],
         typeChart: TypeChart?
     ) async -> Int? {
-        let recent = recentOpponents[player.id, default: []]
+        // Fairness is symmetric (a 35-65% win chance either way, and the
+        // same type checks), so the opponent strategy picks a fair fighter
+        // when asked from the opponent's side.
+        let recent = recentFighters[opponent.id, default: []]
         guard let pick = OpponentStrategy.pick(
-            for: player, from: candidates, typeChart: typeChart, excluding: Set(recent)
+            for: opponent, from: candidates, typeChart: typeChart, excluding: Set(recent)
         ) else { return nil }
-        recentOpponents[player.id] = Array((recent + [pick.id]).suffix(recentOpponentMemory))
-        let chance = OpponentStrategy.predictedWinChance(of: player, against: pick)
-        aiLog("Opponent for \(player.name) (\(Int(player.strength))): \(pick.name) (\(Int(pick.strength))), predicted win chance \(Int(chance * 100))%")
+        recentFighters[opponent.id] = Array((recent + [pick.id]).suffix(recentFighterMemory))
+        let chance = OpponentStrategy.predictedWinChance(of: pick, against: opponent)
+        aiLog("Fighter vs \(opponent.name) (\(Int(opponent.strength))): \(pick.name) (\(Int(pick.strength))), predicted win chance \(Int(chance * 100))%")
         return pick.id
     }
 

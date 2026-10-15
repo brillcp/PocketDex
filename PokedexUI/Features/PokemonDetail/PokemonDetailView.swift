@@ -12,7 +12,8 @@ struct PokemonDetailView<ViewModel: PokemonDetailViewModelProtocol>: View {
     @Environment(\.modelContext) private var modelContext
 
     @State private var viewModel: ViewModel
-    @State private var showOpponentPicker = false
+    /// "Battle" challenges this Pokémon; the sheet picks the player's fighter.
+    @State private var showFighterPicker = false
     @State private var battleLaunch: BattleLaunch?
     @State private var evolutionTarget: Pokemon?
     @State private var selectedType: String?
@@ -57,12 +58,12 @@ struct PokemonDetailView<ViewModel: PokemonDetailViewModelProtocol>: View {
         .task(id: viewModel.pokemon.evolutionChainId) {
             await viewModel.loadEvolutionChain()
         }
-        .sheet(isPresented: $showOpponentPicker) {
-            OpponentPickerView(
-                player: viewModel.pokemon.pokemon,
-                playerTypes: viewModel.pokemon.typeNames
+        .sheet(isPresented: $showFighterPicker) {
+            FighterPickerView(
+                opponent: viewModel.pokemon.pokemon,
+                opponentTypes: viewModel.pokemon.typeNames
             ) { launch in
-                showOpponentPicker = false
+                showFighterPicker = false
                 battleLaunch = launch
             }
         }
@@ -86,9 +87,10 @@ struct PokemonDetailView<ViewModel: PokemonDetailViewModelProtocol>: View {
                 Button {
                     viewModel.toggleBookmark()
                 } label: {
-                    Image(systemName: viewModel.isBookmarked ? "heart.fill" : "heart")
+                    Image(systemName: viewModel.isBookmarked ? "person.2.fill" : "person.2")
                         .foregroundStyle(textColor)
                 }
+                .accessibilityLabel(viewModel.isBookmarked ? "Remove from my team" : "Add to my team")
             }
         }
         .applyPokedexStyling(
@@ -193,7 +195,7 @@ private extension PokemonDetailView {
             }
             Spacer()
             SecondaryCapsuleButton(icon: "bolt.fill", title: "Battle", color: textColor) {
-                showOpponentPicker = true
+                showFighterPicker = true
             }
         }
         .tint(textColor)

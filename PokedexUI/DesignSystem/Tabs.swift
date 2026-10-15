@@ -1,9 +1,7 @@
 import Foundation
 
-/// Top-level TabView selection for the root pokedex screen. `favourites`
-/// isn't a tab; it's presented as a sheet but shares the title/icon table.
 enum Tabs: Int {
-    case pokedex, items, favourites, battle, search
+    case pokedex, items, myTeam, battle, search
 }
 
 extension Tabs {
@@ -11,7 +9,7 @@ extension Tabs {
         switch self {
             case .pokedex: "PocketDex+"
             case .items: "Items"
-            case .favourites: "Favourites"
+            case .myTeam: "My team"
             case .battle: "Gym"
             case .search: "Search"
         }
@@ -21,7 +19,7 @@ extension Tabs {
         switch self {
             case .pokedex: GridLayout.three.icon
             case .items: "xmark.triangle.circle.square.fill"
-            case .favourites: "heart.fill"
+            case .myTeam: "person.2.fill"
             case .battle: "bolt.shield.fill"
             case .search: "magnifyingglass"
         }

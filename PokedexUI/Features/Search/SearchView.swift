@@ -5,9 +5,10 @@ import SwiftData
 ///
 /// The view owns the query (so SwiftData pushes store changes to it) and
 /// hands each new result to the view model, which matches the typed text
-/// against precomputed haystacks.
+/// against precomputed haystacks. The search field itself belongs to
+/// `RootTabView` (`.searchable` on the tab view), which shares this view
+/// model.
 struct SearchView<ViewModel: SearchViewModelProtocol>: View {
-    @FocusState private var isSearchFocused: Bool
     @Namespace private var namespace
     @Environment(\.container) private var container
     @Environment(\.modelContext) private var modelContext
@@ -34,20 +35,12 @@ struct SearchView<ViewModel: SearchViewModelProtocol>: View {
                 }
             }
             .font(.pixel14)
-            .searchable(text: $viewModel.query)
-            .searchFocused($isSearchFocused)
-            .onSubmit(of: .search, viewModel.recordSearch)
             // Re-runs whenever the stored rows change, e.g. once the first
             // launch import finishes while this tab is already open.
             .task(id: corpus) {
                 await viewModel.updateCorpus(corpus)
             }
             .scrollDismissesKeyboard(.immediately)
-            // Leaving the field counts as a search, like pressing return.
-            .onChange(of: isSearchFocused) { old, new in
-                guard old, !new, !viewModel.query.isEmpty else { return }
-                viewModel.recordSearch()
-            }
             .sensoryFeedback(.impact(weight: .light), trigger: viewModel.query)
             .applyPokedexStyling(title: Tabs.search.title)
             .navigationDestination(item: $selectedPokemon) { pokemon in

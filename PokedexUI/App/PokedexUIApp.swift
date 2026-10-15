@@ -31,7 +31,8 @@ private struct RootView: View {
             viewModel: PokedexViewModel(
                 modelContext: modelContext,
                 container: container
-            )
+            ),
+            searchViewModel: SearchViewModel(repository: container.repository)
         )
     }
 }

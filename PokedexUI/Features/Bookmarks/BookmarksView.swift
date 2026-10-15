@@ -1,8 +1,8 @@
 import SwiftUI
 import SwiftData
 
-/// Favourites sheet (opened from the pokedex toolbar) showing bookmarked
-/// Pokemon. The `@Query` predicate filters in the store and keeps the grid
+/// "My team" sheet (opened from the pokedex toolbar) showing bookmarked
+/// Pokemon; the team is stored as `isBookmarked`. The `@Query` predicate filters in the store and keeps the grid
 /// live: unbookmarking in a pushed detail view removes the cell on return.
 struct BookmarksView: View {
     @Environment(\.dismiss) private var dismiss
@@ -27,7 +27,7 @@ struct BookmarksView: View {
             }
                 .background {
                     if bookmarks.isEmpty {
-                        Text("No favourites")
+                        Text("No team members")
                             .foregroundStyle(.secondary)
                             .font(.pixel14)
                     }
@@ -37,7 +37,7 @@ struct BookmarksView: View {
                         Button(role: .cancel, action: dismiss.callAsFunction)
                     }
                 }
-                .applyPokedexStyling(title: Tabs.favourites.title, navColor: .darkGrey)
+                .applyPokedexStyling(title: Tabs.myTeam.title, navColor: .darkGrey)
                 .navigationDestination(item: $selectedPokemon) { pokemon in
                     PokemonDetailView(
                         viewModel: PokemonDetailViewModel(
