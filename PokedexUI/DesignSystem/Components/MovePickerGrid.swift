@@ -2,82 +2,115 @@ import SwiftUI
 import PokeBattleKit
 
 /// Reusable move selection grid shared by single-player and multiplayer
-/// loadout screens. Displays a counter header and a two-column grid of
-/// move cards with toggle selection.
+/// loadout screens.
+///
+/// Two sections, so the loadout is always visible at the top:
+/// - **Your moves**: the selected moves, in the order they were picked.
+///   When the selection came from a recommendation, the header says so and
+///   offers to reset to it after changes.
+/// - **Other moves**: everything else, in the pool's order (best first for
+///   this matchup when the setup ranked it).
+///
+/// Tapping a move moves it between the sections. Nothing is dimmed when the
+/// loadout is full; tapping another move then shows a hint instead.
 struct MovePickerGrid: View {
     let moveSelection: MoveSelection
     var opponentTypes: [String] = []
 
+    @State private var showsFullHint = false
+
     var body: some View {
-        VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s8) {
-            MovePickerHeader(
-                selectedCount: moveSelection.selectedNames.count,
-                maxSelections: moveSelection.maxSelections
-            )
-            grid
+        VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s16) {
+            section(header: yourMovesHeader, moves: moveSelection.selectedMoves, selected: true)
+            if !moveSelection.unselectedMoves.isEmpty {
+                section(header: otherMovesHeader, moves: moveSelection.unselectedMoves, selected: false)
+            }
+        }
+        .animation(.snappy(duration: 0.25), value: moveSelection.selectionOrder)
+        .sensoryFeedback(.warning, trigger: moveSelection.fullTapCount)
+        .onChange(of: moveSelection.fullTapCount) {
+            withAnimation(.easeOut(duration: 0.2)) { showsFullHint = true }
+        }
+        .onChange(of: moveSelection.selectedNames.count) {
+            withAnimation(.easeOut(duration: 0.2)) { showsFullHint = false }
         }
     }
 }
 
 // MARK: - Private
 private extension MovePickerGrid {
-    var grid: some View {
-        LazyVGrid(columns: GridLayout.two.layout, spacing: GridLayout.two.spacing) {
-            ForEach(moveSelection.pool, id: \.name, content: moveCard)
+    func section(header: some View, moves: [Move], selected: Bool) -> some View {
+        VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s8) {
+            header.padding(.horizontal, DesignKit.Spacing.Primitive.s16)
+            LazyVGrid(columns: GridLayout.two.layout, spacing: GridLayout.two.spacing) {
+                ForEach(moves, id: \.name) { move in
+                    MovePickerCard(
+                        move: move,
+                        selected: selected,
+                        effectiveness: effectiveness(of: move),
+                        moveSelection: moveSelection
+                    )
+                }
+            }
         }
     }
 
-    func moveCard(_ move: Move) -> some View {
-        let selected = moveSelection.selectedNames.contains(move.name)
-        let atCap = !selected && moveSelection.selectedNames.count >= moveSelection.maxSelections
-        let effectiveness: Double? = opponentTypes.isEmpty
-            ? nil
-            : PokeBattleKit.typeChart.multiplier(attacking: move.typeName, defenders: opponentTypes)
-        return MovePickerCard(
-            move: move,
-            selected: selected,
-            atCap: atCap,
-            effectiveness: effectiveness,
-            moveSelection: moveSelection
-        )
+    var yourMovesHeader: some View {
+        HStack(spacing: DesignKit.Spacing.Primitive.s8) {
+            Text("Your moves \(moveSelection.selectedNames.count)/\(moveSelection.maxSelections)")
+            if moveSelection.isRecommended {
+                Chip("Recommended", style: .primary, size: .small)
+            }
+            Spacer()
+            if !moveSelection.recommendedNames.isEmpty, !moveSelection.isRecommended {
+                Button("Reset") {
+                    withAnimation(.snappy(duration: 0.25)) { moveSelection.resetToRecommended() }
+                }
+                .font(.pixel12)
+            }
+        }
+        .font(.pixel12)
+        .foregroundStyle(.secondary)
     }
-}
 
-/// "selected/max" counter above the grid.
-private struct MovePickerHeader: View {
-    let selectedCount: Int
-    let maxSelections: Int
+    var otherMovesHeader: some View {
+        VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s4) {
+            Text(moveSelection.recommendedNames.isEmpty ? "Other moves" : "Other moves, best first")
+                .font(.pixel12)
+                .foregroundStyle(.secondary)
+            if showsFullHint {
+                Text("Remove one of your moves to add another")
+                    .font(.pixel9)
+                    .foregroundStyle(Color.pokedexRed)
+                    .transition(.opacity)
+            }
+        }
+    }
 
-    var body: some View {
-        Text("\(selectedCount)/\(maxSelections)")
-            .font(.pixel12)
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, DesignKit.Spacing.Primitive.s16)
+    func effectiveness(of move: Move) -> Double? {
+        opponentTypes.isEmpty ? nil : PokeBattleKit.typeChart.multiplier(attacking: move.typeName, defenders: opponentTypes)
     }
 }
 
 /// Toggleable move card. Takes narrow values so only cards whose selection
-/// or cap state changed re-run their body when the selection updates.
-/// `moveSelection` is only used in the tap action, never read in `body`, so
-/// it doesn't make every card observe the whole selection.
+/// changed re-run their body when the selection updates. `moveSelection` is
+/// only used in the tap action, never read in `body`, so it doesn't make
+/// every card observe the whole selection.
 private struct MovePickerCard: View {
     let move: Move
     let selected: Bool
-    let atCap: Bool
     let effectiveness: Double?
     let moveSelection: MoveSelection
 
     var body: some View {
         Button {
-            withAnimation(.easeOut(duration: 0.15)) {
+            withAnimation(.snappy(duration: 0.25)) {
                 moveSelection.toggle(move)
             }
         } label: {
             MoveCell(move: move, mode: .loadout(selected: selected), effectiveness: effectiveness)
         }
         .buttonStyle(.plain)
-        .opacity(atCap ? Opacity.disabled : 1)
-        .disabled(atCap)
         .sensoryFeedback(.impact(weight: .light), trigger: selected)
     }
 }

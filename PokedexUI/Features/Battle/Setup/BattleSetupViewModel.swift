@@ -100,7 +100,15 @@ extension BattleSetupViewModel: BattleSetupViewModelProtocol {
             return
         }
 
-        selection.load(ranked: playerMoves)
+        // Best moves for this matchup first, then the recommended loadout
+        // pre-selected, so the strongest swaps sit right below it.
+        let fighter = Combatant(pokemon: player, moves: [], rules: rules)
+        let foe = Combatant(pokemon: opponent, moves: [], rules: rules)
+        let chart = PokeBattleKit.typeChart
+        selection.load(ranked: LoadoutStrategy.shortlist(
+            fighter: fighter, opponent: foe, moves: playerMoves, typeChart: chart, limit: playerMoves.count
+        ))
+        selection.recommend(LoadoutStrategy.heuristicPick(fighter: fighter, opponent: foe, moves: playerMoves, typeChart: chart))
         self.opponentPool = opponentMoves
     }
 

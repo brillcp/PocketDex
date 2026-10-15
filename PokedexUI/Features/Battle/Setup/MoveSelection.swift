@@ -18,6 +18,11 @@ final class MoveSelection {
     private(set) var pool: [Move] = []
     private(set) var selectedNames: Set<String> = []
     private(set) var selectionOrder: [String] = []
+    /// The suggested loadout, if one was given (see `recommend(_:)`).
+    private(set) var recommendedNames: [String] = []
+    /// Bumped when a tap can't add a move because the loadout is full, so
+    /// the grid can show a hint and play a haptic.
+    private(set) var fullTapCount = 0
 
     init(loadoutSize: Int = 4) {
         self.loadoutSize = loadoutSize
@@ -37,7 +42,31 @@ final class MoveSelection {
         pool = moves
         selectedNames = []
         selectionOrder = []
+        recommendedNames = []
     }
+
+    /// Selects `moves` (in order, up to the limit) and remembers them as the
+    /// recommendation, so the player can reset to them after changing moves.
+    /// Moves not in the pool are ignored.
+    func recommend(_ moves: [Move]) {
+        let available = Set(pool.map(\.name))
+        recommendedNames = Array(moves.map(\.name).filter(available.contains).prefix(maxSelections))
+        resetToRecommended()
+    }
+
+    /// Restores the recommended loadout.
+    func resetToRecommended() {
+        selectedNames = Set(recommendedNames)
+        selectionOrder = recommendedNames
+    }
+
+    /// Whether the current selection is the recommended one.
+    var isRecommended: Bool {
+        !recommendedNames.isEmpty && Set(recommendedNames) == selectedNames
+    }
+
+    /// The moves not selected, in pool order.
+    var unselectedMoves: [Move] { pool.filter { !selectedNames.contains($0.name) } }
 
     /// Toggle a move in/out of the selection.
     func toggle(_ move: Move) {
@@ -46,7 +75,10 @@ final class MoveSelection {
             selectionOrder.removeAll { $0 == move.name }
             return
         }
-        guard selectedNames.count < maxSelections else { return }
+        guard selectedNames.count < maxSelections else {
+            fullTapCount += 1
+            return
+        }
         selectedNames.insert(move.name)
         selectionOrder.append(move.name)
     }
