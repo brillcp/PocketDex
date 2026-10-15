@@ -151,7 +151,6 @@
 		D5B0CAFE2FC2000000000124 /* BattleAIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleAIService.swift; sourceTree = "<group>"; };
 		D5B0CAFE2FC200000000012A /* Candidate+Pokemon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Candidate+Pokemon.swift"; sourceTree = "<group>"; };
 		D5B0CAFE2FC2000000000130 /* String+Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Formatting.swift"; sourceTree = "<group>"; };
-		D5B0CAFE2FC20000000009A1 /* PokeBattleKit */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = PokeBattleKit; path = ../PokeBattleKit; sourceTree = "<group>"; };
 		D5BA12052E70000000000045 /* BattleViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleViewModel.swift; sourceTree = "<group>"; };
 		D5BA12072E70000000000047 /* BattleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleView.swift; sourceTree = "<group>"; };
 		D5BA12092E70000000000049 /* OpponentPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpponentPickerView.swift; sourceTree = "<group>"; };
@@ -207,7 +206,6 @@
 		9396D22D273EBBED00AF0C94 = {
 			isa = PBXGroup;
 			children = (
-				D5B0CAFE2FC20000000009A1 /* PokeBattleKit */,
 				D5864DCB2FBB4AAE00BEEA3F /* PokedexIcon.icon */,
 				9396D238273EBBED00AF0C94 /* PokedexUI */,
 				9396D237273EBBED00AF0C94 /* Products */,
@@ -924,7 +922,7 @@
 			repositoryURL = "https://github.com/brillcp/pokebattlekit";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 0.1.6;
+				minimumVersion = 0.1.7;
 			};
 		};
 		D57366012E2114C100FE4ED0 /* XCRemoteSwiftPackageReference "Networking" */ = {
