@@ -6,9 +6,8 @@
     {
       "layers" : [
         {
-          "glass" : false,
-          "image-name" : "new-icon 3.png",
-          "name" : "new-icon 3"
+          "image-name" : "icon4.png",
+          "name" : "icon4"
         }
       ],
       "shadow" : {
