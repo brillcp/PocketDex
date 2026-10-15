@@ -223,7 +223,7 @@ The opponent is driven by [PokeBattleKit](https://github.com/brillcp/PokeBattleK
 3. **Per-turn move selection**
    Every move is valued in HP of damage: attacks by the damage they'll do plus a KO bonus, boosts, statuses and heals by the damage they gain or prevent over the next few turns. It reacts to KO threats from faster opponents with priority moves. The AI only knows your moves once you've used them, as a human opponent would.
 
-The player picks the difficulty from the gear menu at the bottom of the loadout screen; the choice is saved and passed to every AI decision. Difficulty works the classic Pokémon way: the opponent is 3 levels below you on easy, the same level on fair, and 4 levels above on hard (calibrated across the whole Pokédex so a good player wins about 80% / 50% / 30%), and the AI plays more loosely on easy and always takes its best move on hard. Levels are shown on the loadout screen and the HP cards.
+The player picks the difficulty from the gear menu at the bottom of the loadout screen; the choice is saved and passed to every AI decision. Difficulty works the classic Pokémon way: the opponent is 6 levels below you on easy, the same level on fair, and 7 levels above on hard (calibrated across the whole Pokédex so a good player wins about 90% / 50% / 20%), and the AI plays more loosely on easy and always takes its best move on hard. Levels are shown on the loadout screen and the HP cards.
 
 ## Strength ratings
 
