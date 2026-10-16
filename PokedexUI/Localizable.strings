@@ -141,7 +141,7 @@
 "multiplayer.connecting" = "Connecting";
 "multiplayer.error.disconnected" = "Opponent disconnected.";
 "multiplayer.error.invalidLoadout" = "Opponent sent an invalid loadout.";
-"multiplayer.error.protocolVersion" = "Opponent uses a different protocol version.";
+"multiplayer.error.protocolVersion" = "Your opponent has a different version of the app. Update both to the latest version to play together.";
 "multiplayer.invite.accept" = "Accept";
 "multiplayer.invite.decline" = "Decline";
 "multiplayer.invite.message %@" = "%@ wants to challenge you to a battle.";
