@@ -144,7 +144,7 @@
 "multiplayer.error.protocolVersion" = "Opponent uses a different protocol version.";
 "multiplayer.invite.accept" = "Accept";
 "multiplayer.invite.decline" = "Decline";
-"multiplayer.invite.message %@" = "%@ wants to challenge you to a 1v1 battle.";
+"multiplayer.invite.message %@" = "%@ wants to challenge you to a battle.";
 "multiplayer.invite.title" = "Battle challenge!";
 "multiplayer.inviteDeclined" = "%@ declined the battle.";
 "multiplayer.nearbyTrainers" = "Nearby trainers";
