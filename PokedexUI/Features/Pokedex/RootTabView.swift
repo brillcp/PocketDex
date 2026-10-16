@@ -52,9 +52,3 @@ private extension RootTabView {
         MultiplayerSetupView(viewModel: MultiplayerSetupViewModel(container: container))
     }
 }
-
-#Preview {
-    @Previewable
-    @Environment(\.modelContext) var modelContext
-    RootTabView(viewModel: PokedexViewModel(modelContext: modelContext, container: .live))
-}

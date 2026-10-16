@@ -24,7 +24,3 @@ struct ItemDetailRowView: View {
         .background(Color.cardBackground)
     }
 }
-
-#Preview {
-    ItemDetailRowView(item: .common)
-}

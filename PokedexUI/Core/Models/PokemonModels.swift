@@ -127,43 +127,6 @@ extension Pokemon {
     }
 }
 
-extension Pokemon {
-    /// Sample row for previews. Not inserted into any context.
-    static var pikachu: Pokemon {
-        Pokemon(
-            id: 25,
-            name: "Pikachu",
-            weight: 60,
-            height: 4,
-            cries: Cries(latest: nil),
-            sprite: Sprite(
-                front: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/3.png",
-                back: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/6.png"
-            ),
-            abilities: [
-                Ability(ability: APIItem(name: "static", url: "")),
-                Ability(ability: APIItem(name: "lightning-rod", url: ""))
-            ],
-            moveNames: ["mega-punch", "pay-day", "thunder-punch", "slam", "thunderbolt"],
-            types: [
-                Type(type: APIItem(name: "electric", url: ""))
-            ],
-            stats: [
-                Stat(baseStat: 35, stat: APIItem(name: "hp", url: "")),
-                Stat(baseStat: 55, stat: APIItem(name: "attack", url: "")),
-                Stat(baseStat: 40, stat: APIItem(name: "defense", url: "")),
-                Stat(baseStat: 50, stat: APIItem(name: "special-attack", url: "")),
-                Stat(baseStat: 50, stat: APIItem(name: "special-defense", url: "")),
-                Stat(baseStat: 90, stat: APIItem(name: "speed", url: ""))
-            ],
-            habitat: "Forest",
-            flavorText: "This Pokemon is electric. This Pokemon is electric. This Pokemon is electric. This Pokemon is electric. ",
-            genderRate: 5,
-            evolutionChainId: "10"
-        )
-    }
-}
-
 // MARK: - SwiftData models
 
 /// Ability slot on a `Pokemon`. Wraps an `APIItem` reference (name + URL)

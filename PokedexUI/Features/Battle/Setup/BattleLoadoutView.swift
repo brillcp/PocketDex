@@ -258,21 +258,3 @@ private extension BattleLoadoutView {
         )
     }
 }
-
-#Preview {
-    let player   = Pokemon.pikachu
-    let opponent = Pokemon.pikachu
-    let vm = BattleSetupViewModel(
-        player: player,
-        opponent: opponent,
-        aiService: BattleAIService(),
-        rules: .standard
-    )
-    let pikachuVM = PokemonViewModel(pokemon: .pikachu)
-    vm.playerPokemon   = pikachuVM
-    vm.opponentPokemon = pikachuVM
-    return NavigationStack {
-        BattleLoadoutView(viewModel: vm, onStart: { _ in })
-    }
-    .colorScheme(.dark)
-}

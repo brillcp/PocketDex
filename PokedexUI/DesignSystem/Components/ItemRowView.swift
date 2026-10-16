@@ -17,7 +17,3 @@ struct ItemRowView: View {
         .background(Color.cardBackground)
     }
 }
-
-#Preview {
-    ItemRowView(item: .init(title: "", items: []))
-}

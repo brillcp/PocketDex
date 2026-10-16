@@ -86,8 +86,3 @@ private extension MeshGradientBackground {
         }
     }
 }
-
-#Preview {
-    MeshGradientBackground(color: Color(hex: "d53b47")!)
-        .ignoresSafeArea()
-}

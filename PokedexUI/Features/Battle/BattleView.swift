@@ -184,22 +184,3 @@ private extension View {
         modifier(BattleFeedbackModifier(animator: animator))
     }
 }
-
-#Preview {
-    NavigationStack {
-        TabView {
-            BattleView(
-                viewModel: BattleViewModel(
-                    player: PokemonViewModel(pokemon: .pikachu),
-                    opponent: PokemonViewModel(pokemon: .pikachu),
-                    playerMoves: Array(PokeBattleKit.allMoves.prefix(4)),
-                    opponentMoves: Array(PokeBattleKit.allMoves.prefix(4)),
-                    difficulty: .fair,
-                    container: .live
-                )
-            )
-        }
-        .applyPokedexStyling(title: "Battle", navColor: .darkGrey)
-    }
-    .colorScheme(.dark)
-}

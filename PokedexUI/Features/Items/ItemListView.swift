@@ -42,9 +42,3 @@ private extension ItemListView {
         .buttonStyle(.plain)
     }
 }
-
-#Preview {
-    @Previewable
-    @Environment(\.modelContext) var modelContext
-    ItemListView(viewModel: ItemListViewModel(modelContext: modelContext, container: .live))
-}

@@ -191,7 +191,3 @@ private struct SearchSectionHeader: View {
             .foregroundStyle(.secondary)
     }
 }
-
-#Preview {
-    SearchView(viewModel: SearchViewModel(repository: AppContainer.live.repository))
-}

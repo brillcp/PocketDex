@@ -50,9 +50,3 @@ struct MyTeamView: View {
         .pokemonDetailDestination(item: $selectedPokemon, zoomIn: namespace)
     }
 }
-
-#Preview {
-    NavigationStack {
-        MyTeamView()
-    }
-}

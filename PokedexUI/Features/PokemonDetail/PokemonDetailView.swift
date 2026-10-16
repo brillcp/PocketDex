@@ -214,16 +214,3 @@ private struct DetailSpriteBackdrop: View {
         }
     }
 }
-
-
-#Preview {
-    let container = try! ModelContainer(for: Pokemon.self, configurations: .init(isStoredInMemoryOnly: true))
-    let vm = PokemonDetailViewModel(
-        summary: .pikachu,
-        container: .live,
-        modelContext: container.mainContext
-    )
-    PokemonDetailView(viewModel: vm)
-        .modelContainer(container)
-        .preferredColorScheme(.dark)
-}

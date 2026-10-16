@@ -18,7 +18,3 @@ struct ItemDetailView<ViewModel: ItemDetailViewModelProtocol>: View {
         .applyPokedexStyling(title: viewModel.title)
     }
 }
-
-#Preview {
-    ItemDetailView(viewModel: ItemDetailViewModel(item: .init(title: "title", items: [])))
-}
