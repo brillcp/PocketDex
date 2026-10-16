@@ -29,7 +29,7 @@ struct PrimaryCapsuleButton: View {
             .font(.pixel16)
             .frame(height: DesignKit.Spacing.Primitive.s24)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, DesignKit.Spacing.Primitive.s16)
+            .padding(.vertical, DesignKit.Spacing.Primitive.s12)
             .foregroundStyle(.white)
         }
         .glassEffect(.regular.tint(.pokedexRed.opacity(0.8)).interactive())
@@ -53,8 +53,8 @@ struct SecondaryCapsuleButton: View {
         Button(action: action) {
             Label(title, systemImage: icon)
                 .font(.pixel14)
-                .padding(.vertical, DesignKit.Spacing.Primitive.s12)
-                .padding(.horizontal, DesignKit.Spacing.Primitive.s16)
+                .padding(.vertical, DesignKit.Spacing.Primitive.s10)
+                .padding(.horizontal, DesignKit.Spacing.Primitive.s12)
                 .foregroundStyle(color)
         }
         .glassEffect(.clear.interactive())

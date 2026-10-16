@@ -30,9 +30,15 @@ struct PokemonGrid<Cell: View>: View {
 
     @State private var tapTrigger = false
 
-    private struct CellID: Hashable {
+    /// A Pokémon in a section. Ids are scoped by section: a lazy grid needs
+    /// them unique across all sections, and a Pokémon can be in two (a team
+    /// member is also in its generation). They're the `ForEach` identity
+    /// itself, not an extra `.id(_:)`, so cells keep a stable identity and
+    /// zoom transitions can find their source cell.
+    private struct Item: Identifiable {
         let section: String
-        let pokemon: Int
+        let pokemon: Pokemon
+        var id: String { "\(section)-\(pokemon.id)" }
     }
 
     init(
@@ -63,13 +69,9 @@ struct PokemonGrid<Cell: View>: View {
             LazyVGrid(columns: grid.layout, spacing: grid.spacing) {
                 ForEach(sections) { section in
                     Section {
-                        // Ids are scoped by section: a lazy grid needs them
-                        // unique across all sections, and a Pokémon can be
-                        // in two (a team member is also in its generation).
-                        ForEach(section.pokemon, id: \.id) { pokemon in
-                            cell(pokemon, section)
+                        ForEach(section.pokemon.map { Item(section: section.id, pokemon: $0) }) { item in
+                            cell(item.pokemon, section)
                                 .simultaneousGesture(TapGesture().onEnded { tapTrigger.toggle() })
-                                .id(CellID(section: section.id, pokemon: pokemon.id))
                         }
                     } header: {
                         if let title = section.title {
@@ -113,6 +115,8 @@ struct PokemonPickerGrid: View {
     /// Shown on the top-trailing corner of cells in sections with
     /// `showsBadges`.
     var badge: ((Pokemon) -> Chip?)?
+    /// Adds the toolbar search field. Off for short lists like "My team".
+    var isSearchable = true
     let onSelect: (Pokemon) -> Void
 
     @State private var searchText = ""
@@ -123,16 +127,23 @@ struct PokemonPickerGrid: View {
         sections: [PokemonGridSection],
         namespace: Namespace.ID? = nil,
         badge: ((Pokemon) -> Chip?)? = nil,
+        isSearchable: Bool = true,
         onSelect: @escaping (Pokemon) -> Void
     ) {
         self.sections = sections
         self.namespace = namespace
         self.badge = badge
+        self.isSearchable = isSearchable
         self.onSelect = onSelect
     }
 
-    init(pokemon: [Pokemon], namespace: Namespace.ID? = nil, onSelect: @escaping (Pokemon) -> Void) {
-        self.init(sections: [.all(pokemon)], namespace: namespace, onSelect: onSelect)
+    init(
+        pokemon: [Pokemon],
+        namespace: Namespace.ID? = nil,
+        isSearchable: Bool = true,
+        onSelect: @escaping (Pokemon) -> Void
+    ) {
+        self.init(sections: [.all(pokemon)], namespace: namespace, isSearchable: isSearchable, onSelect: onSelect)
     }
 
     var body: some View {
@@ -150,8 +161,7 @@ struct PokemonPickerGrid: View {
             }
             .buttonStyle(.plain)
         }
-        .searchable(text: $searchText, placement: .toolbar)
-        .scrollDismissesKeyboard(.immediately)
+        .modifier(PickerSearch(isEnabled: isSearchable, text: $searchText))
         .onAppear(perform: buildIndex)
         .onChange(of: searchText, updateFilteredSections)
     }
@@ -187,6 +197,22 @@ private extension PokemonPickerGrid {
             built[pokemon.id] = Pokemon.searchHaystack(for: pokemon)
         }
         haystacks = built
+    }
+}
+
+/// The picker's toolbar search field, when enabled.
+private struct PickerSearch: ViewModifier {
+    let isEnabled: Bool
+    @Binding var text: String
+
+    func body(content: Content) -> some View {
+        if isEnabled {
+            content
+                .searchable(text: $text, placement: .toolbarPrincipal)
+                .scrollDismissesKeyboard(.immediately)
+        } else {
+            content
+        }
     }
 }
 

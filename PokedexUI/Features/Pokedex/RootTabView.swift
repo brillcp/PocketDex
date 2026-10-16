@@ -31,7 +31,6 @@ struct RootTabView<PokedexViewModel: PokedexViewModelProtocol>: View {
         .tabViewSearchActivation(.searchTabSelection)
         .task { await viewModel.requestPokemon() }
         .preferredColorScheme(.dark)
-        .sheet(isPresented: $viewModel.openFavourites, content: MyTeamView.init)
     }
 }
 

@@ -1,8 +1,16 @@
 import SwiftUI
 import SwiftData
 
+/// Screens pushed onto the pokedex navigation stack. One route type, so
+/// every push in the stack goes through its path (mixing path pushes with
+/// `navigationDestination(isPresented:)` froze the app).
+enum PokedexRoute: Hashable {
+    case pokemon(Pokemon)
+    case myTeam
+}
+
 /// Pokedex tab grid. Wraps `PokemonGrid` with color-analyzed cells,
-/// navigation destination, and a loading overlay for first-launch fetch.
+/// navigation destinations, and a loading overlay for first-launch fetch.
 struct PokedexGridView: View {
     @Namespace private var namespace
     @Environment(\.container) private var container
@@ -35,15 +43,20 @@ struct PokedexGridView: View {
                 IndexingOverlay(progress: loadingProgress)
             }
         }
-        .navigationDestination(for: Pokemon.self) { pokemon in
-            PokemonDetailView(
-                viewModel: PokemonDetailViewModel(
-                    summary: pokemon,
-                    container: container,
-                    modelContext: modelContext
+        .navigationDestination(for: PokedexRoute.self) { route in
+            switch route {
+            case .pokemon(let pokemon):
+                PokemonDetailView(
+                    viewModel: PokemonDetailViewModel(
+                        summary: pokemon,
+                        container: container,
+                        modelContext: modelContext
+                    )
                 )
-            )
-            .navigationTransition(.zoom(sourceID: pokemon.id, in: namespace))
+                .navigationTransition(.zoom(sourceID: pokemon.id, in: namespace))
+            case .myTeam:
+                MyTeamView()
+            }
         }
     }
 }
@@ -86,7 +99,7 @@ private struct PokedexGridItem: View {
             Button { selection.wrappedValue = pokemon } label: { card }
                 .accessibilityAddTraits(isSelected ? .isSelected : [])
         } else {
-            NavigationLink(value: pokemon) { card }
+            NavigationLink(value: PokedexRoute.pokemon(pokemon)) { card }
         }
     }
 

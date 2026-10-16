@@ -25,8 +25,6 @@ protocol PokedexViewModelProtocol {
     /// Ascending or descending.
     var sortDirection: SortDirection { get set }
 
-    /// Drives the favourites sheet presented by `RootTabView`.
-    var openFavourites: Bool { get set }
     /// Pokemon sorted by current sort settings.
     var sortedPokemon: [Pokemon] { get }
     /// Load all Pokemon: cache first, then network if needed.
@@ -63,7 +61,6 @@ final class PokedexViewModel {
     var grid: GridLayout = .three
     var sortType: SortType = .number { didSet { recomputeSortedPokemon() } }
     var sortDirection: SortDirection = .ascending { didSet { recomputeSortedPokemon() } }
-    var openFavourites: Bool = false
     /// Cached derived collection, recomputed only when an input changes so
     /// views that read it don't re-sort on every body evaluation.
     private(set) var sortedPokemon: [Pokemon] = []

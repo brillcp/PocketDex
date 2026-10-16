@@ -19,8 +19,8 @@ struct PokedexContent<ViewModel: PokedexViewModelProtocol>: View {
 
     let viewModel: ViewModel
 
-    /// Pushed detail in compact width.
-    @State private var path: [Pokemon] = []
+    /// Pushed screens in compact width.
+    @State private var path: [PokedexRoute] = []
     /// Detail shown in the leading column in regular width.
     @State private var selection: Pokemon?
 
@@ -42,10 +42,10 @@ struct PokedexContent<ViewModel: PokedexViewModelProtocol>: View {
         // Carry the open Pokémon across fold/unfold so it stays on screen.
         .onChange(of: horizontalSizeClass) { _, sizeClass in
             if sizeClass == .regular {
-                selection = path.first ?? selection
+                if case .pokemon(let pokemon) = path.first { selection = pokemon }
                 path = []
             } else {
-                path = selection.map { [$0] } ?? []
+                path = selection.map { [.pokemon($0)] } ?? []
             }
         }
     }
@@ -125,7 +125,7 @@ private struct PokedexToolbar<ViewModel: PokedexViewModelProtocol>: ToolbarConte
     var body: some ToolbarContent {
         ToolbarItem { gridLayoutButton }
         ToolbarItem { sortMenu }
-        ToolbarItem { favourites }
+        ToolbarItem { myTeam }
     }
 
     private var gridLayoutButton: some View {
@@ -135,9 +135,9 @@ private struct PokedexToolbar<ViewModel: PokedexViewModelProtocol>: ToolbarConte
         .labelStyle(.iconOnly)
     }
 
-    private var favourites: some View {
-        Button(Tabs.myTeam.title, systemImage: Tabs.myTeam.icon) {
-            viewModel.openFavourites.toggle()
+    private var myTeam: some View {
+        NavigationLink(value: PokedexRoute.myTeam) {
+            Label(Tabs.myTeam.title, systemImage: Tabs.myTeam.icon)
         }
         .labelStyle(.iconOnly)
     }

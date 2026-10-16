@@ -52,7 +52,7 @@ struct DifficultyMenu: View {
             Label("Settings", systemImage: "gearshape.fill")
                 .labelStyle(.iconOnly)
                 .font(.title3)
-                .frame(width: DesignKit.Spacing.Primitive.s44, height: DesignKit.Spacing.Primitive.s44)
+                .frame(width: DesignKit.Spacing.Primitive.s40, height: DesignKit.Spacing.Primitive.s40)
         }
         .menuOrder(.fixed)
         .buttonStyle(.glass)
