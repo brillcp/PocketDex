@@ -19,7 +19,11 @@ struct ItemListView<ViewModel: ItemListViewModelProtocol>: View {
             .scrollIndicators(.hidden)
             .background {
                 if viewModel.isLoading {
-                    PixelSpinner(text: "Loading items")
+                    PixelSpinner(text: "items.loading")
+                } else if viewModel.loadFailed, viewModel.items.isEmpty {
+                    LoadFailedView(title: "items.loadFailed.title") {
+                        Task { await viewModel.loadItems() }
+                    }
                 }
             }
             .task { await viewModel.loadItems() }

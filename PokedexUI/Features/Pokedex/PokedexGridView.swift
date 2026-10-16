@@ -20,6 +20,8 @@ struct PokedexGridView: View {
     var grid: GridLayout = .three
     var isLoading: Bool = false
     var loadingProgress: Double = 0
+    /// Set when the first load failed: shows a retry instead of an empty grid.
+    var onRetry: (() -> Void)? = nil
     /// When set, taps write to this binding instead of pushing the detail
     /// view (used by the side-by-side layout in regular width).
     var selection: Binding<Pokemon?>? = nil
@@ -41,6 +43,8 @@ struct PokedexGridView: View {
         .overlay {
             if isLoading && pokemon.isEmpty {
                 IndexingOverlay(progress: loadingProgress)
+            } else if let onRetry, pokemon.isEmpty {
+                LoadFailedView(title: "pokedex.loadFailed.title", retry: onRetry)
             }
         }
         .navigationDestination(for: PokedexRoute.self) { route in
@@ -66,7 +70,7 @@ private struct IndexingOverlay: View {
             ProgressView(value: progress)
                 .tint(.pokedexRed)
                 .frame(width: 200)
-            Text("Loading Pokedex \(progress, format: .pixelPercent(rounding: .down))")
+            Text(LocalizedKey("pokedex.loading", progress.formatted(.pixelPercent(rounding: .down))))
                 .font(.pixel14)
                 .foregroundStyle(.secondary)
         }
@@ -91,7 +95,6 @@ private struct PokedexGridItem: View {
     var body: some View {
         if let selection {
             Button { selection.wrappedValue = pokemon } label: { card }
-                .accessibilityAddTraits(isSelected ? .isSelected : [])
         } else {
             NavigationLink(value: PokedexRoute.pokemon(pokemon)) { card }
         }

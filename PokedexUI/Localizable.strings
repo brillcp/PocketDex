@@ -1,0 +1,194 @@
+/* Localizable.strings */
+
+/** Battle **/
+"battle.error.dataNotLoaded" = "Battle data is still loading. Try again in a moment.";
+"battle.level" = "Lv.%lld";
+"battle.title" = "%1$@ vs %2$@";
+
+/** Battle Log **/
+"battleLog.condition" = "%1$@ is %2$@";
+"battleLog.condition.fastAsleep" = "fast asleep";
+"battleLog.condition.frozenSolid" = "frozen solid";
+"battleLog.condition.fullyParalyzed" = "fully paralyzed";
+"battleLog.criticalHit" = " (critical hit)";
+"battleLog.damaged" = "%1$@ took %2$@";
+"battleLog.damaged.amount" = "%lld dmg";
+"battleLog.draw" = "It's a draw.";
+"battleLog.failed" = "But it %@";
+"battleLog.failed.highlight" = "failed";
+"battleLog.fainted" = "%1$@ %2$@";
+"battleLog.fainted.highlight" = "fainted!";
+"battleLog.flinched" = "%1$@ %2$@ and couldn't move";
+"battleLog.flinched.highlight" = "flinched";
+"battleLog.healed" = "%1$@ restored %2$@";
+"battleLog.healed.amount" = "%lld HP";
+"battleLog.hitCount" = "Hit %@!";
+"battleLog.lostFocus" = "%1$@ lost its %2$@";
+"battleLog.lostFocus.highlight" = "focus";
+"battleLog.missed" = "%@'s attack missed";
+"battleLog.noEffect" = "It had no effect on %@";
+"battleLog.notVeryEffective" = " (not very effective)";
+"battleLog.opponentReady" = "%@ is ready to battle!";
+"battleLog.pickMove" = "Pick a move";
+"battleLog.recharging" = "%1$@ must %2$@";
+"battleLog.recharging.highlight" = "recharge";
+"battleLog.recoil" = "%1$@ took %2$@ damage";
+"battleLog.recoil.amount" = "%lld recoil";
+"battleLog.stat.fell" = "fell";
+"battleLog.stat.fellSharply" = "sharply fell";
+"battleLog.stat.rose" = "rose";
+"battleLog.stat.roseSharply" = "sharply rose";
+"battleLog.statChanged" = "%1$@'s %2$@ %3$@";
+"battleLog.statusApplied" = "%1$@ was inflicted with %2$@";
+"battleLog.statusTick" = "%1$@ hurt by %2$@ (%3$@)";
+"battleLog.superEffective" = " (super effective)";
+"battleLog.thawed" = "%1$@ %2$@";
+"battleLog.thawed.highlight" = "thawed out";
+"battleLog.used" = "%1$@ used %2$@";
+"battleLog.waitingForOpponent" = "Waiting for opponent";
+"battleLog.wildAppeared" = "A wild %@ appeared!";
+"battleLog.wins" = "%1$@ %2$@";
+"battleLog.wins.highlight" = "wins!";
+"battleLog.wokeUp" = "%@ woke up";
+
+/** Battle Setup **/
+"battleSetup.error.catalogue" = "Couldn't load the battle data. Check your connection and try again.";
+"battleSetup.error.movepool" = "Couldn't load %@'s movepool. Check your connection and try again.";
+"battleSetup.error.opponentLoadout" = "Opponent couldn't pick a loadout.";
+"battleSetup.preparing" = "Preparing battle";
+
+/** Buttons **/
+"button.thinking" = "Thinking";
+
+/** Detail **/
+"detail.battle" = "Battle";
+"detail.capture" = "Capture";
+"detail.gender" = "Gender";
+"detail.habitat" = "Habitat";
+"detail.height" = "Height";
+"detail.section.data" = "Data";
+"detail.section.evolution" = "Evolution";
+"detail.section.movesAbilities" = "Moves / Abilities";
+"detail.section.stats" = "Stats";
+"detail.section.typeChart" = "Type chart";
+"detail.stat.attack" = "ATK";
+"detail.stat.defense" = "DEF";
+"detail.stat.hp" = "HP";
+"detail.stat.specialAttack" = "SATK";
+"detail.stat.specialDefense" = "SDEF";
+"detail.stat.speed" = "SPD";
+"detail.total" = "Total";
+"detail.typeChart.strengths" = "Strengths";
+"detail.typeChart.weaknesses" = "Weaknesses";
+"detail.types" = "Types";
+"detail.weight" = "Weight";
+
+/** Difficulty **/
+"difficulty.easy" = "Easy";
+"difficulty.easy.summary" = "The opponent holds back";
+"difficulty.fair" = "Fair";
+"difficulty.fair.summary" = "An even fight";
+"difficulty.hard" = "Hard";
+"difficulty.hard.summary" = "The opponent always plays its best move";
+"difficulty.menu" = "Settings";
+"difficulty.title" = "Difficulty";
+
+/** Evolution **/
+"evolution.friendship" = "Friendship";
+"evolution.level" = "Lv %lld";
+
+/** Fighter Picker **/
+"fighterPicker.generation" = "Gen %@";
+"fighterPicker.smartPick" = "Smart pick";
+"fighterPicker.title" = "Choose player";
+
+/** Global **/
+"global.error" = "Error";
+"global.ok" = "OK";
+
+/** Items **/
+"items.loadFailed.title" = "Couldn't load items";
+"items.loading" = "Loading items";
+
+/** Load Failed **/
+"loadFailed.description" = "Check your connection and try again.";
+"loadFailed.retry" = "Retry";
+
+/** Loadout **/
+"loadout.fullHint" = "Remove one of your moves to add another";
+"loadout.moves.count" = "Moves %1$lld/%2$lld";
+"loadout.recommended" = "Recommended";
+"loadout.reset" = "Reset";
+"loadout.start" = "Start";
+"loadout.title" = "Pick moves";
+"loadout.typeMatchup" = "Type matchup";
+
+/** Matchup **/
+"matchup.even" = "Even";
+"matchup.strong" = "Strong";
+"matchup.weak" = "Weak";
+
+/** Move **/
+"move.accuracy" = "ACC";
+"move.power" = "PWR";
+"move.pp" = "PP %lld";
+
+/** Multiplayer **/
+"multiplayer.canceled" = "%@ canceled.";
+"multiplayer.connecting" = "Connecting";
+"multiplayer.error.disconnected" = "Opponent disconnected.";
+"multiplayer.error.invalidLoadout" = "Opponent sent an invalid loadout.";
+"multiplayer.error.protocolVersion" = "Opponent uses a different protocol version.";
+"multiplayer.invite.accept" = "Accept";
+"multiplayer.invite.decline" = "Decline";
+"multiplayer.invite.message" = "%@ wants to challenge you to a 1v1 battle.";
+"multiplayer.invite.title" = "Battle challenge!";
+"multiplayer.nearbyTrainers" = "Nearby trainers";
+"multiplayer.noTrainers" = "No trainers nearby";
+"multiplayer.opponent" = "Opponent";
+"multiplayer.pickFighter" = "Pick your fighter";
+"multiplayer.ready" = "Ready";
+"multiplayer.trainer" = "Trainer";
+
+/** My Team **/
+"myTeam.empty" = "No team members";
+"myTeam.title" = "My team";
+
+/** Pokedex **/
+"pokedex.loadFailed.title" = "Couldn't load the Pokedex";
+"pokedex.loading" = "Loading Pokedex %@";
+"pokedex.nothingSelected" = "Nothing selected";
+"pokedex.toolbar.gridLayout" = "Change grid layout";
+"pokedex.toolbar.sortBy" = "Sort by";
+
+/** Search **/
+"search.emptyHint" = "Search names, types, habitats or abilities";
+"search.section.recent" = "Recent";
+"search.section.suggested" = "Suggested";
+"search.section.tryTerms" = "Try searching for";
+
+/** Sort **/
+"sort.direction.ascending" = "Ascending";
+"sort.direction.descending" = "Descending";
+"sort.stat.attack" = "Attack";
+"sort.stat.defense" = "Defense";
+"sort.stat.hp" = "Hp";
+"sort.stat.speed" = "Speed";
+"sort.type.catchRate" = "Catch rate";
+"sort.type.height" = "Height";
+"sort.type.name" = "Name";
+"sort.type.number" = "Number";
+"sort.type.weight" = "Weight";
+
+/** Stats **/
+"stat.short.attack" = "ATK";
+"stat.short.defense" = "DEF";
+"stat.short.hp" = "HP";
+"stat.short.specialAttack" = "SPA";
+"stat.short.specialDefense" = "SPD";
+"stat.short.speed" = "SPE";
+
+/** Tabs **/
+"tab.battle" = "Gym";
+"tab.items" = "Items";
+"tab.search" = "Search";

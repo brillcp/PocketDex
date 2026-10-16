@@ -88,15 +88,28 @@ extension BattleSetupViewModel: BattleSetupViewModelProtocol {
         self.playerPokemon   = player
         self.opponentPokemon = opponent
 
+        // The move catalogue loads at launch; wait for it (or retry it, if
+        // that load failed) before building movepools from it.
+        do {
+            try await PokeBattleKit.initialize()
+        } catch {
+            errorMessage = Localized("battleSetup.error.catalogue")
+            return
+        }
+        guard let chart = PokeBattleKit.loadedTypeChart else {
+            errorMessage = Localized("battleSetup.error.catalogue")
+            return
+        }
+
         let playerMoves   = MoveSelection.movesForPokemon(player.pokemon)
         let opponentMoves = MoveSelection.movesForPokemon(opponent.pokemon)
 
         guard !playerMoves.isEmpty else {
-            errorMessage = "Couldn't load \(playerSummary.name)'s movepool. Check your connection and try again."
+            errorMessage = Localized("battleSetup.error.movepool", playerSummary.name)
             return
         }
         guard !opponentMoves.isEmpty else {
-            errorMessage = "Couldn't load \(opponentSummary.name)'s movepool. Check your connection and try again."
+            errorMessage = Localized("battleSetup.error.movepool", opponentSummary.name)
             return
         }
 
@@ -104,7 +117,6 @@ extension BattleSetupViewModel: BattleSetupViewModelProtocol {
         // pre-selected, so the strongest swaps sit right below it.
         let fighter = Combatant(pokemon: player, moves: [], rules: rules)
         let foe = Combatant(pokemon: opponent, moves: [], rules: rules)
-        let chart = PokeBattleKit.typeChart
         selection.load(ranked: LoadoutStrategy.shortlist(
             fighter: fighter, opponent: foe, moves: playerMoves, typeChart: chart, limit: playerMoves.count
         ))
@@ -118,8 +130,8 @@ extension BattleSetupViewModel: BattleSetupViewModelProtocol {
         guard let player = playerPokemon,
               let opponent = opponentPokemon else { return }
 
+        guard let chart = PokeBattleKit.loadedTypeChart else { return }
         isPickingLoadout = true
-        let chart   = PokeBattleKit.typeChart
         let fighter = Combatant(pokemon: opponent, moves: [], rules: rules, level: rules.opponentLevel(for: difficulty))
         let foe     = Combatant(pokemon: player,  moves: [], rules: rules)
         let chosen  = selection.selectedMoves
@@ -134,7 +146,7 @@ extension BattleSetupViewModel: BattleSetupViewModelProtocol {
         )
 
         guard !picks.isEmpty else {
-            errorMessage = "Opponent couldn't pick a loadout."
+            errorMessage = Localized("battleSetup.error.opponentLoadout")
             isPickingLoadout = false
             return
         }

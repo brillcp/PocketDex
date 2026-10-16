@@ -46,20 +46,19 @@ private extension MovePickerGrid {
     var header: some View {
         VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s4) {
             HStack(spacing: DesignKit.Spacing.Primitive.s8) {
-                Text("Moves \(moveSelection.selectedNames.count)/\(moveSelection.maxSelections)")
+                Text(LocalizedKey("loadout.moves.count", moveSelection.selectedNames.count, moveSelection.maxSelections))
                 if moveSelection.isRecommended {
-                    Chip("Recommended", style: .primary, size: .small)
+                    Chip(Localized("loadout.recommended"), style: .primary, size: .small)
                 }
                 Spacer()
                 if !moveSelection.recommendedNames.isEmpty, !moveSelection.isRecommended {
-                    Button("Reset", systemImage: "arrow.counterclockwise") {
+                    Button("loadout.reset", systemImage: "arrow.counterclockwise") {
                         withAnimation(DesignKit.Animation.Primitive.snappy25) { moveSelection.resetToRecommended() }
                     }
-                    .accessibilityLabel("Reset to recommended moves")
                 }
             }
             if showsFullHint {
-                Text("Remove one of your moves to add another")
+                Text("loadout.fullHint")
                     .font(.pixel9)
                     .foregroundStyle(Color.pokedexRed)
                     .transition(.opacity)

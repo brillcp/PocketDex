@@ -15,7 +15,7 @@ struct MultiplayerSetupView: View {
     var body: some View {
         NavigationStack {
             MultiplayerDiscoveryView(viewModel: viewModel)
-                .applyPokedexStyling(title: "Gym")
+                .applyPokedexStyling(title: Tabs.battle.title)
                 .foregroundStyle(.white)
                 .task { viewModel.startListening() }
                 .onAppear(perform: viewModel.startDiscovery)
@@ -33,23 +33,23 @@ struct MultiplayerSetupView: View {
                     }
                 }
                 .alert(
-                    "Battle challenge!",
+                    "multiplayer.invite.title",
                     isPresented: $viewModel.isShowingInvitation,
                     presenting: viewModel.pendingInvitation
                 ) { _ in
-                    Button("Accept", role: .confirm, action: viewModel.acceptInvitation)
-                    Button("Decline", role: .cancel, action: viewModel.declineInvitation)
+                    Button("multiplayer.invite.accept", role: .confirm, action: viewModel.acceptInvitation)
+                    Button("multiplayer.invite.decline", role: .cancel, action: viewModel.declineInvitation)
                 } message: { invite in
                     Text(
-                        "\(invite.peerName) wants to challenge you to a 1v1 battle."
+                        LocalizedKey("multiplayer.invite.message", invite.peerName)
                     )
                 }
                 .alert(
-                    "Error",
+                    "global.error",
                     isPresented: $viewModel.isShowingError,
                     presenting: viewModel.errorMessage
                 ) { _ in
-                    Button("OK") { viewModel.dismissError() }
+                    Button("global.ok") { viewModel.dismissError() }
                 } message: { message in
                     Text(message)
                 }
@@ -70,14 +70,14 @@ private struct MultiplayerDiscoveryView: View {
                 VStack(spacing: DesignKit.Spacing.Primitive.s16) {
                     Spacer()
                     if viewModel.phase == .connecting {
-                        PixelSpinner(text: "Connecting")
+                        PixelSpinner(text: "multiplayer.connecting")
                             .frame(maxWidth: .infinity)
                     } else {
                         Image(systemName: "iphone.gen3.radiowaves.left.and.right")
                             .resizable()
                             .aspectRatio(contentMode: .fill)
                             .frame(width: DesignKit.Spacing.Primitive.s24, height: DesignKit.Spacing.Primitive.s24)
-                        Text("No trainers nearby")
+                        Text("multiplayer.noTrainers")
                     }
                     Spacer()
                 }
@@ -87,7 +87,7 @@ private struct MultiplayerDiscoveryView: View {
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s8) {
-                        Label("Nearby trainers", systemImage: "antenna.radiowaves.left.and.right")
+                        Label("multiplayer.nearbyTrainers", systemImage: "antenna.radiowaves.left.and.right")
                             .font(.pixel12)
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, DesignKit.Spacing.Primitive.s16)
@@ -141,7 +141,7 @@ private struct MultiplayerPickerSheet: View {
                 viewModel.selectPokemon(pokemon)
                 selectedForMoves = pokemon
             }
-            .applyPokedexStyling(title: "Pick your fighter", navColor: .darkGrey)
+            .applyPokedexStyling(title: Localized("multiplayer.pickFighter"), navColor: .darkGrey)
             .foregroundStyle(.white)
             .interactiveDismissDisabled()
             .toolbar {
@@ -193,7 +193,7 @@ private struct MultiplayerMovePickerView: View {
         ) {
             submitButton
         }
-        .applyPokedexStyling(title: "Pick moves", navColor: .darkGrey)
+        .applyPokedexStyling(title: Localized("loadout.title"), navColor: .darkGrey)
         .foregroundStyle(.white)
     }
 }
@@ -205,8 +205,8 @@ private extension MultiplayerMovePickerView {
         let ready = viewModel.selectedPokemon != nil && sel.isFull
         return PrimaryCapsuleButton(
             icon: "bolt.fill",
-            title: "Ready",
-            loadingTitle: "Waiting for opponent",
+            title: Localized("multiplayer.ready"),
+            loadingTitle: Localized("battleLog.waitingForOpponent"),
             isEnabled: ready,
             isLoading: viewModel.phase == .waitingForOpponent,
             action: viewModel.submitLoadout

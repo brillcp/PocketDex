@@ -21,7 +21,7 @@ struct BattleLoadoutView<ViewModel: BattleSetupViewModelProtocol>: View {
 
     var body: some View {
         content
-            .applyPokedexStyling(title: "Pick moves", navColor: .darkGrey)
+            .applyPokedexStyling(title: Localized("loadout.title"), navColor: .darkGrey)
             .foregroundStyle(.white)
             .task { await viewModel.prepare() }
             .onChange(of: viewModel.phase) { _, newPhase in
@@ -65,7 +65,7 @@ private extension BattleLoadoutView {
     // MARK: - States
 
     var loadingState: some View {
-        PixelSpinner(text: "Preparing battle")
+        PixelSpinner(text: "battleSetup.preparing")
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
@@ -125,7 +125,7 @@ private extension BattleLoadoutView {
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
 
-            Text("Lv.\(level)")
+            Text(LocalizedKey("battle.level", level))
                 .font(.pixel12)
                 .foregroundStyle(.secondary)
                 .contentTransition(.numericText(value: Double(level)))
@@ -147,12 +147,12 @@ private extension BattleLoadoutView {
     func statGrid(pokemon: PokemonViewModel) -> some View {
         let byName = Dictionary(uniqueKeysWithValues: pokemon.stats.map { ($0.stat.name, $0.baseStat) })
         let entries: [(String, Int)] = [
-            ("HP", byName["hp"] ?? 0),
-            ("ATK", byName["attack"] ?? 0),
-            ("DEF", byName["defense"] ?? 0),
-            ("SPA", byName["special-attack"] ?? 0),
-            ("SPD", byName["special-defense"] ?? 0),
-            ("SPE", byName["speed"] ?? 0)
+            (Localized("stat.short.hp"), byName["hp"] ?? 0),
+            (Localized("stat.short.attack"), byName["attack"] ?? 0),
+            (Localized("stat.short.defense"), byName["defense"] ?? 0),
+            (Localized("stat.short.specialAttack"), byName["special-attack"] ?? 0),
+            (Localized("stat.short.specialDefense"), byName["special-defense"] ?? 0),
+            (Localized("stat.short.speed"), byName["speed"] ?? 0)
         ]
         return VStack(spacing: DesignKit.Spacing.Primitive.s2) {
             ForEach(0..<2) { rowIdx in
@@ -176,7 +176,7 @@ private extension BattleLoadoutView {
 
     var typeMatchup: some View {
         VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s8) {
-            Text("Type matchup")
+            Text("loadout.typeMatchup")
                 .font(.pixel12)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, DesignKit.Spacing.Primitive.s16)
@@ -211,7 +211,7 @@ private extension BattleLoadoutView {
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
             Image(systemName: "arrow.forward")
-                .font(.system(size: 10))
+                .font(.pixel9)
                 .foregroundStyle(.secondary)
             Text(toName)
                 .lineLimit(1)
@@ -249,7 +249,7 @@ private extension BattleLoadoutView {
         let phase = viewModel.phase
         return PrimaryCapsuleButton(
             icon: "bolt.fill",
-            title: "Start",
+            title: Localized("loadout.start"),
             isEnabled: phase == .readyToStart || phase == .readyToRequest,
             isLoading: phase == .awaitingAI,
             action: phase == .readyToStart

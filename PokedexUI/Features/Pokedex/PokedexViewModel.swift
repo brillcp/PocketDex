@@ -5,7 +5,7 @@ import SwiftUI
 /// Observable view model behind the pokedex grid.
 ///
 /// Like every screen in the app, the view depends on this protocol rather
-/// than the concrete class, so previews and tests can inject a stub. The
+/// than the concrete class, so a stub can be injected. The
 /// conforming type is a `@MainActor @Observable` class that views hold in
 /// `@State`, so SwiftUI tracks exactly the properties each body reads.
 @MainActor
@@ -16,6 +16,9 @@ protocol PokedexViewModelProtocol {
     var isLoading: Bool { get }
     /// 0...1 progress during first-load API fetch.
     var loadingProgress: Double { get }
+    /// `true` when the first-load fetch failed (usually no connection) and
+    /// nothing is stored yet; the grid offers a retry.
+    var loadFailed: Bool { get }
     /// Currently selected tab in the parent `TabView`.
     var selectedTab: Tabs { get set }
     /// Current pokedex grid layout (3 cols vs 4 cols).
@@ -57,6 +60,7 @@ final class PokedexViewModel {
     var pokemon: [Pokemon] = [] { didSet { recomputeSortedPokemon() } }
     var isLoading: Bool = false
     var loadingProgress: Double = 0
+    var loadFailed = false
     var selectedTab: Tabs = .pokedex
     var grid: GridLayout = .three
     var sortType: SortType = .number { didSet { recomputeSortedPokemon() } }
@@ -86,6 +90,7 @@ extension PokedexViewModel: PokedexViewModelProtocol {
         isLoading = true
         defer { isLoading = false }
         loadingProgress = 0
+        loadFailed = false
 
         do {
             // Download, decode, and import all run in `PokedexRepository` off the
@@ -95,6 +100,7 @@ extension PokedexViewModel: PokedexViewModelProtocol {
             }
             pokemon = fetchStoredPokemon() ?? []
         } catch {
+            loadFailed = true
             #if DEBUG
             print("PokedexViewModel: fetch failed: \(error)")
             #endif

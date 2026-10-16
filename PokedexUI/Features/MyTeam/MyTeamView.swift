@@ -8,7 +8,7 @@ import SwiftData
 /// "My team" title and symbol, shared by the toolbar button, this screen
 /// and the fighter picker's team section.
 enum MyTeam {
-    static let title = "My team"
+    static var title: String { Localized("myTeam.title") }
     static let icon = "person.2.fill"
 }
 
@@ -41,7 +41,7 @@ struct MyTeamView: View {
         }
         .background {
             if team.isEmpty {
-                Text("No team members")
+                Text("myTeam.empty")
                     .foregroundStyle(.secondary)
                     .font(.pixel14)
             }

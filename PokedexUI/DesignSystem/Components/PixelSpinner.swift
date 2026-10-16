@@ -12,7 +12,7 @@ struct PixelSpinner: View {
     let lineCount: Int
     let lineWidth: CGFloat
     let lineLength: CGFloat
-    var text: String?
+    var text: LocalizedStringKey?
 
     init(
         size: CGFloat = 22,
@@ -20,7 +20,7 @@ struct PixelSpinner: View {
         lineCount: Int = 8,
         lineWidth: CGFloat = 2.2,
         lineLength: CGFloat = 6.4,
-        text: String? = nil
+        text: LocalizedStringKey? = nil
     ) {
         self.size = size
         self.color = color
@@ -43,7 +43,6 @@ struct PixelSpinner: View {
                 spinnerView
             }
         }
-        .accessibilityLabel("Loading")
     }
 }
 
@@ -77,15 +76,4 @@ private extension PixelSpinner {
         let seconds = date.timeIntervalSinceReferenceDate
         return Int(seconds * Double(lineCount)) % lineCount
     }
-}
-
-#Preview {
-    VStack(spacing: DesignKit.Spacing.Primitive.s32) {
-        PixelSpinner()
-        PixelSpinner(text: "Loading items")
-        PixelSpinner(size: 48, color: .yellow, lineWidth: 3, lineLength: 12)
-        PixelSpinner(size: 64, color: .white, lineCount: 16, lineWidth: 2, lineLength: 14)
-    }
-    .padding(DesignKit.Spacing.Primitive.s16)
-    .background(Color.black)
 }

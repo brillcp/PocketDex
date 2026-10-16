@@ -13,7 +13,7 @@ PocketDex+ is a SwiftUI app built on top of the [PokeAPI](https://pokeapi.co), w
 
 If you're a senior iOS engineer looking for a worked example of modern SwiftUI patterns (**Swift 6 strict concurrency**, actors, `@Observable`, SwiftData with a background `@ModelActor`, a rule-based battle AI checked by whole-Pokédex simulation, MultipeerConnectivity), or someone earlier in their iOS journey trying to see how these pieces fit together in a real app, hopefully there's something here for you. Every feature is small enough to read end-to-end, and the code is commented to explain *why* things are built the way they are: data flow, threading choices, and the non-obvious decisions.
 
-Built by [Viktor Gidlöf](https://viktorgidlof.com).
+Built by [Viktor Gidlöf](https://viktorgidlof.com). Contributions are welcome, see [CONTRIBUTING](CONTRIBUTING.md).
 
 <img height="800" alt="Pokedex+" src="https://github.com/user-attachments/assets/c9f1df1d-bca8-40db-b57a-0059c7429c65" />
 
@@ -26,23 +26,29 @@ PocketDex+ is **Protocol-Oriented MVVM** with clear layer boundaries and **Swift
 ## Key architectural benefits
 
 - ✅ **Swift 6 language mode**: full compile-time data-race checking, with zero warnings. See [Concurrency model](#concurrency-model).
-- ✅ **Protocol-Oriented**: every layer depends on abstractions, enabling DI and easy testing.
+- ✅ **Protocol-Oriented**: services and view models sit behind protocols and are wired in one composition root, so dependencies can be swapped without touching call sites.
 - ✅ **Background data pipeline**: network JSON decodes into `Sendable` DTOs in parallel off the main thread; a `@ModelActor` turns them into SwiftData rows. `@Model` objects never cross actors.
 - ✅ **Storage-First**: SwiftData is the source of truth; the network is a one-time backfill mechanism.
 - ✅ **Clean Separation**: App / Features / Core / DesignSystem layers with one-way dependencies (App can see everything, Core depends on nothing).
 - ✅ **Type Safety**: generics, `Sendable` snapshots crossing actor boundaries (`PokemonSearchEntry`, `Candidate`, DTOs), `@Attribute(.unique)` on every keyed cache entity (Pokemon by id, EvolutionChainEntity by chainId). Move and type data live in PokeBattleKit's own disk cache.
 - ✅ **Reactive UI**: SwiftUI body re-renders driven entirely by `@Observable` view models, with views split so high-frequency updates only touch the views that read them.
-- ✅ **Adaptive layout**: size-class driven, so the app works on iPhone, iPad, resizable windows, and the foldable iPhone Duo (detail on the left, grid on the right when unfolded).
+- ✅ **Adaptive layout**: size-class driven, so the app adapts to wide iPhone layouts and the foldable iPhone Duo (detail on the left, grid on the right when unfolded).
 - ✅ **Battle AI**: rule-based AI from [PokeBattleKit](https://github.com/brillcp/PokeBattleKit), with opponents matched by simulated strength ratings and three difficulty levels.
 - ✅ **Local Multiplayer**: host-authoritative architecture with a typed, versioned `Codable` message protocol over MultipeerConnectivity. The same `BattleViewModelProtocol` drives both AI and peer-to-peer battles with zero view changes.
 
-### SOLID Compliance Score: 0.94 / 1.0
+### SOLID audit: 0.76 / 1.00
 
-- **S**ingle Responsibility: each service, store, and view model has one job. View models are thin conductors that delegate timing, formatting, and strategy to dedicated collaborators. Shared UI components each own a single reusable concern.
-- **O**pen/Closed: new endpoints are a new `PokeAPIRequest` case plus a `Sendable` DTO; the client, decoding, and storage pipeline don't change. `BattleViewModelProtocol` let an entirely new battle mode ship without touching the battle view, animator, or log formatter.
-- **L**iskov Substitution: every service is reached through its protocol on `AppContainer`, so previews and tests can swap any concrete type for a mock without touching call sites. Multiple conformers of the same protocol are interchangeable at runtime.
-- **I**nterface Segregation: each view model exposes only the surface its view needs. No god-protocol shared across consumers.
-- **D**ependency Inversion: `AppContainer` is the single composition root. Views read services via `@Environment(\.container)`. No `static let shared` lookups in feature code.
+Scored from an audit of the app target's code (the mean of the five principles, each scored on evidence: 1.0 means essentially no violations, 0.8 minor isolated ones, 0.6 several real ones in important places):
+
+| Principle | Score | Where it holds | Where it doesn't (yet) |
+| --- | --- | --- | --- |
+| **S**ingle Responsibility | 0.75 | Battle flow split into formatter, animator, color resolver and AI driver; persistence only in `PokedexStore` | `MultiplayerSetupViewModel` handles discovery, connection, picking and handshake; `FighterPickerView` runs Smart pick itself |
+| **O**pen/Closed | 0.80 | Services behind protocols; one `BattleView` serves both battle modes; AI behaviour lives in PokeBattleKit strategies | New multiplayer messages touch the encoder, decoder and two view models; display enums use many `switch`es |
+| **L**iskov Substitution | 0.90 | Both `BattleViewModelProtocol` conformers are interchangeable in the generic `BattleView`; no trapping conformers | A force-unwrapped Struggle lookup in `BattleAIService` |
+| **I**nterface Segregation | 0.75 | Small service protocols (one or two members); each view model exposes only what its view needs | View models take the whole `AppContainer`; each client uses one of `BattleAIServiceProtocol`'s three methods |
+| **D**ependency Inversion | 0.60 | One composition root injected through the environment; views generic over view model protocols | `MultipeerService` and `EvolutionService` are concrete; PokeBattleKit's catalogue is read through globals |
+
+The biggest wins left: put `MultipeerService` behind a protocol, wrap PokeBattleKit's catalogue in one injected dependency, and pass view models only the services they use.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -172,7 +178,7 @@ extension EnvironmentValues {
 @Environment(\.container) private var container
 ```
 
-Previews (and future tests) swap in a custom container with mocks (or an in-memory `ModelContainer` via `AppContainer.makeModelContainer(inMemory: true)`); the rest of the app is unaware.
+A different container (with stub services, or an in-memory `ModelContainer` via `AppContainer.makeModelContainer(inMemory: true)`) can be injected the same way; the rest of the app is unaware.
 
 ## Storage
 
@@ -193,7 +199,7 @@ Move and type effectiveness data are owned by PokeBattleKit, which caches them a
 The layout follows the horizontal size class, never the device model, so it adapts live as a window resizes or the device folds:
 
 - **Compact width** (iPhone, folded iPhone Duo): a single navigation stack; tapping a pokemon pushes its detail with a zoom transition.
-- **Regular width** (unfolded iPhone Duo, iPad, wide windows): the detail sits in a leading column and the grid in a trailing column. `NavigationSplitView` always puts its sidebar on the leading edge, so the two columns are separate navigation stacks.
+- **Regular width** (unfolded iPhone Duo, landscape on large iPhones): the detail sits in a leading column and the grid in a trailing column. `NavigationSplitView` always puts its sidebar on the leading edge, so the two columns are separate navigation stacks.
 
 The open pokemon is carried across size-class changes, so folding or unfolding keeps it on screen.
 
@@ -425,9 +431,25 @@ dependencies: [
 
 ---
 
+# Getting started 🚀
+
+1. Clone the repo and open `PokedexUI.xcodeproj`.
+2. Select the `PokedexUI` target and pick your own team under **Signing & Capabilities**.
+3. Run on an iPhone or the simulator. The first launch downloads the Pokédex from PokeAPI (it needs a connection; a Retry button appears if it fails), and every later launch reads from SwiftData.
+
+Multiplayer needs two devices on the same network; the Gym tab asks for Local Network permission the first time.
+
+---
+
+# Localization 🌍
+
+All user-facing text lives in `Localizable.strings` with dotted keys grouped by screen (`"myTeam.title" = "My team";`), and plurals in `Localizable.stringsdict`. Views pass keys straight to SwiftUI (`Text("myTeam.title")`); code that needs a `String` uses `Localized("key", args…)`. Battle log lines are whole-sentence keys with placeholders (`"%1$@ used %2$@"`), filled with styled parts by `LocalizedAttributed`, so a translation can reorder the words and keep the colors. English is the only language so far.
+
+---
+
 # Requirements ❗️
 
-- Xcode 26+
+- Xcode 27 (iOS 27 SDK)
 - iOS 26+ (for Liquid Glass, `@Observable`, SwiftData)
 - Swift 6 language mode (default actor isolation `nonisolated`, Approachable Concurrency)
 - Local Network permission for multiplayer (prompted automatically on first Gym use)

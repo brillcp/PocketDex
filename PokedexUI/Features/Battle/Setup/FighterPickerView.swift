@@ -68,7 +68,7 @@ struct FighterPickerView: View {
                         Button(role: .cancel, action: dismiss.callAsFunction)
                     }
                 }
-                .applyPokedexStyling(title: "Choose player", navColor: .darkGrey)
+                .applyPokedexStyling(title: Localized("fighterPicker.title"), navColor: .darkGrey)
                 .onChange(of: SectionsKey(all: allPokemon, team: team), initial: true) {
                     sections = buildSections()
                 }
@@ -130,7 +130,7 @@ private extension FighterPickerView {
             .map { number, pokemon in
                 PokemonGridSection(
                     id: number.map { "gen-\($0)" } ?? "gen-other",
-                    title: number.map { "Gen \(Self.romanNumeral($0))" },
+                    title: number.map { Localized("fighterPicker.generation", Self.romanNumeral($0)) },
                     pokemon: pokemon,
                     showsBadges: true
                 )
@@ -170,9 +170,9 @@ private extension FighterPickerView {
 
     func matchupChip(for pokemon: Pokemon) -> Chip? {
         switch matchups[pokemon.id] {
-        case .strong: Chip("Strong", style: .success)
-        case .even: Chip("Even")
-        case .weak: Chip("Weak", style: .danger)
+        case .strong: Chip(Localized("matchup.strong"), style: .success)
+        case .even: Chip(Localized("matchup.even"))
+        case .weak: Chip(Localized("matchup.weak"), style: .danger)
         case nil: nil
         }
     }
@@ -193,7 +193,7 @@ private extension FighterPickerView {
     var pickerButton: some View {
         PrimaryCapsuleButton(
             icon: "sparkles.2",
-            title: "Smart pick",
+            title: Localized("fighterPicker.smartPick"),
             isEnabled: !isAIThinking,
             isLoading: isAIThinking,
             action: pickSmart

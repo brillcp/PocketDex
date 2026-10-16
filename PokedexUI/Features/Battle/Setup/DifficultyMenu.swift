@@ -14,18 +14,18 @@ enum BattleDifficulty {
 extension Difficulty {
     var title: String {
         switch self {
-        case .easy: "Easy"
-        case .fair: "Fair"
-        case .hard: "Hard"
+        case .easy: Localized("difficulty.easy")
+        case .fair: Localized("difficulty.fair")
+        case .hard: Localized("difficulty.hard")
         }
     }
 
     /// One-line explanation shown under each option in the menu.
     var summary: String {
         switch self {
-        case .easy: "The opponent holds back"
-        case .fair: "An even fight"
-        case .hard: "The opponent always plays its best move"
+        case .easy: Localized("difficulty.easy.summary")
+        case .fair: Localized("difficulty.fair.summary")
+        case .hard: Localized("difficulty.hard.summary")
         }
     }
 }
@@ -36,9 +36,9 @@ struct DifficultyMenu: View {
 
     var body: some View {
         Menu {
-            Text("Difficulty")
+            Text("difficulty.title")
             Divider()
-            Picker("Difficulty", selection: $difficulty) {
+            Picker("difficulty.title", selection: $difficulty) {
                 ForEach(Difficulty.allCases, id: \.self) { level in
                     // A second Text becomes the menu item's subtitle.
                     VStack {
@@ -49,7 +49,7 @@ struct DifficultyMenu: View {
                 }
             }
         } label: {
-            Label("Settings", systemImage: "gearshape.fill")
+            Label("difficulty.menu", systemImage: "gearshape.fill")
                 .labelStyle(.iconOnly)
                 .font(.title3)
                 .frame(width: DesignKit.Spacing.Primitive.s40, height: DesignKit.Spacing.Primitive.s40)
@@ -57,6 +57,5 @@ struct DifficultyMenu: View {
         .menuOrder(.fixed)
         .buttonStyle(.glass)
         .buttonBorderShape(.circle)
-        .accessibilityLabel("Difficulty: \(difficulty.title)")
     }
 }

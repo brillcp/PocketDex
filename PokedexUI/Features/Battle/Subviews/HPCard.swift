@@ -15,7 +15,7 @@ struct HPCard: View, Equatable {
         VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s8) {
             HStack {
                 Text(name).font(.pixel14)
-                Text("Lv.\(level)")
+                Text(LocalizedKey("battle.level", level))
                     .font(.pixel12)
                     .foregroundStyle(.secondary)
                 if status != .none {

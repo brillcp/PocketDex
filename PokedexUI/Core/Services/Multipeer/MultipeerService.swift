@@ -74,7 +74,7 @@ final class MultipeerService: NSObject {
     private func resolvedConnection() -> (peerID: MCPeerID, session: MCSession) {
         if let connection { return connection }
         let name = UIDevice.current.name
-        let peerID = MCPeerID(displayName: name.isEmpty ? "Trainer" : name)
+        let peerID = MCPeerID(displayName: name.isEmpty ? Localized("multiplayer.trainer") : name)
         let session = MCSession(peer: peerID, securityIdentity: nil, encryptionPreference: .required)
         session.delegate = self
         connection = (peerID, session)

@@ -16,8 +16,8 @@ struct WeaknessGridView: View {
         // until it's available rather than showing a wrong matchup.
         if PokeBattleKit.isInitialized {
             VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s24) {
-                matchupSection(title: "Strengths", buckets: offensiveBuckets)
-                matchupSection(title: "Weaknesses", buckets: defensiveBuckets)
+                matchupSection(title: Localized("detail.typeChart.strengths"), buckets: offensiveBuckets)
+                matchupSection(title: Localized("detail.typeChart.weaknesses"), buckets: defensiveBuckets)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }

@@ -8,6 +8,9 @@ protocol ItemListViewModelProtocol {
     var items: [ItemData] { get }
     /// A flag indicating whether data is currently being fetched.
     var isLoading: Bool { get }
+    /// `true` when the first import failed (usually no connection) and
+    /// nothing is stored yet; the list offers a retry.
+    var loadFailed: Bool { get }
 
     /// Imports items on first launch if needed, then reads them from the store.
     /// No-op once items are loaded.
@@ -25,6 +28,7 @@ final class ItemListViewModel {
 
     var items: [ItemData] = []
     var isLoading: Bool = false
+    var loadFailed = false
 
     init(modelContext: ModelContext, container: AppContainer) {
         self.repository = container.repository
@@ -37,6 +41,7 @@ final class ItemListViewModel {
 extension ItemListViewModel: ItemListViewModelProtocol {
     func loadItems() async {
         guard !isLoading, items.isEmpty else { return }
+        loadFailed = false
 
         items = await withLoadingState {
             // Downloads and imports off the main actor when nothing is
@@ -44,6 +49,7 @@ extension ItemListViewModel: ItemListViewModelProtocol {
             do {
                 try await repository.loadItemsIfNeeded()
             } catch {
+                loadFailed = true
                 #if DEBUG
                 print("ItemListViewModel: fetch failed: \(error)")
                 #endif

@@ -48,7 +48,7 @@ struct EvolutionDetail: Codable, Sendable {
     /// Display-ready trigger label, e.g. "Lv 16", "Thunder Stone", "Friendship".
     var triggerLabel: String? {
         if let level = minLevel {
-            return "Lv \(level)"
+            return Localized("evolution.level", level)
         }
         if let item = item?.name {
             return item.pretty
@@ -57,7 +57,7 @@ struct EvolutionDetail: Codable, Sendable {
             return trigger.pretty
         }
         if (minHappiness ?? 0) > 0 {
-            return "Friendship"
+            return Localized("evolution.friendship")
         }
         return nil
     }

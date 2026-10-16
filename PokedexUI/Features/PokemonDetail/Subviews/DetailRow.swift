@@ -104,7 +104,7 @@ struct TypesRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: DesignKit.Spacing.Primitive.s16) {
-            Text("Types")
+            Text("detail.types")
                 .frame(width: 82, alignment: .leading)
             HStack {
                 ForEach(typeNames, id: \.self) { type in
@@ -131,12 +131,12 @@ struct DetailRowStat: View {
 
     private var abbreviatedTitle: String {
         switch title.lowercased() {
-        case "special-attack":  return "SATK"
-        case "attack":          return "ATK"
-        case "hp":              return "HP"
-        case "speed":           return "SPD"
-        case "special-defense": return "SDEF"
-        case "defense":         return "DEF"
+        case "special-attack":  return Localized("detail.stat.specialAttack")
+        case "attack":          return Localized("detail.stat.attack")
+        case "hp":              return Localized("detail.stat.hp")
+        case "speed":           return Localized("detail.stat.speed")
+        case "special-defense": return Localized("detail.stat.specialDefense")
+        case "defense":         return Localized("detail.stat.defense")
         default:                return title.capitalized
         }
     }

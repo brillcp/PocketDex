@@ -72,7 +72,7 @@ private extension SearchView {
                         onClear: viewModel.clearRecentSearches
                     )
                 } else {
-                    Text("Search names, types, habitats or abilities")
+                    Text("search.emptyHint")
                         .frame(maxWidth: .infinity, alignment: .center)
                         .multilineTextAlignment(.center)
                         .padding(.top, DesignKit.Spacing.Primitive.s56 + DesignKit.Spacing.Primitive.s24)
@@ -99,7 +99,7 @@ private struct SuggestedTermsSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s8) {
-            SearchSectionHeader(title: "Try searching for", systemImage: "magnifyingglass")
+            SearchSectionHeader(title: "search.section.tryTerms", systemImage: "magnifyingglass")
             FlowLayout(spacing: DesignKit.Spacing.Primitive.s6) {
                 ForEach(terms, id: \.self) { term in
                     Button {
@@ -124,7 +124,7 @@ private struct SuggestedPokemonSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s8) {
-            SearchSectionHeader(title: "Suggested", systemImage: "sparkles.2")
+            SearchSectionHeader(title: "search.section.suggested", systemImage: "sparkles.2")
                 .padding(.horizontal, DesignKit.Spacing.Primitive.s16)
             LazyVGrid(columns: GridLayout.two.layout, spacing: GridLayout.two.spacing) {
                 ForEach(pokemon, id: \.id) { pokemon in
@@ -150,7 +150,7 @@ private struct RecentSearchesSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s8) {
             HStack {
-                SearchSectionHeader(title: "Recent", systemImage: "clock.arrow.circlepath")
+                SearchSectionHeader(title: "search.section.recent", systemImage: "clock.arrow.circlepath")
                 Spacer()
                 Button(action: onClear) {
                     Image(systemName: "trash.fill")
@@ -182,7 +182,7 @@ private struct RecentSearchesSection: View {
 
 /// Small icon + title header used by the empty-state sections.
 private struct SearchSectionHeader: View {
-    let title: String
+    let title: LocalizedStringKey
     let systemImage: String
 
     var body: some View {

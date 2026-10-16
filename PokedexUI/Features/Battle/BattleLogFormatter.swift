@@ -46,95 +46,108 @@ struct BattleLogFormatter {
         }
         switch event {
         case .used(let side, let moveName):
-            return nameAttr(side) + plain(" used ") + bold(moveName)
+            return line("battleLog.used", nameAttr(side), bold(moveName))
         case .missed(let side):
-            return nameAttr(side) + plain("'s attack missed")
+            return line("battleLog.missed", nameAttr(side))
         case .damaged(let side, let amount, let effectiveness, let crit):
             if effectiveness == 0 {
-                return plain("It had no effect on ") + nameAttr(side)
+                return line("battleLog.noEffect", nameAttr(side))
             }
-            var line = nameAttr(side) + plain(" took ") + colored("\(amount) dmg", Color.pokedexRed)
+            var result = line("battleLog.damaged", nameAttr(side), colored(Localized("battleLog.damaged.amount", amount), Color.pokedexRed))
             if crit {
-                line += colored(" (critical hit)", .yellow)
+                result += colored(Localized("battleLog.criticalHit"), .yellow)
             }
             if effectiveness >= 2 {
-                line += colored(" (super effective)", .green)
+                result += colored(Localized("battleLog.superEffective"), .green)
             } else if effectiveness < 1 {
-                line += colored(" (not very effective)", .gray)
+                result += colored(Localized("battleLog.notVeryEffective"), .gray)
             }
-            return line
+            return result
         case .statusApplied(let side, let status):
-            return nameAttr(side) + plain(" was inflicted with ") + colored(status.displayName, statusColor(status))
+            return line("battleLog.statusApplied", nameAttr(side), colored(status.displayName, statusColor(status)))
         case .statusTick(let side, let status, let amount):
-            return nameAttr(side) + plain(" hurt by ") + colored(status.displayName, statusColor(status))
-                + plain(" (") + colored("-\(amount)", Color.pokedexRed) + plain(")")
+            return line(
+                "battleLog.statusTick",
+                nameAttr(side),
+                colored(status.displayName, statusColor(status)),
+                colored("-\(amount)", Color.pokedexRed)
+            )
         case .statChanged(let side, let stat, let delta):
             let pretty = stat.replacingOccurrences(of: "-", with: " ").capitalized
             let tint: Color = delta > 0 ? .green : Color.pokedexRed
-            let sharp = abs(delta) >= 2 ? "sharply " : ""
-            let verb = delta > 0 ? "rose" : "fell"
-            return nameAttr(side) + plain("'s \(pretty) \(sharp)") + colored(verb, tint)
+            let change = switch (delta > 0, abs(delta) >= 2) {
+            case (true, true): Localized("battleLog.stat.roseSharply")
+            case (true, false): Localized("battleLog.stat.rose")
+            case (false, true): Localized("battleLog.stat.fellSharply")
+            case (false, false): Localized("battleLog.stat.fell")
+            }
+            return line("battleLog.statChanged", nameAttr(side), plain(pretty), colored(change, tint))
         case .healed(let side, let amount):
-            return nameAttr(side) + plain(" restored ") + colored("\(amount) HP", .green)
+            return line("battleLog.healed", nameAttr(side), colored(Localized("battleLog.healed.amount", amount), .green))
         case .recoil(let side, let amount):
-            return nameAttr(side) + plain(" took ") + colored("\(amount) recoil", Color.pokedexRed) + plain(" damage")
+            return line("battleLog.recoil", nameAttr(side), colored(Localized("battleLog.recoil.amount", amount), Color.pokedexRed))
         case .wokeUp(let side):
-            return nameAttr(side) + plain(" woke up")
+            return line("battleLog.wokeUp", nameAttr(side))
         case .fastAsleep(let side):
-            return nameAttr(side) + plain(" is ") + colored("fast asleep", statusColor(.sleep))
+            return line("battleLog.condition", nameAttr(side), colored(Localized("battleLog.condition.fastAsleep"), statusColor(.sleep)))
         case .recharging(let side):
-            return nameAttr(side) + plain(" must ") + colored("recharge", .gray)
+            return line("battleLog.recharging", nameAttr(side), colored(Localized("battleLog.recharging.highlight"), .gray))
         case .frozenSolid(let side):
-            return nameAttr(side) + plain(" is ") + colored("frozen solid", statusColor(.freeze))
+            return line("battleLog.condition", nameAttr(side), colored(Localized("battleLog.condition.frozenSolid"), statusColor(.freeze)))
         case .thawed(let side):
-            return nameAttr(side) + colored(" thawed out", statusColor(.freeze))
+            return line("battleLog.thawed", nameAttr(side), colored(Localized("battleLog.thawed.highlight"), statusColor(.freeze)))
         case .fullyParalyzed(let side):
-            return nameAttr(side) + plain(" is ") + colored("fully paralyzed", statusColor(.paralysis))
+            return line("battleLog.condition", nameAttr(side), colored(Localized("battleLog.condition.fullyParalyzed"), statusColor(.paralysis)))
         case .lostFocus(let side):
-            return nameAttr(side) + plain(" lost its ") + colored("focus", .gray)
+            return line("battleLog.lostFocus", nameAttr(side), colored(Localized("battleLog.lostFocus.highlight"), .gray))
         case .flinched(let side):
-            return nameAttr(side) + colored(" flinched", .gray) + plain(" and couldn't move")
+            return line("battleLog.flinched", nameAttr(side), colored(Localized("battleLog.flinched.highlight"), .gray))
         case .failed:
-            return plain("But it ") + colored("failed", .gray)
+            return line("battleLog.failed", colored(Localized("battleLog.failed.highlight"), .gray))
         case .hitCount(_, let count):
-            return plain("Hit ") + bold("\(count) times") + plain("!")
+            return line("battleLog.hitCount", bold(Localized("battleLog.hitCount.times", count)))
         case .fainted(let side):
-            return nameAttr(side) + colored(" fainted!", Color.pokedexRed)
+            return line("battleLog.fainted", nameAttr(side), colored(Localized("battleLog.fainted.highlight"), Color.pokedexRed))
         case .ended(let w):
             guard let winner = w else {
-                return plain("It's a draw.")
+                return line("battleLog.draw")
             }
-            return nameAttr(winner) + colored(" wins!", .green)
+            return line("battleLog.wins", nameAttr(winner), colored(Localized("battleLog.wins.highlight"), .green))
         }
     }
 
     func wildAppeared(opponentColor: Color?) -> AttributedString {
         var attr = nameAttr(opponentName, color: opponentColor)
         attr.inlinePresentationIntent = .stronglyEmphasized
-        return plain("A wild ") + attr + plain(" appeared!")
+        return line("battleLog.wildAppeared", attr)
     }
 
     /// Multiplayer-flavored entrance line shown when a peer's pokemon arrives.
     func opponentReady(opponentColor: Color?) -> AttributedString {
         var attr = nameAttr(opponentName, color: opponentColor)
         attr.inlinePresentationIntent = .stronglyEmphasized
-        return attr + plain(" is ready to battle!")
+        return line("battleLog.opponentReady", attr)
     }
 
     /// Placeholder line shown after the local player commits a move while
     /// the remote peer's commit is still in flight.
     func waitingForOpponent() -> AttributedString {
-        colored("Waiting for opponent", .gray)
+        colored(Localized("battleLog.waitingForOpponent"), .gray)
     }
 
     /// Prompt shown when the peer has already committed and is waiting on us.
     func chooseMove() -> AttributedString {
-        colored("Pick a move", .yellow)
+        colored(Localized("battleLog.pickMove"), .yellow)
     }
 }
 
 // MARK: - Private
 private extension BattleLogFormatter {
+    /// One localized sentence with its styled parts filled in.
+    func line(_ key: String, _ parts: AttributedString...) -> AttributedString {
+        LocalizedAttributed(key, parts: parts)
+    }
+
     func plain(_ text: String) -> AttributedString {
         AttributedString(text)
     }

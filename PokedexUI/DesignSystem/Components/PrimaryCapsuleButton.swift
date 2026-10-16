@@ -6,7 +6,7 @@ import SwiftUI
 struct PrimaryCapsuleButton: View {
     let icon: String
     let title: String
-    var loadingTitle: String = "Thinking"
+    var loadingTitle: String = Localized("button.thinking")
     var isEnabled: Bool = true
     var isLoading: Bool = false
     let action: () -> Void

@@ -64,16 +64,16 @@ private extension MoveCell {
             switch mode {
             case .battle:
                 if let pp = move.pp {
-                    Text("PP \(pp)")
+                    Text(LocalizedKey("move.pp", pp))
                         .font(.pixel12)
                 }
             case .loadout:
                 VStack(alignment: .leading) {
-                    Text("PWR")
+                    Text("move.power")
                     Text(move.power.map { $0.formatted() } ?? "-")
                 }
                 VStack(alignment: .leading) {
-                    Text("ACC")
+                    Text("move.accuracy")
                     Text(move.accuracy.map { (Double($0) / 100).formatted(.pixelPercent()) } ?? "-")
                 }
             }

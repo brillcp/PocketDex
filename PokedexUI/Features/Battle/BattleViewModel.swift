@@ -41,8 +41,8 @@ extension BattleViewModelProtocol {
 /// Concrete `BattleViewModelProtocol` implementation for single-player
 /// battles against an AI opponent.
 ///
-/// Each turn: ask `BattleAIDriver` for the opponent's move (may call the
-/// on-device model), resolve the round synchronously with the value-type
+/// Each turn: ask `BattleAIDriver` for the opponent's move (PokeBattleKit's
+/// rule-based AI), resolve the round synchronously with the value-type
 /// `BattleEngine`, then replay the resulting events one by one: format a log
 /// line, reduce into `state`, and await the matching animation.
 @MainActor
@@ -110,8 +110,13 @@ final class BattleViewModel {
         )
         let initialState = BattleState(player: p, opponent: o)
         self.state = initialState
-        let chart = PokeBattleKit.typeChart
-        activateEngine(state: initialState, chart: chart)
+        // Read without trapping: if the battle catalogue hasn't loaded, the
+        // battle can't start and says so instead of crashing.
+        if let chart = PokeBattleKit.loadedTypeChart {
+            activateEngine(state: initialState, chart: chart)
+        } else {
+            errorMessage = Localized("battle.error.dataNotLoaded")
+        }
     }
 }
 
@@ -165,9 +170,6 @@ extension BattleViewModel: BattleViewModelProtocol {
         for event in events {
             let line = formatter.format(event, playerColor: animator.playerCues.color, opponentColor: animator.opponentCues.color)
             log.append(.regular(line))
-            #if DEBUG
-            print("⚔️ \(String(line.characters))")
-            #endif
             apply(event)
             await animator.play(event)
             try? await Task.sleep(for: .milliseconds(650))

@@ -1,10 +1,11 @@
-
-PokedexUI.xcodeproj/xcuserdata/viktor.gidlof.xcuserdatad/xcdebugger/
-PokedexUI.xcodeproj/xcuserdata/vg.xcuserdatad/xcdebugger/
-PokedexUI.xcodeproj/project.xcworkspace/xcuserdata/vg.xcuserdatad/
-
-BattleKit/Sources/.DS_Store
-BattleKit/.DS_Store
-BattleKit/Sources/BattleKit/.DS_Store
-.build/
+# macOS
 .DS_Store
+
+# Xcode per-user state
+xcuserdata/
+*.xcuserstate
+
+# Build products
+.build/
+DerivedData/
+build/

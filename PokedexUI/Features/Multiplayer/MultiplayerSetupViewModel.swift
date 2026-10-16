@@ -229,7 +229,7 @@ private extension MultiplayerSetupViewModel {
         switch message {
         case .hello(let version, _, _):
             if version != MultipeerProtocol.version {
-                errorMessage = "Opponent uses a different protocol version."
+                errorMessage = Localized("multiplayer.error.protocolVersion")
                 multipeer.disconnect()
                 showPicker = false
                 reset()
@@ -262,7 +262,7 @@ private extension MultiplayerSetupViewModel {
 
     /// Peer we invited declined (MC disconnected while connecting).
     func inviteDeclined() {
-        let name = invitedPeer?.name ?? "Trainer"
+        let name = invitedPeer?.name ?? Localized("multiplayer.trainer")
         invitedPeer = nil
         phase = .discovering
         errorMessage = "\(name) declined the battle."
@@ -290,7 +290,7 @@ private extension MultiplayerSetupViewModel {
         // The peer's Pokémon may know fewer than four usable moves.
         guard !peerMoves.isEmpty, peerMoves.count == peerChallenge.moveNames.count,
               peerMoves.count <= selection.loadoutSize else {
-            errorMessage = "Opponent sent an invalid loadout."
+            errorMessage = Localized("multiplayer.error.invalidLoadout")
             showPicker = false
             reset()
             return
@@ -309,12 +309,12 @@ private extension MultiplayerSetupViewModel {
     }
 
     static var opponentFallbackName: String {
-        "Opponent"
+        Localized("multiplayer.opponent")
     }
 
     func canceledMessage() -> String {
         let name = connectedPeerName ?? Self.opponentFallbackName
-        return "\(name) canceled."
+        return Localized("multiplayer.canceled", name)
     }
 
     func reset() {

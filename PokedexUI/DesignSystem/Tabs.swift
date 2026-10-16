@@ -8,9 +8,9 @@ extension Tabs {
     var title: String {
         switch self {
             case .pokedex: "PocketDex+"
-            case .items: "Items"
-            case .battle: "Gym"
-            case .search: "Search"
+            case .items: Localized("tab.items")
+            case .battle: Localized("tab.battle")
+            case .search: Localized("tab.search")
         }
     }
 

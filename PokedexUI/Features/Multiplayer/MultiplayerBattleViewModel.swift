@@ -91,7 +91,7 @@ final class MultiplayerBattleViewModel {
                 self.typeChart = chart
                 self.engine = BattleEngine(state: state!, typeChart: chart)
             } else {
-                self.errorMessage = "Battle data is still loading. Try again in a moment."
+                self.errorMessage = Localized("battle.error.dataNotLoaded")
             }
         }
     }
@@ -163,7 +163,7 @@ private extension MultiplayerBattleViewModel {
             // The host's `Side` is from its own perspective; flip for the guest.
             self.winner = role == .host ? w : w?.opposite
         case .disconnect:
-            errorMessage = "Opponent disconnected."
+            errorMessage = Localized("multiplayer.error.disconnected")
             winner = nil
         case .hello, .challengeProposed, .challengeAccepted, .challengeDeclined, .rematch:
             break

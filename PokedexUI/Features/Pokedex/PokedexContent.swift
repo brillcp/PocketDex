@@ -85,12 +85,17 @@ private struct PokedexGridColumn<ViewModel: PokedexViewModelProtocol>: View {
             grid: viewModel.grid,
             isLoading: viewModel.isLoading,
             loadingProgress: viewModel.loadingProgress,
+            onRetry: viewModel.loadFailed ? { retry() } : nil,
             selection: selection
         )
         .applyPokedexStyling(title: Tabs.pokedex.title)
         .toolbar { PokedexToolbar(viewModel: viewModel) }
         .animation(DesignKit.Animation.Primitive.snappy25, value: viewModel.sortType)
         .animation(DesignKit.Animation.Primitive.snappy25, value: viewModel.sortDirection)
+    }
+
+    func retry() {
+        Task { await viewModel.requestPokemon() }
     }
 }
 
@@ -105,7 +110,7 @@ private struct PokedexDetailColumn: View {
             if let selection {
                 PokemonDetailScreen(pokemon: selection)
             } else {
-                ContentUnavailableView("Nothing selected", systemImage: "square.grid.3x3.fill")
+                ContentUnavailableView("pokedex.nothingSelected", systemImage: "square.grid.3x3.fill")
                     .font(.pixel14)
                     .applyPokedexStyling(title: "")
             }
@@ -127,7 +132,7 @@ private struct PokedexToolbar<ViewModel: PokedexViewModelProtocol>: ToolbarConte
     }
 
     private var gridLayoutButton: some View {
-        Button("Change grid layout", systemImage: viewModel.grid.otherIcon) {
+        Button("pokedex.toolbar.gridLayout", systemImage: viewModel.grid.otherIcon) {
             withAnimation(DesignKit.Animation.Primitive.bouncy25) { viewModel.grid.toggle() }
         }
         .labelStyle(.iconOnly)
@@ -154,7 +159,7 @@ private struct PokedexToolbar<ViewModel: PokedexViewModelProtocol>: ToolbarConte
                         .tag(type)
                 }
             } label: {
-                Text("Sort by")
+                Text("pokedex.toolbar.sortBy")
             }
         } label: {
             Image(systemName: "arrow.up.and.down.text.horizontal")

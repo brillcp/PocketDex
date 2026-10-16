@@ -80,7 +80,6 @@ struct PokemonDetailView<ViewModel: PokemonDetailViewModelProtocol>: View {
                     Image(systemName: viewModel.isOnTeam ? "person.2.fill" : "person.2")
                         .foregroundStyle(textColor)
                 }
-                .accessibilityLabel(viewModel.isOnTeam ? "Remove from my team" : "Add to my team")
             }
         }
         .applyPokedexStyling(
@@ -115,32 +114,32 @@ private extension PokemonDetailView {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            DetailSection(title: "Data") {
+            DetailSection(title: Localized("detail.section.data")) {
                 TypesRow(typeNames: pokemon.typeNames) { selectedType = $0 }
-                DetailRow(title: "Height", subtitle: pokemon.height)
-                DetailRow(title: "Weight", subtitle: pokemon.weight)
+                DetailRow(title: Localized("detail.height"), subtitle: pokemon.height)
+                DetailRow(title: Localized("detail.weight"), subtitle: pokemon.weight)
 
                 if let habitat = pokemon.habitat {
-                    DetailRow(title: "Habitat", subtitle: habitat)
+                    DetailRow(title: Localized("detail.habitat"), subtitle: habitat)
                 }
-                DetailRow(title: "Capture", subtitle: pokemon.capturePercent)
+                DetailRow(title: Localized("detail.capture"), subtitle: pokemon.capturePercent)
                 if pokemon.genderRate > 0 {
                     GenderRow(rate: pokemon.genderRate, textColor: textColor)
                 }
             }
 
-            DetailSection(title: "Type chart") {
+            DetailSection(title: Localized("detail.section.typeChart")) {
                 WeaknessGridView(
                     typeNames: pokemon.typeNames,
                     textColor: textColor,
                     onSelectType: { selectedType = $0 }
                 )
             }
-            DetailSection(title: "Moves / Abilities") {
+            DetailSection(title: Localized("detail.section.movesAbilities")) {
                 DetailRow(subtitle: pokemon.moves, axis: .vertical)
                 DetailRow(subtitle: pokemon.abilities, axis: .vertical)
             }
-            DetailSection(title: "Stats") {
+            DetailSection(title: Localized("detail.section.stats")) {
                 ForEach(pokemon.stats) { stat in
                     DetailRowStat(
                         title: stat.stat.name,
@@ -149,14 +148,14 @@ private extension PokemonDetailView {
                     )
                 }
                 HStack {
-                    Text("Total")
+                    Text("detail.total")
                     Spacer()
                     Text("\(pokemon.baseStatTotal)")
                 }
             }
 
             if viewModel.evolutionStages.count > 1 {
-                DetailSection(title: "Evolution") {
+                DetailSection(title: Localized("detail.section.evolution")) {
                     EvolutionChainView(
                         stages: viewModel.evolutionStages,
                         textColor: textColor,
@@ -184,7 +183,7 @@ private extension PokemonDetailView {
                 }
             }
             Spacer()
-            SecondaryCapsuleButton(icon: "bolt.fill", title: "Battle", color: textColor) {
+            SecondaryCapsuleButton(icon: "bolt.fill", title: Localized("detail.battle"), color: textColor) {
                 showFighterPicker = true
             }
         }

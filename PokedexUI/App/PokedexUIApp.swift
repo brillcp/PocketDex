@@ -41,7 +41,9 @@ private struct RootView: View {
 /// UIKit lifecycle hook, bridged in via `@UIApplicationDelegateAdaptor`.
 /// Only used to kick off `PokeBattleKit.initialize()` at launch. The call
 /// runs in an unstructured `Task` so `didFinishLaunching` returns
-/// immediately instead of waiting on it; errors are deliberately ignored.
+/// immediately instead of waiting on it. A failure is ignored here: the
+/// loadout screen calls `initialize()` again before a battle (it's safe to
+/// call repeatedly) and shows the error if it still fails.
 final class AppDelegate: NSObject, UIApplicationDelegate {
     func application(
         _ application: UIApplication,

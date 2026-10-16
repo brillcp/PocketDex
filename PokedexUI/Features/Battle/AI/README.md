@@ -15,7 +15,6 @@ rule-based AI. There's no language model.
 AI/
   BattleAIService.swift           protocol + actor, the three decisions
   BattleAIDriver.swift            per-battle history and scouted player moves
-  Candidate+Pokemon.swift         Sendable Pokémon DTO for opponent picks
 ```
 
 Everything that decides how well the AI plays lives in PokeBattleKit, where

@@ -12,7 +12,7 @@ struct GenderRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: DesignKit.Spacing.Primitive.s16) {
-            Text("Gender")
+            Text("detail.gender")
                 .frame(width: 82, alignment: .leading)
             if rate > 0 {
                 let female = Double(rate) / 8.0

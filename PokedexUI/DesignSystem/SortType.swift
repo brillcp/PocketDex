@@ -22,8 +22,8 @@ enum SortDirection: Hashable {
 
     var label: String {
         switch self {
-        case .ascending: "Ascending"
-        case .descending: "Descending"
+        case .ascending: Localized("sort.direction.ascending")
+        case .descending: Localized("sort.direction.descending")
         }
     }
 
@@ -41,10 +41,10 @@ enum Stats: String, CaseIterable {
 
     var displayName: String {
         switch self {
-        case .hp: "Hp"
-        case .attack: "Attack"
-        case .defense: "Defense"
-        case .speed: "Speed"
+        case .hp: Localized("sort.stat.hp")
+        case .attack: Localized("sort.stat.attack")
+        case .defense: Localized("sort.stat.defense")
+        case .speed: Localized("sort.stat.speed")
         }
     }
 }
@@ -52,11 +52,11 @@ enum Stats: String, CaseIterable {
 extension SortType {
     var title: String {
         switch self {
-        case .number: "Number"
-        case .name: "Name"
-        case .height: "Height"
-        case .weight: "Weight"
-        case .catchRate: "Catch rate"
+        case .number: Localized("sort.type.number")
+        case .name: Localized("sort.type.name")
+        case .height: Localized("sort.type.height")
+        case .weight: Localized("sort.type.weight")
+        case .catchRate: Localized("sort.type.catchRate")
         case .stat(let name): name.displayName
         }
     }
