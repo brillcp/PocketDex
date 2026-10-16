@@ -19,22 +19,17 @@ protocol EvolutionPrefetching: Sendable {
 /// `PokedexRepository` (which prefetches every chain on first launch).
 ///
 /// Lookup order: in-memory `cache` → stored payload in SwiftData → network.
-/// The actor serialises access to `cache` and the lazily created store.
-/// Network responses are decoded off the actor (in `PokeAPIClient.fetch` or
-/// task-group children), and only Sendable `EvolutionChain` values and
-/// `Data` payloads cross to and from `PokedexStore`.
+/// The actor serialises access to `cache`. Network responses are decoded
+/// off the actor (in `PokeAPIClient.fetch` or task-group children), and
+/// only Sendable `EvolutionChain` values and `Data` payloads cross to and
+/// from `PokedexStore`.
 actor EvolutionService {
     private let client: any PokeAPIFetching
-    private let modelContainer: ModelContainer
-    private var storeTask: Task<PokedexStore, Never>?
+    private let stores: PokedexStoreProvider
     private var cache: [String: EvolutionChain] = [:]
 
-    init(modelContainer: ModelContainer) {
-        self.init(modelContainer: modelContainer, client: PokeAPIClient())
-    }
-
-    init(modelContainer: ModelContainer, client: any PokeAPIFetching) {
-        self.modelContainer = modelContainer
+    init(stores: PokedexStoreProvider, client: any PokeAPIFetching = PokeAPIClient()) {
+        self.stores = stores
         self.client = client
     }
 }
@@ -105,14 +100,7 @@ extension EvolutionService: EvolutionPrefetching {
 
 // MARK: - Private
 private extension EvolutionService {
-    /// Caches the creation task (not the result) so concurrent first callers
-    /// share one store: a second caller arriving while `make` is suspended
-    /// awaits the same task instead of creating another store.
     func resolvedStore() async -> PokedexStore {
-        if let storeTask { return await storeTask.value }
-        let container = modelContainer
-        let task = Task { await PokedexStore.make(modelContainer: container) }
-        storeTask = task
-        return await task.value
+        await stores.store()
     }
 }

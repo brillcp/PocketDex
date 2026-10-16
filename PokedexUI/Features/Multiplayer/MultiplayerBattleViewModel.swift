@@ -22,6 +22,7 @@ final class MultiplayerBattleViewModel {
     private let audioPlayer: AudioPlaying
     private let formatter: BattleLogFormatter
     private let spriteColors: SpriteColorResolver
+    private let eventPlayer: BattleEventPlayer
     private let selfSummary: PokemonSummary
     private let peerSummary: PokemonSummary
     private let selfMoves: [Move]
@@ -67,10 +68,19 @@ final class MultiplayerBattleViewModel {
         self.displayMoves = selfMoves
         self.playerName = selfSummary.name
         self.opponentName = peerSummary.name
-        self.animator = BattleAnimator()
-        self.formatter = BattleLogFormatter(
+        let animator = BattleAnimator()
+        let formatter = BattleLogFormatter(
             playerName: selfSummary.name,
             opponentName: peerSummary.name
+        )
+        self.animator = animator
+        self.formatter = formatter
+        self.eventPlayer = BattleEventPlayer(
+            formatter: formatter,
+            animator: animator,
+            audioPlayer: services.audioPlayer,
+            playerCry: selfSummary.cryURL,
+            opponentCry: peerSummary.cryURL
         )
         self.spriteColors = SpriteColorResolver(
             spriteLoader: services.spriteLoader,
@@ -109,7 +119,7 @@ final class MultiplayerBattleViewModel {
 // MARK: - BattleViewModelProtocol
 extension MultiplayerBattleViewModel: BattleViewModelProtocol {
     var canSelectMove: Bool {
-        state != nil && pendingSelfMove == nil && winner == nil && !isResolvingTurn
+        typeChart != nil && state != nil && pendingSelfMove == nil && winner == nil && !isResolvingTurn
     }
 
     func prepare() async {
@@ -163,8 +173,9 @@ private extension MultiplayerBattleViewModel {
         case .roundResolved(let events, let turn):
             await receiveResolution(events: events, turn: turn)
         case .battleEnded(let w):
-            // The host's `Side` is from its own perspective; flip for the guest.
-            self.winner = role == .host ? w : w?.opposite
+            // The host's `Side` is from its own perspective; flip for the
+            // guest. A draw is shown as a player win, as in `BattleEventPlayer`.
+            self.winner = (role == .host ? w : w?.opposite) ?? .player
         case .disconnect:
             errorMessage = Localized("multiplayer.error.disconnected")
             winner = nil
@@ -193,8 +204,7 @@ private extension MultiplayerBattleViewModel {
 
         isResolvingTurn = true
         removePromptLines()
-        let flipped = events.map(flip)
-        await play(events: flipped)
+        await eventPlayer.play(events.map(\.mirrored), into: self)
         pendingSelfMove = nil
         isResolvingTurn = false
     }
@@ -214,7 +224,9 @@ private extension MultiplayerBattleViewModel {
         self.engine = eng
         // Send before animating so both devices play the turn together.
         multipeer.send(.roundResolved(events: events, turnNumber: turnNumber))
-        await play(events: events)
+        if case .ended(let w) = await eventPlayer.play(events, into: self) {
+            multipeer.send(.battleEnded(winner: w))
+        }
         pendingSelfMove = nil
         pendingPeerMoveName = nil
         state = eng.state
@@ -224,34 +236,6 @@ private extension MultiplayerBattleViewModel {
 
 // MARK: - Rendering
 private extension MultiplayerBattleViewModel {
-    func play(events: [Event]) async {
-        for event in events {
-            let line = formatter.format(
-                event,
-                playerColor: animator.playerCues.color,
-                opponentColor: animator.opponentCues.color
-            )
-            log.append(.regular(line))
-            apply(event)
-            await animator.play(event)
-            try? await Task.sleep(for: .milliseconds(650))
-            if case .ended(let w) = event {
-                winner = w ?? .player
-                await playWinnerCry()
-                if role == .host {
-                    multipeer.send(.battleEnded(winner: w))
-                }
-                break
-            }
-        }
-    }
-
-    func apply(_ event: Event) {
-        guard var snapshot = state else { return }
-        BattleStateReducer.apply(event, to: &snapshot, animator: animator)
-        state = snapshot
-    }
-
     func playEntrance() async {
         await animator.playEntrance()
         log.append(.regular(formatter.opponentReady(opponentColor: animator.opponentCues.color)))
@@ -260,43 +244,11 @@ private extension MultiplayerBattleViewModel {
         }
     }
 
-    func playWinnerCry() async {
-        guard let winner else { return }
-        let cry = winner == .player ? selfSummary.cryURL : peerSummary.cryURL
-        guard let cry else { return }
-        try? await Task.sleep(for: .milliseconds(350))
-        await audioPlayer.play(from: cry)
-    }
-
     func removePromptLines() {
         withAnimation(DesignKit.Animation.Primitive.easeOut25) {
             log.removeAll { $0.kind == .prompt }
         }
     }
-
-    /// Mirrors an event from the host's perspective to the guest's.
-    func flip(_ event: Event) -> Event {
-        switch event {
-        case .used(let s, let m): .used(s.opposite, moveName: m)
-        case .missed(let s): .missed(s.opposite)
-        case .damaged(let s, let a, let e, let c): .damaged(s.opposite, amount: a, effectiveness: e, crit: c)
-        case .statusApplied(let s, let st): .statusApplied(s.opposite, st)
-        case .statusTick(let s, let st, let a): .statusTick(s.opposite, st, amount: a)
-        case .statChanged(let s, let st, let d): .statChanged(s.opposite, stat: st, delta: d)
-        case .healed(let s, let a): .healed(s.opposite, amount: a)
-        case .recoil(let s, let a): .recoil(s.opposite, amount: a)
-        case .recharging(let s): .recharging(s.opposite)
-        case .wokeUp(let s): .wokeUp(s.opposite)
-        case .fastAsleep(let s): .fastAsleep(s.opposite)
-        case .frozenSolid(let s): .frozenSolid(s.opposite)
-        case .thawed(let s): .thawed(s.opposite)
-        case .fullyParalyzed(let s): .fullyParalyzed(s.opposite)
-        case .lostFocus(let s): .lostFocus(s.opposite)
-        case .flinched(let s): .flinched(s.opposite)
-        case .failed(let s): .failed(s.opposite)
-        case .hitCount(let s, let n): .hitCount(s.opposite, count: n)
-        case .fainted(let s): .fainted(s.opposite)
-        case .ended(let w): .ended(winner: w?.opposite)
-        }
-    }
 }
+
+extension MultiplayerBattleViewModel: BattleEventSink {}

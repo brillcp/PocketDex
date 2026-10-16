@@ -9,9 +9,9 @@ import PokeBattleKit
 /// Create it from a nonisolated context (see `PokedexStore.make`): a model
 /// actor initialised on the main thread executes on the main thread.
 ///
-/// `PokedexRepository` and `EvolutionService` each lazily create one store
-/// on the shared `ModelContainer`; the UI never talks to it directly and
-/// instead sees saved rows through the main context / `@Query`.
+/// `PokedexStoreProvider` creates one on the shared `ModelContainer` for
+/// `PokedexRepository` and `EvolutionService`; the UI never talks to it
+/// directly and instead sees saved rows through the main context / `@Query`.
 @ModelActor
 actor PokedexStore {
     /// Create the store off the main thread so its context, and therefore

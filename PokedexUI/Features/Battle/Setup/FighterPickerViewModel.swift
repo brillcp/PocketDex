@@ -20,9 +20,8 @@ final class FighterPickerViewModel {
     private let opponentTypes: [String]
     private let repository: PokedexRepositoryProtocol
     private let aiService: BattleAIServiceProtocol
-    private let catalog: BattleCatalog
-    private let movePools: MovePoolBuilder
-    private let rules: BattleRules
+    private let catalog: any BattleCatalogReading
+    private let makeSetup: @MainActor (Pokemon) -> BattleSetupViewModel
 
     private var allPokemon: [Pokemon] = []
     private var candidateCache: [Candidate]?
@@ -37,22 +36,22 @@ final class FighterPickerViewModel {
     /// The chosen fighter; drives the push to the loadout screen.
     var fighter: Pokemon?
 
+    /// `makeSetup` builds the loadout screen's view model for a chosen
+    /// fighter against `opponent` (see `ViewModelFactory`).
     init(
         opponent: Pokemon,
         opponentTypes: [String],
         repository: PokedexRepositoryProtocol,
         aiService: BattleAIServiceProtocol,
-        catalog: BattleCatalog,
-        movePools: MovePoolBuilder,
-        rules: BattleRules
+        catalog: any BattleCatalogReading,
+        makeSetup: @escaping @MainActor (Pokemon) -> BattleSetupViewModel
     ) {
         self.opponent = opponent
         self.opponentTypes = opponentTypes
         self.repository = repository
         self.aiService = aiService
         self.catalog = catalog
-        self.movePools = movePools
-        self.rules = rules
+        self.makeSetup = makeSetup
     }
 
     /// New rows from the view's queries: everyone but the opponent, and the
@@ -100,7 +99,7 @@ final class FighterPickerViewModel {
 
     /// The loadout screen for `fighter` against the opponent.
     func setupViewModel(for fighter: Pokemon) -> BattleSetupViewModel {
-        BattleSetupViewModel(player: fighter, opponent: opponent, aiService: aiService, catalog: catalog, movePools: movePools, rules: rules)
+        makeSetup(fighter)
     }
 }
 

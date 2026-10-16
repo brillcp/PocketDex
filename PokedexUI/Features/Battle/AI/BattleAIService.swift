@@ -17,7 +17,8 @@ private func hpPct(_ c: Combatant) -> Int {
 protocol BattleAIServiceProtocol: Sendable {
     /// Pick the move for this turn. `defenderSeenMoves` is the subset of
     /// the defender's moves already used in the current battle; the AI only
-    /// reasons about those, like a human opponent would.
+    /// reasons about those, like a human opponent would. `nil` only when
+    /// `moves` is empty and Struggle isn't loaded.
     func chooseMove(
         attacker: Combatant,
         defender: Combatant,
@@ -28,7 +29,7 @@ protocol BattleAIServiceProtocol: Sendable {
         recentMoves: [String],
         turnNumber: Int,
         difficulty: Difficulty
-    ) async -> Move
+    ) async -> Move?
     /// Pick the player's fighter id from `candidates` to challenge
     /// `opponent` with (the whole Pokédex is fine: the service picks among
     /// the fair matchups).
@@ -93,10 +94,8 @@ extension BattleAIService: BattleAIServiceProtocol {
         recentMoves: [String],
         turnNumber: Int,
         difficulty: Difficulty
-    ) async -> Move {
-        guard let first = moves.first ?? catalog.move(named: "struggle") else {
-            preconditionFailure("chooseMove needs a move: every loadout has one, and Struggle is loaded with the catalogue")
-        }
+    ) async -> Move? {
+        guard let first = moves.first ?? catalog.move(named: "struggle") else { return nil }
         // Information parity: the AI only knows the player's moves it has
         // seen used, as a human opponent would.
         let scouted = defender.knowing(onlyMoves: defenderSeenMoves)

@@ -1,9 +1,10 @@
 import SwiftUI
 import SwiftData
 
-/// Root tab host for pokedex, battle, items, and search. Each tab
-/// builds its own view model inline; only the pokedex view model is
-/// hoisted here so its grid + sort state survives tab switches.
+/// Root tab host for pokedex, battle, items, and search. The pokedex view
+/// model is hoisted here so its grid + sort state survives tab switches,
+/// and the multiplayer lobby's so it (with its handshake) is built once
+/// rather than on every tab switch; the other tabs build theirs inline.
 ///
 /// Search follows the iOS 26 pattern: a `.search` role tab with the system
 /// title and symbol and `.searchTabSelection` activation, so it's a
@@ -19,6 +20,7 @@ struct RootTabView<PokedexViewModel: PokedexViewModelProtocol>: View {
     @Environment(\.viewModels) private var viewModels
 
     @State var viewModel: PokedexViewModel
+    @State var multiplayerSetup: MultiplayerSetupViewModel
 
     var body: some View {
         TabView(selection: $viewModel.selectedTab) {
@@ -48,6 +50,6 @@ private extension RootTabView {
     }
 
     func battleTab() -> some View {
-        MultiplayerSetupView(viewModel: viewModels.multiplayerSetup())
+        MultiplayerSetupView(viewModel: multiplayerSetup)
     }
 }

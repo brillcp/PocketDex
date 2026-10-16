@@ -36,19 +36,19 @@ PocketDex+ is **Protocol-Oriented MVVM** with clear layer boundaries and **Swift
 - ✅ **Battle AI**: rule-based AI from [PokeBattleKit](https://github.com/brillcp/PokeBattleKit), with opponents matched by simulated strength ratings and three difficulty levels.
 - ✅ **Local Multiplayer**: host-authoritative architecture with a typed, versioned `Codable` message protocol over MultipeerConnectivity. The same `BattleViewModelProtocol` drives both AI and peer-to-peer battles with zero view changes.
 
-### SOLID audit: 0.88 / 1.00
+### SOLID audit: 0.89 / 1.00
 
 Scored from an audit of the app target's code (the mean of the five principles, each scored on evidence: 1.0 means essentially no violations, 0.8 minor isolated ones, 0.6 several real ones in important places):
 
 | Principle | Score | Where it holds | Where it doesn't (yet) |
 | --- | --- | --- | --- |
-| **S**ingle Responsibility | 0.87 | Lobby and battle handshake are separate types; Smart pick lives in `FighterPickerViewModel`; move pools come from `MovePoolBuilder`, with SwiftData behind `BaseFormLookup` | The two battle view models repeat the event-playback loop and winner cry; the multiplayer battle view model also mirrors events for the guest |
-| **O**pen/Closed | 0.85 | Every service is behind a protocol; new screens plug into `ViewModelFactory`; one `BattleView` serves both battle modes | A new multiplayer message or engine event means editing `switch`es in the view models |
-| **L**iskov Substitution | 0.90 | Both battle view models are interchangeable in the generic `BattleView`; a missing catalogue is handled, not a crash | `canSelectMove` means slightly different things in the two conformers |
-| **I**nterface Segregation | 0.93 | Small, role-based protocols: `PeerDiscovering` / `PeerMessaging`, `BattleCatalogReading` / `BattleCatalogLoading`, single-service environment values for leaf views | A couple of view models take a wider dependency only to pass it on |
-| **D**ependency Inversion | 0.85 | One composition root; views get view models from `ViewModelFactory`; MultipeerConnectivity and PokeBattleKit's globals sit behind protocols | Services create their own `PokedexStore`; a few view models are built outside the factory; the environment defaults are wired to `.live` individually |
+| **S**ingle Responsibility | 0.89 | Lobby and battle handshake are separate types; both battle modes play turns through one `BattleEventPlayer`; guest-side event mirroring lives on `Event`; move pools come from `MovePoolBuilder` | The multiplayer battle view model handles both host and guest roles; the two battle view models still repeat their setup and entrance |
+| **O**pen/Closed | 0.86 | Every service is behind a protocol; new screens plug into `ViewModelFactory`; one `BattleView` serves both battle modes | A new multiplayer message or engine event means editing several `switch`es |
+| **L**iskov Substitution | 0.91 | Both battle view models are interchangeable in the generic `BattleView` and agree on `canSelectMove`; a missing catalogue or move is handled, not a crash | A peer disconnect clears the multiplayer winner, which a single-player battle never does |
+| **I**nterface Segregation | 0.91 | Small, role-based protocols: `PeerDiscovering` / `PeerMessaging`, `BattleCatalogReading` / `BattleCatalogLoading`, single-service environment values for leaf views | The repository and AI service protocols each bundle operations that different screens use one at a time |
+| **D**ependency Inversion | 0.87 | One composition root builds every service (including the shared background store) and, through `ViewModelFactory`, every view model; environment values derive from the injected container | Battle view models build their own playback helpers; some view models use SwiftData's `ModelContext` directly |
 
-Next steps that would raise it: a shared battle event player for both battle modes, one meaning for `canSelectMove`, and routing the last few constructions (store, nested view models) through the composition root.
+Next steps that would raise it: split the repository and AI service protocols by consumer, and inject the battle playback helpers.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -173,14 +173,15 @@ final class AppContainer: Sendable {
 }
 
 extension EnvironmentValues {
-    @Entry var viewModels: ViewModelFactory = ViewModelFactory(container: .live)
+    @Entry var container: AppContainer = .live
+    var viewModels: ViewModelFactory { ViewModelFactory(container: container) }
 }
 
 @Environment(\.viewModels) private var viewModels
 PokemonDetailView(viewModel: viewModels.pokemonDetail(for: pokemon))
 ```
 
-View models take only what they use: the Pokédex and Items view models take the repository, battle screens a `BattleServices` slice, the multiplayer handshake and battle only the messaging half of the multipeer service (`PeerMessaging`), and read-only code only `BattleCatalogReading`. A different container (with stub services, or an in-memory `ModelContainer` via `AppContainer.makeModelContainer(inMemory: true)`) can be injected the same way; the rest of the app is unaware.
+View models take only what they use: the Pokédex and Items view models take the repository, battle screens a `BattleServices` slice, the multiplayer handshake and battle only the messaging half of the multipeer service (`PeerMessaging`), and read-only code only `BattleCatalogReading`. Screens that open other screens (the fighter picker, the multiplayer handshake) get a build closure from the factory rather than constructing the next view model themselves, and the repository and evolution service share one background `PokedexStore` from an injected `PokedexStoreProvider`. A different container (with stub services, or an in-memory `ModelContainer` via `AppContainer.makeModelContainer(inMemory: true)`) can be injected the same way; the rest of the app is unaware.
 
 ## Storage
 

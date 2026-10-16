@@ -25,9 +25,19 @@ final class MultiplayerHandshake {
         case invalidPeerLoadout
     }
 
+    /// Both loadouts, from this device's side: what a battle is built from.
+    struct Match {
+        let role: MultipeerRole
+        let selfSummary: PokemonSummary
+        let selfMoves: [Move]
+        let peerSummary: PokemonSummary
+        let peerMoves: [Move]
+    }
+
     private let multipeer: any PeerMessaging
-    private let services: BattleServices
+    private let catalog: any BattleCatalogReading
     private let movePools: MovePoolBuilder
+    private let makeBattle: @MainActor (Match) -> MultiplayerBattleViewModel
     private var peerChallenge: ChallengePayload?
     private(set) var ownChallengeSent = false
 
@@ -35,12 +45,20 @@ final class MultiplayerHandshake {
     private(set) var selectedPokemon: Pokemon?
 
     /// For move effectiveness labels; `nil` while the catalogue loads.
-    var typeChart: TypeChart? { services.catalog.typeChart }
+    var typeChart: TypeChart? { catalog.typeChart }
 
-    init(multipeer: any PeerMessaging, services: BattleServices, movePools: MovePoolBuilder) {
+    /// `makeBattle` builds the battle once both loadouts are in (see
+    /// `ViewModelFactory`).
+    init(
+        multipeer: any PeerMessaging,
+        catalog: any BattleCatalogReading,
+        movePools: MovePoolBuilder,
+        makeBattle: @escaping @MainActor (Match) -> MultiplayerBattleViewModel
+    ) {
         self.multipeer = multipeer
-        self.services = services
+        self.catalog = catalog
         self.movePools = movePools
+        self.makeBattle = makeBattle
     }
 
     func select(_ pokemon: Pokemon) {
@@ -88,19 +106,17 @@ private extension MultiplayerHandshake {
               let role = multipeer.role,
               let pokemon = selectedPokemon
         else { return nil }
-        let peerMoves = peerChallenge.moveNames.compactMap { services.catalog.move(named: $0) }
+        let peerMoves = peerChallenge.moveNames.compactMap { catalog.move(named: $0) }
         // The peer's Pokémon may know fewer than four usable moves.
         guard !peerMoves.isEmpty, peerMoves.count == peerChallenge.moveNames.count,
               peerMoves.count <= selection.loadoutSize
         else { return .invalidPeerLoadout }
-        return .launch(MultiplayerBattleViewModel(
+        return .launch(makeBattle(Match(
             role: role,
             selfSummary: PokemonSummary(pokemon: pokemon),
             selfMoves: selection.selectedMoves,
             peerSummary: peerChallenge.pokemon,
-            peerMoves: peerMoves,
-            multipeer: multipeer,
-            services: services
-        ))
+            peerMoves: peerMoves
+        )))
     }
 }

@@ -23,9 +23,9 @@ protocol PokedexRepositoryProtocol: Sendable {
     func battleCandidates() async -> [Candidate]
 }
 
-/// Production `PokedexRepositoryProtocol`. An actor so its lazily created
-/// `PokedexStore` is shared safely between concurrent callers (the pokedex
-/// and items tabs can load at the same time). The actor itself does little
+/// Production `PokedexRepositoryProtocol`. Writes through the injected
+/// `PokedexStoreProvider`'s shared store (the pokedex and items tabs can
+/// load at the same time). The actor itself does little
 /// work: fetching and decoding happen in `PokeAPIClient`'s `@concurrent`
 /// methods and child tasks, and persistence happens on the store.
 ///
@@ -42,19 +42,18 @@ actor PokedexRepository {
     private static let itemDataVersion = 2
     private static let itemDataVersionKey = "items.dataVersion"
 
-    private let modelContainer: ModelContainer
+    private let stores: PokedexStoreProvider
     private let client: any PokeAPIFetching
     private let evolutionService: any EvolutionPrefetching
     private let defaults: UserDefaults
-    private var storeTask: Task<PokedexStore, Never>?
 
     init(
-        modelContainer: ModelContainer,
+        stores: PokedexStoreProvider,
         evolutionService: any EvolutionPrefetching,
         client: any PokeAPIFetching = PokeAPIClient(),
         defaults: UserDefaults = .standard
     ) {
-        self.modelContainer = modelContainer
+        self.stores = stores
         self.client = client
         self.evolutionService = evolutionService
         self.defaults = defaults
@@ -148,15 +147,8 @@ extension PokedexRepository: PokedexRepositoryProtocol {
 
 // MARK: - Private
 private extension PokedexRepository {
-    /// One shared store. Caching the creation task (not the result) means
-    /// concurrent first callers await the same store instead of each
-    /// creating their own across the suspension.
     func resolvedStore() async -> PokedexStore {
-        if let storeTask { return await storeTask.value }
-        let container = modelContainer
-        let task = Task { await PokedexStore.make(modelContainer: container) }
-        storeTask = task
-        return await task.value
+        await stores.store()
     }
 }
 

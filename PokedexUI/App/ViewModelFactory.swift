@@ -41,14 +41,25 @@ extension ViewModelFactory {
         )
     }
 
-    /// The fighter picker for challenging `opponent`; it builds the loadout
-    /// screen's view model for the chosen fighter itself.
+    /// The fighter picker for challenging `opponent`, and the loadout screen
+    /// it pushes for the chosen fighter.
     @MainActor
     func fighterPicker(against opponent: Pokemon, opponentTypes: [String]) -> FighterPickerViewModel {
         FighterPickerViewModel(
             opponent: opponent,
             opponentTypes: opponentTypes,
             repository: container.repository,
+            aiService: container.battleAI,
+            catalog: container.battleCatalog,
+            makeSetup: { fighter in battleSetup(player: fighter, opponent: opponent) }
+        )
+    }
+
+    @MainActor
+    func battleSetup(player: Pokemon, opponent: Pokemon) -> BattleSetupViewModel {
+        BattleSetupViewModel(
+            player: player,
+            opponent: opponent,
             aiService: container.battleAI,
             catalog: container.battleCatalog,
             movePools: movePools,
@@ -75,12 +86,29 @@ extension ViewModelFactory {
         )
     }
 
+    /// The multiplayer lobby, its handshake, and the battle the handshake
+    /// launches once both loadouts are in.
     @MainActor
     func multiplayerSetup() -> MultiplayerSetupViewModel {
-        MultiplayerSetupViewModel(
+        let handshake = MultiplayerHandshake(
             multipeer: container.multipeerService,
-            battleServices: container.battleServices,
-            movePools: movePools
+            catalog: container.battleCatalog,
+            movePools: movePools,
+            makeBattle: multiplayerBattle
+        )
+        return MultiplayerSetupViewModel(multipeer: container.multipeerService, handshake: handshake)
+    }
+
+    @MainActor
+    func multiplayerBattle(_ match: MultiplayerHandshake.Match) -> MultiplayerBattleViewModel {
+        MultiplayerBattleViewModel(
+            role: match.role,
+            selfSummary: match.selfSummary,
+            selfMoves: match.selfMoves,
+            peerSummary: match.peerSummary,
+            peerMoves: match.peerMoves,
+            multipeer: container.multipeerService,
+            services: container.battleServices
         )
     }
 }

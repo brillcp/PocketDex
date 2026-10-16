@@ -25,16 +25,17 @@ final class BattleAIDriver {
     }
 
     /// Ask the service for the AI's next move. Updates the rolling
-    /// recent-moves window on its way out.
+    /// recent-moves window on its way out. `nil` if the AI has no move to
+    /// use (see `BattleAIServiceProtocol.chooseMove`).
     func nextOpponentMove(
         attacker: Combatant,
         defender: Combatant,
         opponentMoves: [Move],
         playerMoves: [Move],
         typeChart: TypeChart
-    ) async -> Move {
+    ) async -> Move? {
         turnNumber += 1
-        let pick = await service.chooseMove(
+        guard let pick = await service.chooseMove(
             attacker:          attacker,
             defender:          defender,
             moves:             opponentMoves,
@@ -44,7 +45,7 @@ final class BattleAIDriver {
             recentMoves:       history,
             turnNumber:        turnNumber,
             difficulty:        difficulty
-        )
+        ) else { return nil }
         history.append(pick.name)
         if history.count > historyLimit { history.removeFirst() }
         return pick

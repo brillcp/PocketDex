@@ -70,7 +70,7 @@ private extension BattleView {
     /// `MoveCell` is equatable, so only the enabled/disabled change during a
     /// turn re-renders the cells.
     func moveGrid(state: BattleState) -> some View {
-        let disabled = !viewModel.canSelectMove || viewModel.isResolvingTurn || viewModel.winner != nil
+        let disabled = !viewModel.canSelectMove
         return LazyVGrid(columns: GridLayout.two.layout, spacing: GridLayout.two.spacing) {
             ForEach(viewModel.displayMoves, id: \.name) { move in
                 Button {

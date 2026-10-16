@@ -47,14 +47,15 @@ final class AppContainer: Sendable {
         multipeerService:   any MultipeerServicing   = MultipeerService(),
         battleRules:        BattleRules              = .standard
     ) {
-        // The repository and evolution service default to the same
-        // `modelContainer`, and the repository reuses the evolution service
-        // so chains prefetched on first launch are persisted where detail
-        // screens later look them up.
-        let evolutionService = evolutionService ?? EvolutionService(modelContainer: modelContainer)
+        // The repository and evolution service default to one background
+        // store on `modelContainer`, and the repository reuses the evolution
+        // service so chains prefetched on first launch are persisted where
+        // detail screens later look them up.
+        let stores = PokedexStoreProvider(modelContainer: modelContainer)
+        let evolutionService = evolutionService ?? EvolutionService(stores: stores)
         self.modelContainer     = modelContainer
         self.repository         = repository ?? PokedexRepository(
-            modelContainer: modelContainer,
+            stores: stores,
             evolutionService: evolutionService
         )
         self.evolutionService   = evolutionService

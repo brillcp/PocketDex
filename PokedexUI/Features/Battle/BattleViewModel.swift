@@ -13,8 +13,9 @@ protocol BattleViewModelProtocol: AnyObject {
     var opponentName: String { get }
     var animator: BattleAnimator { get }
     var state: BattleState? { get }
-    /// Whether a move can be chosen right now (engine ready in single-player;
-    /// no move already committed and no turn playing in multiplayer).
+    /// Whether a move can be chosen right now: the battle is ready, no turn
+    /// is playing, there's no winner yet, and (in multiplayer) no move is
+    /// already committed.
     var canSelectMove: Bool { get }
     var log: [BattleLogEntry] { get }
     var isResolvingTurn: Bool { get }
@@ -56,6 +57,7 @@ final class BattleViewModel {
     private let audioPlayer:   AudioPlaying
     private let aiDriver:      BattleAIDriver
     private let spriteColors:  SpriteColorResolver
+    private let eventPlayer:   BattleEventPlayer
     private(set) var typeChart: TypeChart?
 
     let playerPokemon:   PokemonViewModel
@@ -92,10 +94,19 @@ final class BattleViewModel {
             spriteLoader: services.spriteLoader,
             imageColorAnalyzer: services.imageColorAnalyzer
         )
-        self.animator = BattleAnimator()
-        self.formatter = BattleLogFormatter(
+        let animator = BattleAnimator()
+        let formatter = BattleLogFormatter(
             playerName: player.name,
             opponentName: opponent.name
+        )
+        self.animator = animator
+        self.formatter = formatter
+        self.eventPlayer = BattleEventPlayer(
+            formatter: formatter,
+            animator: animator,
+            audioPlayer: services.audioPlayer,
+            playerCry: player.latestCry,
+            opponentCry: opponent.latestCry
         )
         // Same rules for both sides and no HP edge for the player. The
         // difficulty sets the opponent's level, the classic way: below the
@@ -127,7 +138,7 @@ final class BattleViewModel {
 extension BattleViewModel: BattleViewModelProtocol {
     var playerName: String { playerPokemon.name }
     var opponentName: String { opponentPokemon.name }
-    var canSelectMove: Bool { engine != nil }
+    var canSelectMove: Bool { engine != nil && !isResolvingTurn && winner == nil }
 
     func prepare() async {
         // Sendable values only: `async let` evaluates in a child task.
@@ -147,7 +158,7 @@ extension BattleViewModel: BattleViewModelProtocol {
     }
 
     func submit(_ move: Move) async {
-        guard var eng = engine, let typeChart, !isResolvingTurn, winner == nil, let snapshot = state else { return }
+        guard canSelectMove, var eng = engine, let typeChart, let snapshot = state else { return }
         animator.attackTick += 1
         isResolvingTurn = true
 
@@ -166,23 +177,18 @@ extension BattleViewModel: BattleViewModelProtocol {
             log.removeAll { $0.kind == .placeholder }
         }
 
+        // Only when the opponent has no moves and Struggle isn't loaded.
+        guard let opponentMove else {
+            errorMessage = Localized("battle.error.dataNotLoaded")
+            isResolvingTurn = false
+            return
+        }
+
         // `BattleEngine` is a struct: mutate a copy, then store it back.
         let events = eng.resolveRound(playerMove: move, opponentMove: opponentMove)
         self.engine = eng
 
-        for event in events {
-            let line = formatter.format(event, playerColor: animator.playerCues.color, opponentColor: animator.opponentCues.color)
-            log.append(.regular(line))
-            apply(event)
-            await animator.play(event)
-            try? await Task.sleep(for: .milliseconds(650))
-            if case .ended(let w) = event {
-                // A draw is shown as a player win.
-                winner = w ?? .player
-                await playWinnerCry()
-                break
-            }
-        }
+        await eventPlayer.play(events, into: self)
         // Re-sync with the engine so bookkeeping the reducer doesn't mirror
         // (sleep counters, recharge flags) can't drift from the display.
         state = eng.state
@@ -207,18 +213,6 @@ private extension BattleViewModel {
             await audioPlayer.play(from: cry)
         }
     }
-
-    func playWinnerCry() async {
-        guard let winner else { return }
-        let cry = winner == .player ? playerPokemon.latestCry : opponentPokemon.latestCry
-        guard let cry else { return }
-        try? await Task.sleep(for: .milliseconds(350))
-        await audioPlayer.play(from: cry)
-    }
-
-    func apply(_ event: Event) {
-        guard var snapshot = state else { return }
-        BattleStateReducer.apply(event, to: &snapshot, animator: animator)
-        state = snapshot
-    }
 }
+
+extension BattleViewModel: BattleEventSink {}

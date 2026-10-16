@@ -1,17 +1,20 @@
 import SwiftUI
 import SwiftData
 
-/// App entry point. Installs the shared `ModelContainer` from
-/// `AppContainer.live` into the scene, so every view's `@Query` and
+/// App entry point. Injects the composition root and installs its
+/// `ModelContainer` into the scene, so every view's `@Query` and
 /// `\.modelContext` read the same store that `PokedexStore` writes to in the
 /// background.
 @main
 struct PokedexUIApp: App {
+    private let container = AppContainer.live
+
     var body: some Scene {
         WindowGroup {
             RootView()
+                .environment(\.container, container)
         }
-        .modelContainer(AppContainer.live.modelContainer)
+        .modelContainer(container.modelContainer)
     }
 }
 
@@ -25,7 +28,7 @@ private struct RootView: View {
     @Environment(\.viewModels) private var viewModels
 
     var body: some View {
-        RootTabView(viewModel: viewModels.pokedex())
+        RootTabView(viewModel: viewModels.pokedex(), multiplayerSetup: viewModels.multiplayerSetup())
             .task { try? await container.battleCatalog.load() }
     }
 }
