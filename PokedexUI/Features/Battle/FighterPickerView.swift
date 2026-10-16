@@ -68,7 +68,7 @@ struct FighterPickerView: View {
                     await prebuildCandidatesIfNeeded()
                 }
                 .navigationDestination(item: $fighter) { fighter in
-                    BattleLoadOutView(
+                    BattleLoadoutView(
                         viewModel: BattleSetupViewModel(
                             player: fighter,
                             opponent: opponent,
