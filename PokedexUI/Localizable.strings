@@ -2,8 +2,8 @@
 
 /** Battle **/
 "battle.error.dataNotLoaded" = "Battle data is still loading. Try again in a moment.";
-"battle.level" = "Lv.%lld";
-"battle.title" = "%1$@ vs %2$@";
+"battle.level %lld" = "Lv.%lld";
+"battle.title %@ %@" = "%1$@ vs %2$@";
 
 /** Battle Log **/
 "battleLog.condition" = "%1$@ is %2$@";
@@ -66,6 +66,8 @@
 "detail.gender" = "Gender";
 "detail.habitat" = "Habitat";
 "detail.height" = "Height";
+"detail.legendary" = "LEGENDARY";
+"detail.mythical" = "MYTHICAL";
 "detail.section.data" = "Data";
 "detail.section.evolution" = "Evolution";
 "detail.section.movesAbilities" = "Moves / Abilities";
@@ -98,7 +100,7 @@
 "evolution.level" = "Lv %lld";
 
 /** Fighter Picker **/
-"fighterPicker.generation" = "Gen %@";
+"fighterPicker.generation %@" = "Gen %@";
 "fighterPicker.smartPick" = "Smart pick";
 "fighterPicker.title" = "Choose player";
 
@@ -116,7 +118,7 @@
 
 /** Loadout **/
 "loadout.fullHint" = "Remove one of your moves to add another";
-"loadout.moves.count" = "Moves %1$lld/%2$lld";
+"loadout.moves.count %lld %lld" = "Moves %1$lld/%2$lld";
 "loadout.recommended" = "Recommended";
 "loadout.reset" = "Reset";
 "loadout.start" = "Start";
@@ -131,18 +133,20 @@
 /** Move **/
 "move.accuracy" = "ACC";
 "move.power" = "PWR";
-"move.pp" = "PP %lld";
+"move.pp %lld" = "PP %lld";
 
 /** Multiplayer **/
 "multiplayer.canceled" = "%@ canceled.";
+"multiplayer.challengeDeclined" = "%@ declined the challenge.";
 "multiplayer.connecting" = "Connecting";
 "multiplayer.error.disconnected" = "Opponent disconnected.";
 "multiplayer.error.invalidLoadout" = "Opponent sent an invalid loadout.";
 "multiplayer.error.protocolVersion" = "Opponent uses a different protocol version.";
 "multiplayer.invite.accept" = "Accept";
 "multiplayer.invite.decline" = "Decline";
-"multiplayer.invite.message" = "%@ wants to challenge you to a 1v1 battle.";
+"multiplayer.invite.message %@" = "%@ wants to challenge you to a 1v1 battle.";
 "multiplayer.invite.title" = "Battle challenge!";
+"multiplayer.inviteDeclined" = "%@ declined the battle.";
 "multiplayer.nearbyTrainers" = "Nearby trainers";
 "multiplayer.noTrainers" = "No trainers nearby";
 "multiplayer.opponent" = "Opponent";
@@ -156,7 +160,7 @@
 
 /** Pokedex **/
 "pokedex.loadFailed.title" = "Couldn't load the Pokedex";
-"pokedex.loading" = "Loading Pokedex %@";
+"pokedex.loading %@" = "Loading Pokedex %@";
 "pokedex.nothingSelected" = "Nothing selected";
 "pokedex.toolbar.gridLayout" = "Change grid layout";
 "pokedex.toolbar.sortBy" = "Sort by";

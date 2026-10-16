@@ -17,7 +17,7 @@ struct BattleView<ViewModel: BattleViewModelProtocol>: View {
     var body: some View {
         content
             .applyPokedexStyling(
-                title: Localized("battle.title", viewModel.playerName, viewModel.opponentName),
+                title: "battle.title \(viewModel.playerName) \(viewModel.opponentName)",
                 navColor: .darkGrey
             )
             .foregroundStyle(.white)

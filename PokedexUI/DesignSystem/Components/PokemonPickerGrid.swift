@@ -3,7 +3,7 @@ import SwiftUI
 /// A titled group of Pokémon in a `PokemonGrid`.
 struct PokemonGridSection: Identifiable {
     let id: String
-    var title: String?
+    var title: LocalizedStringKey?
     let pokemon: [Pokemon]
     /// Whether cells in this section show the picker's badge.
     var showsBadges = false
@@ -87,7 +87,7 @@ struct PokemonGrid<Cell: View>: View {
         .sensoryFeedback(.impact(weight: .light), trigger: tapTrigger)
     }
 
-    private func header(_ title: String) -> some View {
+    private func header(_ title: LocalizedStringKey) -> some View {
         Text(title)
             .font(.pixel12)
             .foregroundStyle(.secondary)

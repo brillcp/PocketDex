@@ -33,8 +33,8 @@ final class MoveSelection {
     var maxSelections: Int { min(loadoutSize, max(1, pool.count)) }
 
     /// Load and rank moves for a Pokemon.
-    func load(for pokemon: Pokemon) {
-        load(ranked: Self.movesForPokemon(pokemon))
+    func load(for pokemon: Pokemon, catalog: BattleCatalog) {
+        load(ranked: Self.movesForPokemon(pokemon, catalog: catalog))
     }
 
     /// Set pool from pre-ranked moves and reset selection.
@@ -100,18 +100,19 @@ extension MoveSelection {
     /// with too few usable moves (many Mega and G-Max forms in PokeAPI)
     /// also gets its base species' moves (`PokemonForms`), and a Pokémon
     /// with no usable attack gets Struggle.
-    static func movesForPokemon(_ pokemon: Pokemon) -> [Move] {
+    static func movesForPokemon(_ pokemon: Pokemon, catalog: BattleCatalog) -> [Move] {
+        let allMoves = catalog.allMoves
         var names = Set(pokemon.moveNames)
-        if battleReady(names).count < PokemonForms.minimumOwnMoves,
+        if battleReady(names, in: allMoves).count < PokemonForms.minimumOwnMoves,
            let base = baseForm(of: pokemon) {
             names.formUnion(base.moveNames)
         }
-        let pool = LoadoutStrategy.withFallbackAttack(battleReady(names), struggle: PokeBattleKit.move(named: "struggle"))
+        let pool = LoadoutStrategy.withFallbackAttack(battleReady(names, in: allMoves), struggle: catalog.move(named: "struggle"))
         return rankedByImpact(pool)
     }
 
-    private static func battleReady(_ names: Set<String>) -> [Move] {
-        PokeBattleKit.allMoves.filter { names.contains($0.name) && $0.isBattleReady }
+    private static func battleReady(_ names: Set<String>, in allMoves: [Move]) -> [Move] {
+        allMoves.filter { names.contains($0.name) && $0.isBattleReady }
     }
 
     /// The form's base species from the same store, if it has a learnset.

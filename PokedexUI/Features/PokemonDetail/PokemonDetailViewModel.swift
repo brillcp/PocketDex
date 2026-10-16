@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import PokeBattleKit
 
 /// Pokemon detail view model protocol.
 @MainActor
@@ -14,6 +15,8 @@ protocol PokemonDetailViewModelProtocol {
     var color: Color? { get }
     /// Resolved evolution chain stages; empty until `loadEvolutionChain` runs.
     var evolutionStages: [EvolutionChain.Stage] { get }
+    /// For the type chart section; `nil` while the battle catalogue loads.
+    var typeChart: TypeChart? { get }
 
     /// Load front sprite image and extract dominant color.
     func loadSpritesAndColor() async
@@ -30,7 +33,7 @@ protocol PokemonDetailViewModelProtocol {
 /// Concrete implementation of `PokemonDetailViewModelProtocol`.
 ///
 /// Created by the presenting view and owned by `PokemonDetailView` as
-/// `@State`. Services come from the `AppContainer`; sprite download and
+/// `@State`. It's given only the services it uses; sprite download and
 /// color analysis run inside those services, and only the finished `Image`
 /// and `Color` are assigned here on the main actor.
 @MainActor
@@ -40,6 +43,7 @@ final class PokemonDetailViewModel {
     private let spriteLoader: SpriteLoading
     private let imageColorAnalyzer: ImageColorAnalyzing
     private let audioPlayer: AudioPlaying
+    private let battleCatalog: BattleCatalog
     private let modelContext: ModelContext
 
     var pokemon: PokemonViewModel
@@ -48,13 +52,22 @@ final class PokemonDetailViewModel {
     var color: Color?
     var evolutionStages: [EvolutionChain.Stage] = []
 
-    init(summary: Pokemon, container: AppContainer, modelContext: ModelContext) {
+    init(
+        summary: Pokemon,
+        modelContext: ModelContext,
+        evolutionService: EvolutionServiceProtocol,
+        spriteLoader: SpriteLoading,
+        imageColorAnalyzer: ImageColorAnalyzing,
+        audioPlayer: AudioPlaying,
+        battleCatalog: BattleCatalog
+    ) {
         self.isOnTeam = summary.isBookmarked
         self.pokemon = PokemonViewModel(pokemon: summary)
-        self.evolutionService = container.evolutionService
-        self.spriteLoader = container.spriteLoader
-        self.imageColorAnalyzer = container.imageColorAnalyzer
-        self.audioPlayer = container.audioPlayer
+        self.evolutionService = evolutionService
+        self.spriteLoader = spriteLoader
+        self.imageColorAnalyzer = imageColorAnalyzer
+        self.audioPlayer = audioPlayer
+        self.battleCatalog = battleCatalog
         self.modelContext = modelContext
     }
 }
@@ -62,6 +75,8 @@ final class PokemonDetailViewModel {
 // MARK: - PokemonDetailViewModelProtocol
 
 extension PokemonDetailViewModel: PokemonDetailViewModelProtocol {
+    var typeChart: TypeChart? { battleCatalog.typeChart }
+
     func loadEvolutionChain() async {
         guard evolutionStages.isEmpty,
               let chainId = pokemon.evolutionChainId

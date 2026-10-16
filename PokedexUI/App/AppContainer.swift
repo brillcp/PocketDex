@@ -15,7 +15,8 @@ import PokeBattleKit
 /// update when a background import finishes.
 ///
 /// `Sendable`: every member is an immutable reference to a Sendable service
-/// (actors, Sendable protocols, the main-actor `MultipeerService`), so the
+/// (actors and Sendable protocols, including the main-actor multipeer
+/// service), so the
 /// container can be the nonisolated `@Entry` default.
 final class AppContainer: Sendable {
     let modelContainer: ModelContainer
@@ -26,7 +27,9 @@ final class AppContainer: Sendable {
     let imageColorAnalyzer: ImageColorAnalyzing
     let audioPlayer:        AudioPlaying
     let battleAI:           BattleAIServiceProtocol
-    let multipeerService:   MultipeerService
+    /// PokeBattleKit's move and type catalogue.
+    let battleCatalog:      BattleCatalog
+    let multipeerService:   any MultipeerServicing
     /// Level and battle length for every fight (see PokeBattleKit's
     /// `BattleRules`). Both sides of a battle, and both peers in
     /// multiplayer, build their combatants with these.
@@ -35,12 +38,13 @@ final class AppContainer: Sendable {
     init(
         modelContainer:     ModelContainer           = AppContainer.makeModelContainer(),
         repository:         PokedexRepositoryProtocol? = nil,
-        evolutionService:   EvolutionService?        = nil,
+        evolutionService:   (any EvolutionServiceProtocol & EvolutionPrefetching)? = nil,
         spriteLoader:       SpriteLoading            = SpriteLoader(),
         imageColorAnalyzer: ImageColorAnalyzing      = ImageColorAnalyzer(),
         audioPlayer:        AudioPlaying             = AudioPlayer(),
-        battleAI:           BattleAIServiceProtocol  = BattleAIService(),
-        multipeerService:   MultipeerService         = MultipeerService(),
+        battleCatalog:      BattleCatalog            = PokeBattleKitCatalog(),
+        battleAI:           BattleAIServiceProtocol? = nil,
+        multipeerService:   any MultipeerServicing   = MultipeerService(),
         battleRules:        BattleRules              = .standard
     ) {
         // The repository and evolution service default to the same
@@ -57,7 +61,8 @@ final class AppContainer: Sendable {
         self.spriteLoader       = spriteLoader
         self.imageColorAnalyzer = imageColorAnalyzer
         self.audioPlayer        = audioPlayer
-        self.battleAI           = battleAI
+        self.battleCatalog      = battleCatalog
+        self.battleAI           = battleAI ?? BattleAIService(catalog: battleCatalog)
         self.multipeerService   = multipeerService
         self.battleRules        = battleRules
     }

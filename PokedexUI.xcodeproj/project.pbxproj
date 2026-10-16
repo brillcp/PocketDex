@@ -39,6 +39,10 @@
 		D58900B6308247FD00C96B56 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = D58900B5308247FD00C96B56 /* Localizable.strings */; };
 		D58900B83082482100C96B56 /* LoadFailedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58900B73082482100C96B56 /* LoadFailedView.swift */; };
 		D58900BA3082498900C96B56 /* Localizable.stringsdict in Resources */ = {isa = PBXBuildFile; fileRef = D58900B93082498900C96B56 /* Localizable.stringsdict */; };
+		D58900BC3082521200C96B56 /* BattleCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58900BB3082521200C96B56 /* BattleCatalog.swift */; };
+		D58900BE308252BF00C96B56 /* BattleServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58900BD308252BF00C96B56 /* BattleServices.swift */; };
+		D58900C0308252D500C96B56 /* MultiplayerHandshake.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58900BF308252D500C96B56 /* MultiplayerHandshake.swift */; };
+		D58900C23082533300C96B56 /* FighterPickerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58900C13082533300C96B56 /* FighterPickerViewModel.swift */; };
 		D589FD4230822B9B00C96B56 /* PokemonDetailDestination.swift in Sources */ = {isa = PBXBuildFile; fileRef = D589FD4130822B9B00C96B56 /* PokemonDetailDestination.swift */; };
 		D58C0DFB2E398709003098EC /* MyTeamView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58C0DFA2E398709003098EC /* MyTeamView.swift */; };
 		D58F8D992E3970F300BB9A45 /* SortType.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58F8D982E3970F300BB9A45 /* SortType.swift */; };
@@ -137,6 +141,10 @@
 		D58900B5308247FD00C96B56 /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = Localizable.strings; sourceTree = "<group>"; };
 		D58900B73082482100C96B56 /* LoadFailedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadFailedView.swift; sourceTree = "<group>"; };
 		D58900B93082498900C96B56 /* Localizable.stringsdict */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; path = Localizable.stringsdict; sourceTree = "<group>"; };
+		D58900BB3082521200C96B56 /* BattleCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleCatalog.swift; sourceTree = "<group>"; };
+		D58900BD308252BF00C96B56 /* BattleServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleServices.swift; sourceTree = "<group>"; };
+		D58900BF308252D500C96B56 /* MultiplayerHandshake.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiplayerHandshake.swift; sourceTree = "<group>"; };
+		D58900C13082533300C96B56 /* FighterPickerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FighterPickerViewModel.swift; sourceTree = "<group>"; };
 		D589FD4130822B9B00C96B56 /* PokemonDetailDestination.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PokemonDetailDestination.swift; sourceTree = "<group>"; };
 		D58C0DFA2E398709003098EC /* MyTeamView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyTeamView.swift; sourceTree = "<group>"; };
 		D58F8D982E3970F300BB9A45 /* SortType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SortType.swift; sourceTree = "<group>"; };
@@ -323,6 +331,7 @@
 				D5BA12092E70000000000049 /* FighterPickerView.swift */,
 				D56F11102FC2FC360002A450 /* MovePickerGrid.swift */,
 				D56F11142FC3022F0002A450 /* MoveLoadoutView.swift */,
+				D58900C13082533300C96B56 /* FighterPickerViewModel.swift */,
 			);
 			path = Setup;
 			sourceTree = "<group>";
@@ -351,6 +360,7 @@
 				D5DA000000000000000000D1 /* MultiplayerBattleViewModel.swift */,
 				D5DA000000000000000000D2 /* MultiplayerSetupViewModel.swift */,
 				D5DA000000000000000000D3 /* MultiplayerSetupView.swift */,
+				D58900BF308252D500C96B56 /* MultiplayerHandshake.swift */,
 			);
 			path = Multiplayer;
 			sourceTree = "<group>";
@@ -386,6 +396,7 @@
 				D5B0CAFE2FC200000000011C /* PokedexRepository.swift */,
 				D5B0CAFE2FC200000000011E /* SpriteLoader.swift */,
 				D5DA000000000000000000A0 /* Multipeer */,
+				D58900BB3082521200C96B56 /* BattleCatalog.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -467,6 +478,7 @@
 				D5E0000000000000000000EB /* Subviews */,
 				D5BA13062E70000000000207 /* AI */,
 				D5BA130C2E70000000000305 /* Setup */,
+				D58900BD308252BF00C96B56 /* BattleServices.swift */,
 			);
 			path = Battle;
 			sourceTree = "<group>";
@@ -667,6 +679,8 @@
 				D5164F732E22702000E3EC8D /* ItemDetailRowView.swift in Sources */,
 				D5F41B762E256D5A000341D3 /* ItemRowView.swift in Sources */,
 				93F7F578274009B2002CEBB5 /* PokemonDetailView.swift in Sources */,
+				D58900BC3082521200C96B56 /* BattleCatalog.swift in Sources */,
+				D58900C0308252D500C96B56 /* MultiplayerHandshake.swift in Sources */,
 				D58C0DFB2E398709003098EC /* MyTeamView.swift in Sources */,
 				9332C0E0273F2A36003AF377 /* Color.swift in Sources */,
 				D50FA80E2FC48F7E00DDB7C6 /* PokedexContent.swift in Sources */,
@@ -677,12 +691,14 @@
 				D51DA2572E3409E900028782 /* GridLayout.swift in Sources */,
 				D58F8D992E3970F300BB9A45 /* SortType.swift in Sources */,
 				D55D580C2E204BBC008F1B16 /* Font.swift in Sources */,
+				D58900BE308252BF00C96B56 /* BattleServices.swift in Sources */,
 				D57366002E2110E000FE4ED0 /* ItemListViewModel.swift in Sources */,
 				D5D6250D2E2194230030867D /* ItemDetailView.swift in Sources */,
 				D54F5AF22E1DA61400411759 /* PokedexViewModel.swift in Sources */,
 				9396D23A273EBBED00AF0C94 /* PokedexUIApp.swift in Sources */,
 				D5E0000000000000000000C1 /* AppContainer.swift in Sources */,
 				D5E0000000000000000000C3 /* AppContainerKey.swift in Sources */,
+				D58900C23082533300C96B56 /* FighterPickerViewModel.swift in Sources */,
 				D5E0000000000000000000D1 /* WeaknessGridView.swift in Sources */,
 				D5E0000000000000000000D3 /* GenderRow.swift in Sources */,
 				D5E0000000000000000000D5 /* EvolutionChainView.swift in Sources */,

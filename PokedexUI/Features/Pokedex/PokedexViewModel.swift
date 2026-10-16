@@ -69,8 +69,8 @@ final class PokedexViewModel {
     /// views that read it don't re-sort on every body evaluation.
     private(set) var sortedPokemon: [Pokemon] = []
 
-    init(modelContext: ModelContext, container: AppContainer) {
-        self.repository = container.repository
+    init(modelContext: ModelContext, repository: PokedexRepositoryProtocol) {
+        self.repository = repository
         self.modelContext = modelContext
     }
 }

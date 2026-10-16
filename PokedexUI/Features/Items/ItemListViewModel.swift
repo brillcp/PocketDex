@@ -30,8 +30,8 @@ final class ItemListViewModel {
     var isLoading: Bool = false
     var loadFailed = false
 
-    init(modelContext: ModelContext, container: AppContainer) {
-        self.repository = container.repository
+    init(modelContext: ModelContext, repository: PokedexRepositoryProtocol) {
+        self.repository = repository
         self.modelContext = modelContext
     }
 }

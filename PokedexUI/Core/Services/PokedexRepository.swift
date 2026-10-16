@@ -43,14 +43,21 @@ actor PokedexRepository {
     private static let itemDataVersionKey = "items.dataVersion"
 
     private let modelContainer: ModelContainer
-    private let client: PokeAPIClient
-    private let evolutionService: EvolutionService
+    private let client: any PokeAPIFetching
+    private let evolutionService: any EvolutionPrefetching
+    private let defaults: UserDefaults
     private var storeTask: Task<PokedexStore, Never>?
 
-    init(modelContainer: ModelContainer, evolutionService: EvolutionService) {
+    init(
+        modelContainer: ModelContainer,
+        evolutionService: any EvolutionPrefetching,
+        client: any PokeAPIFetching = PokeAPIClient(),
+        defaults: UserDefaults = .standard
+    ) {
         self.modelContainer = modelContainer
-        self.client = PokeAPIClient()
+        self.client = client
         self.evolutionService = evolutionService
+        self.defaults = defaults
     }
 }
 
@@ -115,7 +122,6 @@ extension PokedexRepository: PokedexRepositoryProtocol {
     /// successful import, so a failed attempt is retried on the next launch.
     func loadItemsIfNeeded() async throws {
         let store = await resolvedStore()
-        let defaults = UserDefaults.standard
         let isOutdated = defaults.integer(forKey: Self.itemDataVersionKey) < Self.itemDataVersion
         let hasItems = await store.itemCategoryCount() > 0
         guard isOutdated || !hasItems else { return }

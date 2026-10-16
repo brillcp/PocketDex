@@ -5,8 +5,8 @@ import SwiftUI
 /// and ignores taps.
 struct PrimaryCapsuleButton: View {
     let icon: String
-    let title: String
-    var loadingTitle: String = Localized("button.thinking")
+    let title: LocalizedStringKey
+    var loadingTitle: LocalizedStringKey = "button.thinking"
     var isEnabled: Bool = true
     var isLoading: Bool = false
     let action: () -> Void
@@ -44,7 +44,7 @@ struct PrimaryCapsuleButton: View {
 /// haptic, unlike `PrimaryCapsuleButton`.
 struct SecondaryCapsuleButton: View {
     let icon: String
-    let title: String
+    let title: LocalizedStringKey
     let color: Color
     var isEnabled: Bool = true
     let action: () -> Void

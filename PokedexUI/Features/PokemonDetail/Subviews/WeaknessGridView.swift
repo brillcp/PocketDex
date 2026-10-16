@@ -6,6 +6,8 @@ import PokeBattleKit
 /// all Pokemon of that type.
 struct WeaknessGridView: View {
     let typeNames: [String]
+    /// `nil` until the battle catalogue has loaded (first launch).
+    let typeChart: TypeChart?
     let textColor: Color
     let onSelectType: (String) -> Void
 
@@ -14,10 +16,10 @@ struct WeaknessGridView: View {
     var body: some View {
         // The type chart loads asynchronously at app launch; render nothing
         // until it's available rather than showing a wrong matchup.
-        if PokeBattleKit.isInitialized {
+        if typeChart != nil {
             VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s24) {
-                matchupSection(title: Localized("detail.typeChart.strengths"), buckets: offensiveBuckets)
-                matchupSection(title: Localized("detail.typeChart.weaknesses"), buckets: defensiveBuckets)
+                matchupSection(title: "detail.typeChart.strengths", buckets: offensiveBuckets)
+                matchupSection(title: "detail.typeChart.weaknesses", buckets: defensiveBuckets)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -33,8 +35,7 @@ private extension WeaknessGridView {
     /// types can produce x4 or x0.25). Neutral matchups are omitted.
     var defensiveBuckets: [(label: String, types: [String])] {
         let defenders = typeNames
-        // Empty until the battle catalogue has loaded (first launch).
-        guard let chart = PokeBattleKit.loadedTypeChart else { return [] }
+        guard let chart = typeChart else { return [] }
 
         var rows: [Double: [String]] = [:]
         for (attackerName, _) in chart.attackers {
@@ -55,7 +56,7 @@ private extension WeaknessGridView {
     /// can pick whichever STAB type suits the defender.
     var offensiveBuckets: [(label: String, types: [String])] {
         let attackers = typeNames
-        guard !attackers.isEmpty, let chart = PokeBattleKit.loadedTypeChart else { return [] }
+        guard !attackers.isEmpty, let chart = typeChart else { return [] }
 
         var rows: [Double: [String]] = [:]
         for (defenderName, _) in chart.attackers {
@@ -75,7 +76,7 @@ private extension WeaknessGridView {
     // MARK: Shared UI
 
     @ViewBuilder
-    func matchupSection(title: String, buckets: [(label: String, types: [String])]) -> some View {
+    func matchupSection(title: LocalizedStringKey, buckets: [(label: String, types: [String])]) -> some View {
         if !buckets.isEmpty {
             VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s8) {
                 Text(title)

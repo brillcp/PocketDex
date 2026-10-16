@@ -12,20 +12,20 @@ enum BattleDifficulty {
 }
 
 extension Difficulty {
-    var title: String {
+    var title: LocalizedStringKey {
         switch self {
-        case .easy: Localized("difficulty.easy")
-        case .fair: Localized("difficulty.fair")
-        case .hard: Localized("difficulty.hard")
+        case .easy: "difficulty.easy"
+        case .fair: "difficulty.fair"
+        case .hard: "difficulty.hard"
         }
     }
 
     /// One-line explanation shown under each option in the menu.
-    var summary: String {
+    var summary: LocalizedStringKey {
         switch self {
-        case .easy: Localized("difficulty.easy.summary")
-        case .fair: Localized("difficulty.fair.summary")
-        case .hard: Localized("difficulty.hard.summary")
+        case .easy: "difficulty.easy.summary"
+        case .fair: "difficulty.fair.summary"
+        case .hard: "difficulty.hard.summary"
         }
     }
 }

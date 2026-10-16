@@ -8,6 +8,13 @@ protocol EvolutionServiceProtocol: Sendable {
     func requestChain(id: String) async throws -> EvolutionChain
 }
 
+/// Bulk chain download, used by the first-launch import.
+protocol EvolutionPrefetching: Sendable {
+    /// Download and store every chain in `ids` not stored yet; `onTick`
+    /// fires once per chain.
+    func prefetchChains(ids: Set<String>, onTick: (@Sendable () async -> Void)?) async
+}
+
 /// Production `EvolutionServiceProtocol`, shared by detail screens and by
 /// `PokedexRepository` (which prefetches every chain on first launch).
 ///
@@ -17,7 +24,7 @@ protocol EvolutionServiceProtocol: Sendable {
 /// task-group children), and only Sendable `EvolutionChain` values and
 /// `Data` payloads cross to and from `PokedexStore`.
 actor EvolutionService {
-    private let client: PokeAPIClient
+    private let client: any PokeAPIFetching
     private let modelContainer: ModelContainer
     private var storeTask: Task<PokedexStore, Never>?
     private var cache: [String: EvolutionChain] = [:]
@@ -26,7 +33,7 @@ actor EvolutionService {
         self.init(modelContainer: modelContainer, client: PokeAPIClient())
     }
 
-    init(modelContainer: ModelContainer, client: PokeAPIClient) {
+    init(modelContainer: ModelContainer, client: any PokeAPIFetching) {
         self.modelContainer = modelContainer
         self.client = client
     }
@@ -57,9 +64,9 @@ extension EvolutionService: EvolutionServiceProtocol {
     }
 }
 
-// MARK: - Bootstrap
+// MARK: - EvolutionPrefetching
 
-extension EvolutionService {
+extension EvolutionService: EvolutionPrefetching {
     /// Download every chain in `ids` that isn't persisted yet and store it.
     /// `onTick` fires once per id (cached ids tick immediately).
     ///

@@ -8,7 +8,7 @@ import SwiftData
 /// "My team" title and symbol, shared by the toolbar button, this screen
 /// and the fighter picker's team section.
 enum MyTeam {
-    static var title: String { Localized("myTeam.title") }
+    static var title: LocalizedStringKey { "myTeam.title" }
     static let icon = "person.2.fill"
 }
 

@@ -41,7 +41,7 @@ struct MultiplayerSetupView: View {
                     Button("multiplayer.invite.decline", role: .cancel, action: viewModel.declineInvitation)
                 } message: { invite in
                     Text(
-                        LocalizedKey("multiplayer.invite.message", invite.peerName)
+                        "multiplayer.invite.message \(invite.peerName)"
                     )
                 }
                 .alert(
@@ -141,7 +141,7 @@ private struct MultiplayerPickerSheet: View {
                 viewModel.selectPokemon(pokemon)
                 selectedForMoves = pokemon
             }
-            .applyPokedexStyling(title: Localized("multiplayer.pickFighter"), navColor: .darkGrey)
+            .applyPokedexStyling(title: "multiplayer.pickFighter", navColor: .darkGrey)
             .foregroundStyle(.white)
             .interactiveDismissDisabled()
             .toolbar {
@@ -188,12 +188,13 @@ private struct MultiplayerMovePickerView: View {
     var body: some View {
         MoveLoadoutView(
             pokemon: pokemon,
-            moveSelection: viewModel.selection,
+            moveSelection: viewModel.handshake.selection,
+            typeChart: viewModel.handshake.typeChart,
             isDisabled: viewModel.phase == .waitingForOpponent
         ) {
             submitButton
         }
-        .applyPokedexStyling(title: Localized("loadout.title"), navColor: .darkGrey)
+        .applyPokedexStyling(title: "loadout.title", navColor: .darkGrey)
         .foregroundStyle(.white)
     }
 }
@@ -201,12 +202,12 @@ private struct MultiplayerMovePickerView: View {
 // MARK: - Private
 private extension MultiplayerMovePickerView {
     var submitButton: some View {
-        let sel = viewModel.selection
-        let ready = viewModel.selectedPokemon != nil && sel.isFull
+        let sel = viewModel.handshake.selection
+        let ready = viewModel.handshake.selectedPokemon != nil && sel.isFull
         return PrimaryCapsuleButton(
             icon: "bolt.fill",
-            title: Localized("multiplayer.ready"),
-            loadingTitle: Localized("battleLog.waitingForOpponent"),
+            title: "multiplayer.ready",
+            loadingTitle: "battleLog.waitingForOpponent",
             isEnabled: ready,
             isLoading: viewModel.phase == .waitingForOpponent,
             action: viewModel.submitLoadout

@@ -20,7 +20,7 @@ struct DetailButton: View {
 /// Titled section with glass-effect card. Used for Data, Stats, and Evolution
 /// sections in the detail view.
 struct DetailSection<Content: View>: View {
-    var title: String?
+    var title: LocalizedStringKey?
     @ViewBuilder let content: () -> Content
 
     var body: some View {
@@ -58,8 +58,8 @@ struct SpeciesHeader: View {
             if let generationLabel {
                 Chip(generationLabel, style: .custom(background: textColor.opacity(0.1), foreground: textColor))
             }
-            if isLegendary { Chip("LEGENDARY", style: .primary) }
-            if isMythical { Chip("MYTHICAL", style: .primary) }
+            if isLegendary { Chip("detail.legendary", style: .primary) }
+            if isMythical { Chip("detail.mythical", style: .primary) }
         }
         .padding(.horizontal, DesignKit.Spacing.Primitive.s24)
     }
@@ -68,7 +68,7 @@ struct SpeciesHeader: View {
 /// Generic "Label: value" row with fixed-width labels for alignment.
 /// Use `.vertical` axis for stacked label/value layout (abilities, moves).
 struct DetailRow: View {
-    var title: String?
+    var title: LocalizedStringKey?
     let subtitle: String
     var axis: Axis = .horizontal
 
@@ -129,15 +129,15 @@ struct DetailRowStat: View {
     let value: Int
     let textColor: Color
 
-    private var abbreviatedTitle: String {
+    private var abbreviatedTitle: Text {
         switch title.lowercased() {
-        case "special-attack":  return Localized("detail.stat.specialAttack")
-        case "attack":          return Localized("detail.stat.attack")
-        case "hp":              return Localized("detail.stat.hp")
-        case "speed":           return Localized("detail.stat.speed")
-        case "special-defense": return Localized("detail.stat.specialDefense")
-        case "defense":         return Localized("detail.stat.defense")
-        default:                return title.capitalized
+        case "special-attack":  Text("detail.stat.specialAttack")
+        case "attack":          Text("detail.stat.attack")
+        case "hp":              Text("detail.stat.hp")
+        case "speed":           Text("detail.stat.speed")
+        case "special-defense": Text("detail.stat.specialDefense")
+        case "defense":         Text("detail.stat.defense")
+        default:                Text(title.capitalized)
         }
     }
 
@@ -147,7 +147,7 @@ struct DetailRowStat: View {
         let progress = Double(clampedValue) / Double(maxValue)
 
         HStack {
-            Text(abbreviatedTitle)
+            abbreviatedTitle
                 .frame(width: 58, alignment: .leading)
                 .lineLimit(1)
             Text("\(clampedValue)")

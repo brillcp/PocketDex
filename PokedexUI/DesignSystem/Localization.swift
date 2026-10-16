@@ -6,17 +6,13 @@ import SwiftUI
 /// Looks up `key` in Localizable.strings and substitutes any `args` into its
 /// stored format placeholders. Falls back to `key` itself if missing.
 ///
-/// SwiftUI views pass keys straight to `Text("key")`, `Button("key")` and
-/// friends (they're `LocalizedStringKey`s); use this where a plain `String`
-/// is needed, and ``LocalizedKey(_:_:)`` for a formatted key in a view.
+/// SwiftUI views and the app's own components take `LocalizedStringKey`s,
+/// so views pass keys straight in (`Text("key")`, `Chip("key")`), with
+/// interpolated values for formatted strings (`Text("move.pp \(pp)")` looks
+/// up `"move.pp %lld"`). Use this where a plain `String` is needed (view
+/// models, the battle log).
 nonisolated func Localized(_ key: String, _ args: CVarArg...) -> String {
     formattedLocalizedString(key, args)
-}
-
-/// ``Localized(_:_:)`` as a `LocalizedStringKey`, for formatted strings in
-/// SwiftUI views.
-nonisolated func LocalizedKey(_ key: String, _ args: CVarArg...) -> LocalizedStringKey {
-    LocalizedStringKey(formattedLocalizedString(key, args))
 }
 
 /// Formats with the current locale so numbers use the user's digits and

@@ -53,11 +53,42 @@ enum PokeAPIRequest: Requestable {
     }
 }
 
+/// PokeAPI requests, behind a protocol so services don't depend on the
+/// concrete client.
+protocol PokeAPIFetching: Sendable {
+    /// Fetch and decode one endpoint.
+    func fetch<T: Decodable & Sendable>(_ request: PokeAPIRequest, as type: T.Type) async throws -> T
+    /// Raw response bytes, for callers that persist the payload as-is.
+    func fetchData(_ request: PokeAPIRequest) async throws -> Data
+    /// Fetch a list endpoint, then every detail record it references
+    /// concurrently. `onTick` fires once per detail response.
+    func fetchAll<T: Decodable & Sendable>(
+        _ type: T.Type,
+        list: PokeAPIRequest,
+        detail: @escaping @Sendable (String) -> PokeAPIRequest,
+        onTick: (@Sendable () async -> Void)?
+    ) async throws -> [T]
+}
+
+extension PokeAPIFetching {
+    func fetch<T: Decodable & Sendable>(_ request: PokeAPIRequest) async throws -> T {
+        try await fetch(request, as: T.self)
+    }
+
+    func fetchAll<T: Decodable & Sendable>(
+        _ type: T.Type,
+        list: PokeAPIRequest,
+        detail: @escaping @Sendable (String) -> PokeAPIRequest
+    ) async throws -> [T] {
+        try await fetchAll(type, list: list, detail: detail, onTick: nil)
+    }
+}
+
 /// Thin client over `Network.Service`. Fetches raw bytes through the
 /// service actor and decodes on the caller's task, so concurrent detail
 /// requests decode in parallel on the cooperative pool instead of queueing
 /// behind the service actor.
-struct PokeAPIClient: Sendable {
+struct PokeAPIClient: PokeAPIFetching {
     private let service: Network.Service
 
     init(service: Network.Service = .pokeAPI) {

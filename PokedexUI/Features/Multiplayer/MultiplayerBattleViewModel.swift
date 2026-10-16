@@ -18,7 +18,7 @@ import PokeBattleKit
 @Observable
 final class MultiplayerBattleViewModel {
     private let role: MultipeerRole
-    private let multipeer: MultipeerService
+    private let multipeer: any MultipeerServicing
     private let audioPlayer: AudioPlaying
     private let formatter: BattleLogFormatter
     private let spriteColors: SpriteColorResolver
@@ -26,7 +26,8 @@ final class MultiplayerBattleViewModel {
     private let peerSummary: PokemonSummary
     private let selfMoves: [Move]
     private let peerMoves: [Move]
-    private var typeChart: TypeChart?
+    private(set) var typeChart: TypeChart?
+    private let catalog: BattleCatalog
     /// Host only; the guest never resolves rounds locally.
     private var engine: BattleEngine?
     /// Incremented on each local commit; both peers stay in lockstep.
@@ -52,12 +53,13 @@ final class MultiplayerBattleViewModel {
         selfMoves: [Move],
         peerSummary: PokemonSummary,
         peerMoves: [Move],
-        multipeer: MultipeerService,
-        container: AppContainer
+        multipeer: any MultipeerServicing,
+        services: BattleServices
     ) {
         self.role = role
         self.multipeer = multipeer
-        self.audioPlayer = container.audioPlayer
+        self.audioPlayer = services.audioPlayer
+        self.catalog = services.catalog
         self.selfSummary = selfSummary
         self.peerSummary = peerSummary
         self.selfMoves = selfMoves
@@ -71,28 +73,29 @@ final class MultiplayerBattleViewModel {
             opponentName: peerSummary.name
         )
         self.spriteColors = SpriteColorResolver(
-            spriteLoader: container.spriteLoader,
-            imageColorAnalyzer: container.imageColorAnalyzer
+            spriteLoader: services.spriteLoader,
+            imageColorAnalyzer: services.imageColorAnalyzer
         )
         let selfCombatant = Combatant(
             pokemon: selfSummary,
             moves: selfMoves.map { MoveSnapshot(from: $0) },
-            rules: container.battleRules
+            rules: services.rules
         )
         let peerCombatant = Combatant(
             pokemon: peerSummary,
             moves: peerMoves.map { MoveSnapshot(from: $0) },
-            rules: container.battleRules
+            rules: services.rules
         )
         self.state = BattleState(player: selfCombatant, opponent: peerCombatant)
-        if role == .host {
-            // Read without trapping: the catalogue may still be loading.
-            if let chart = PokeBattleKit.loadedTypeChart {
-                self.typeChart = chart
+        // Both peers use the chart for effectiveness labels; only the host
+        // runs the engine.
+        if let chart = catalog.typeChart {
+            self.typeChart = chart
+            if role == .host {
                 self.engine = BattleEngine(state: state!, typeChart: chart)
-            } else {
-                self.errorMessage = Localized("battle.error.dataNotLoaded")
             }
+        } else {
+            self.errorMessage = Localized("battle.error.dataNotLoaded")
         }
     }
 
@@ -202,7 +205,7 @@ private extension MultiplayerBattleViewModel {
         guard role == .host,
               let selfMove = pendingSelfMove,
               let peerName = pendingPeerMoveName,
-              let peerMove = peerMoves.first(where: { $0.name == peerName }) ?? PokeBattleKit.move(named: peerName),
+              let peerMove = peerMoves.first(where: { $0.name == peerName }) ?? catalog.move(named: peerName),
               var eng = engine
         else { return }
         isResolvingTurn = true

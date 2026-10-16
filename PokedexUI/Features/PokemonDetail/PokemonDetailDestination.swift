@@ -20,8 +20,12 @@ struct PokemonDetailScreen: View {
         let detail = PokemonDetailView(
             viewModel: PokemonDetailViewModel(
                 summary: pokemon,
-                container: container,
-                modelContext: modelContext
+                modelContext: modelContext,
+                evolutionService: container.evolutionService,
+                spriteLoader: container.spriteLoader,
+                imageColorAnalyzer: container.imageColorAnalyzer,
+                audioPlayer: container.audioPlayer,
+                battleCatalog: container.battleCatalog
             )
         )
         if let zoomNamespace {

@@ -64,7 +64,7 @@ private extension MoveCell {
             switch mode {
             case .battle:
                 if let pp = move.pp {
-                    Text(LocalizedKey("move.pp", pp))
+                    Text("move.pp \(pp)")
                         .font(.pixel12)
                 }
             case .loadout:

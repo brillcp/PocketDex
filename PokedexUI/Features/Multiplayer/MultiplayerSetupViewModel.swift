@@ -1,5 +1,4 @@
 import Foundation
-import MultipeerConnectivity
 import PokeBattleKit
 import SwiftUI
 
@@ -32,43 +31,33 @@ struct MultiplayerLaunch: Identifiable, Hashable {
     }
 }
 
-/// Drives `MultiplayerSetupView`. Owns peer discovery state, connection
-/// lifecycle, the local pokemon + move selection, the wire handshake, and
-/// the assembly of the live battle view model once both peers have submitted
-/// their loadouts.
-///
-/// Handshake: whichever side finishes picking first sends its
-/// `ChallengePayload` (host as `.challengeProposed`, guest as
-/// `.challengeAccepted`) and waits; when a device holds both its own and the
-/// peer's payload it builds a `MultiplayerBattleViewModel` locally. Roles
-/// come from `MultipeerService` (the device that accepted the invite hosts).
-/// Only a `PokemonSummary` snapshot and move names cross the wire; each
-/// device rebuilds `Move`s from its own PokeBattleKit data.
+/// Drives `MultiplayerSetupView`: the lobby. Owns peer discovery,
+/// invitations, the connection lifecycle, errors, and pushing the battle.
+/// The fighter/move picking and challenge exchange live in `handshake`;
+/// this forwards the peer's challenge messages to it and acts on the outcome.
+/// Roles come from the multipeer service (the device that accepted the
+/// invite hosts).
 @MainActor
 @Observable
 final class MultiplayerSetupViewModel {
-    private let container: AppContainer
+    private let multipeer: any MultipeerServicing
     private var listenTask: Task<Void, Never>?
-    private var ownChallengeSent: Bool = false
-    private var peerChallenge: ChallengePayload?
     private var connectedPeerName: String?
     private var receivedBattleEnded: Bool = false
 
-    let multipeer: MultipeerService
-    let selection = MoveSelection()
+    let handshake: MultiplayerHandshake
 
     var phase: MultiplayerSetupPhase = .discovering
     var showPicker: Bool = false
     var errorMessage: String?
-    var selectedPokemon: Pokemon?
     var invitedPeer: PeerHandle?
     var launch: MultiplayerLaunch?
     var discoveredPeers: [PeerHandle] = []
     var pendingInvitation: PendingInvitation?
 
-    init(container: AppContainer) {
-        self.container = container
-        self.multipeer = container.multipeerService
+    init(multipeer: any MultipeerServicing, battleServices: BattleServices) {
+        self.multipeer = multipeer
+        self.handshake = MultiplayerHandshake(multipeer: multipeer, services: battleServices)
     }
 
     isolated deinit {
@@ -107,7 +96,7 @@ extension MultiplayerSetupViewModel {
 
     func invite(_ peer: PeerHandle) {
         invitedPeer = peer
-        multipeer.invite(peer.id)
+        multipeer.invite(peer)
         phase = .connecting
     }
 
@@ -146,32 +135,14 @@ extension MultiplayerSetupViewModel {
     }
 
     func selectPokemon(_ pokemon: Pokemon) {
-        selectedPokemon = pokemon
-        selection.load(for: pokemon)
+        handshake.select(pokemon)
         phase = .picking
     }
 
     /// Send the locally chosen loadout to the peer.
     func submitLoadout() {
-        guard let pokemon = selectedPokemon,
-              selection.isFull,
-              let role = multipeer.role
-        else { return }
-        let payload = ChallengePayload(
-            pokemon: PokemonSummary(pokemon: pokemon),
-            moveNames: selection.selectionOrder
-        )
-        switch role {
-        case .host:  multipeer.send(.challengeProposed(payload))
-        case .guest: multipeer.send(.challengeAccepted(payload))
-        }
-        ownChallengeSent = true
-        if peerChallenge != nil {
-            phase = .launching
-            tryLaunch()
-        } else {
-            phase = .waitingForOpponent
-        }
+        guard let outcome = handshake.submit() else { return }
+        apply(outcome)
     }
 
     /// Derived from `.battleEnded` message or launch VM's winner.
@@ -194,17 +165,16 @@ extension MultiplayerSetupViewModel {
 private extension MultiplayerSetupViewModel {
     func handle(_ event: MultipeerEvent) async {
         switch event {
-        case .peerFound(let peerID):
-            let handle = PeerHandle(id: peerID)
-            if !discoveredPeers.contains(handle) {
-                discoveredPeers.append(handle)
+        case .peerFound(let peer):
+            if !discoveredPeers.contains(peer) {
+                discoveredPeers.append(peer)
             }
-        case .peerLost(let peerID):
-            discoveredPeers.removeAll { $0.id == peerID }
+        case .peerLost(let peer):
+            discoveredPeers.removeAll { $0 == peer }
         case .peerConnecting:
             break
-        case .peerConnected(let peerID):
-            connectedPeerName = peerID.displayName
+        case .peerConnected(let peer):
+            connectedPeerName = peer.name
             discoveredPeers = []
             receivedBattleEnded = false
             showPicker = true
@@ -221,11 +191,11 @@ private extension MultiplayerSetupViewModel {
         case .browsingFailed(let error):
             errorMessage = error.localizedDescription
         case .message(let battleMessage):
-            await handleBattleMessage(battleMessage)
+            handleBattleMessage(battleMessage)
         }
     }
 
-    func handleBattleMessage(_ message: BattleMessage) async {
+    func handleBattleMessage(_ message: BattleMessage) {
         switch message {
         case .hello(let version, _, _):
             if version != MultipeerProtocol.version {
@@ -235,20 +205,15 @@ private extension MultiplayerSetupViewModel {
                 reset()
             }
         case .challengeProposed(let payload), .challengeAccepted(let payload):
-            peerChallenge = payload
-            if ownChallengeSent {
-                phase = .launching
-                tryLaunch()
-            }
+            if let outcome = handshake.receive(payload) { apply(outcome) }
         case .challengeDeclined:
-            let name = connectedPeerName ?? Self.opponentFallbackName
-            errorMessage = "\(name) declined the challenge."
+            errorMessage = Localized("multiplayer.challengeDeclined", peerName)
             showPicker = false
             reset()
         case .disconnect:
             guard phase != .discovering else { return }
             if !battleEnded {
-                errorMessage = canceledMessage()
+                errorMessage = Localized("multiplayer.canceled", peerName)
             }
             showPicker = false
             reset()
@@ -260,61 +225,45 @@ private extension MultiplayerSetupViewModel {
         }
     }
 
+    /// Acts on a handshake step: wait, push the battle, or reject the
+    /// peer's loadout.
+    func apply(_ outcome: MultiplayerHandshake.Outcome) {
+        switch outcome {
+        case .waiting:
+            phase = .waitingForOpponent
+        case .launch(let viewModel):
+            phase = .launching
+            showPicker = false
+            launch = MultiplayerLaunch(viewModel: viewModel)
+        case .invalidPeerLoadout:
+            errorMessage = Localized("multiplayer.error.invalidLoadout")
+            showPicker = false
+            reset()
+        }
+    }
+
     /// Peer we invited declined (MC disconnected while connecting).
     func inviteDeclined() {
         let name = invitedPeer?.name ?? Localized("multiplayer.trainer")
         invitedPeer = nil
         phase = .discovering
-        errorMessage = "\(name) declined the battle."
+        errorMessage = Localized("multiplayer.inviteDeclined", name)
         startDiscovery()
     }
 
     /// MC dropped unexpectedly during picking, waiting, or battle.
     func connectionLost() {
         if !battleEnded {
-            errorMessage = canceledMessage()
+            errorMessage = Localized("multiplayer.canceled", peerName)
         }
         showPicker = false
         reset()
         startDiscovery()
     }
 
-    func tryLaunch() {
-        guard ownChallengeSent,
-              let peerChallenge,
-              let role = multipeer.role,
-              let pokemon = selectedPokemon
-        else { return }
-        let selfMoves = selection.selectedMoves
-        let peerMoves = peerChallenge.moveNames.compactMap { PokeBattleKit.move(named: $0) }
-        // The peer's Pokémon may know fewer than four usable moves.
-        guard !peerMoves.isEmpty, peerMoves.count == peerChallenge.moveNames.count,
-              peerMoves.count <= selection.loadoutSize else {
-            errorMessage = Localized("multiplayer.error.invalidLoadout")
-            showPicker = false
-            reset()
-            return
-        }
-        showPicker = false
-        let viewModel = MultiplayerBattleViewModel(
-            role: role,
-            selfSummary: PokemonSummary(pokemon: pokemon),
-            selfMoves: selfMoves,
-            peerSummary: peerChallenge.pokemon,
-            peerMoves: peerMoves,
-            multipeer: multipeer,
-            container: container
-        )
-        launch = MultiplayerLaunch(viewModel: viewModel)
-    }
-
-    static var opponentFallbackName: String {
-        Localized("multiplayer.opponent")
-    }
-
-    func canceledMessage() -> String {
-        let name = connectedPeerName ?? Self.opponentFallbackName
-        return Localized("multiplayer.canceled", name)
+    /// The connected peer's name, for error messages.
+    var peerName: String {
+        connectedPeerName ?? Localized("multiplayer.opponent")
     }
 
     func reset() {
@@ -325,17 +274,8 @@ private extension MultiplayerSetupViewModel {
     }
 
     func resetSelection() {
-        selectedPokemon = nil
-        selection.load(ranked: [])
-        ownChallengeSent = false
-        peerChallenge = nil
+        handshake.reset()
         connectedPeerName = nil
         launch = nil
     }
-}
-
-/// Identifiable wrapper around `MCPeerID` for stable use in SwiftUI lists.
-struct PeerHandle: Identifiable, Hashable {
-    let id: MCPeerID
-    var name: String { id.displayName }
 }

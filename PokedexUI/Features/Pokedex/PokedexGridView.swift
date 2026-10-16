@@ -70,7 +70,7 @@ private struct IndexingOverlay: View {
             ProgressView(value: progress)
                 .tint(.pokedexRed)
                 .frame(width: 200)
-            Text(LocalizedKey("pokedex.loading", progress.formatted(.pixelPercent(rounding: .down))))
+            Text("pokedex.loading \(progress.formatted(.pixelPercent(rounding: .down)))")
                 .font(.pixel14)
                 .foregroundStyle(.secondary)
         }

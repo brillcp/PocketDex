@@ -21,18 +21,48 @@ enum MultipeerRole: Sendable {
     case guest
 }
 
+/// A nearby device, as the rest of the app sees it. Opaque: the
+/// MultipeerConnectivity peer stays inside `MultipeerService`, so features
+/// never depend on the framework.
+struct PeerHandle: Identifiable, Hashable, Sendable {
+    let id: UUID
+    let name: String
+}
+
 /// Typed events emitted by MultipeerConnectivity delegate callbacks.
 /// Consumed by view models via the `events()` AsyncStream.
 enum MultipeerEvent {
-    case peerFound(MCPeerID)
-    case peerLost(MCPeerID)
-    case peerConnecting(MCPeerID)
-    case peerConnected(MCPeerID)
-    case peerDisconnected(MCPeerID)
+    case peerFound(PeerHandle)
+    case peerLost(PeerHandle)
+    case peerConnecting(PeerHandle)
+    case peerConnected(PeerHandle)
+    case peerDisconnected(PeerHandle)
     case invitationReceived(peerName: String)
     case advertisingFailed(Error)
     case browsingFailed(Error)
     case message(BattleMessage)
+}
+
+/// Local peer-to-peer connection for multiplayer battles: discovery,
+/// invitations, and a typed message channel. View models depend on this
+/// protocol, not on MultipeerConnectivity.
+@MainActor
+protocol MultipeerServicing: AnyObject, Sendable {
+    /// This device's role once connected (`nil` before then).
+    var role: MultipeerRole? { get }
+    /// A new stream of every future event; each caller gets its own.
+    func events() -> AsyncStream<MultipeerEvent>
+    func startDiscovery()
+    func stopDiscovery()
+    /// Invite a discovered peer. The inviter becomes the guest.
+    func invite(_ peer: PeerHandle)
+    /// Accept the pending invitation. The accepter becomes the host.
+    func acceptInvitation()
+    func declineInvitation()
+    /// Send a message to the connected peer, in order and reliably.
+    func send(_ message: BattleMessage)
+    /// Tell the peer we're leaving, then tear down the session.
+    func disconnect()
 }
 
 /// Process-wide MultipeerConnectivity wrapper. Owns the `MCSession`,
@@ -53,9 +83,12 @@ final class MultipeerService: NSObject {
     private var advertiser: MCNearbyServiceAdvertiser?
     private var browser: MCNearbyServiceBrowser?
     private var invitationHandler: ((Bool) -> Void)?
+    /// The opaque handle handed out for each MultipeerConnectivity peer, and
+    /// the peer behind each handle, so events and invites map both ways.
+    @ObservationIgnored private var handles: [MCPeerID: PeerHandle] = [:]
+    @ObservationIgnored private var peers: [UUID: MCPeerID] = [:]
 
     private(set) var role: MultipeerRole?
-    var localDisplayName: String { myPeerID.displayName }
 
     /// Nonisolated so `AppContainer.live` (and the `\.container`
     /// environment default) can be built without the main actor. The peer
@@ -137,10 +170,10 @@ final class MultipeerService: NSObject {
     }
 
     /// Send an invite to a discovered peer. The inviter becomes the guest.
-    func invite(_ peer: MCPeerID) {
-        guard let browser else { return }
+    func invite(_ peer: PeerHandle) {
+        guard let browser, let peerID = peers[peer.id] else { return }
         role = .guest
-        browser.invitePeer(peer, to: session, withContext: nil, timeout: 30)
+        browser.invitePeer(peerID, to: session, withContext: nil, timeout: 30)
     }
 
     /// Accept the latest pending invitation. The accepter becomes the host.
@@ -183,8 +216,19 @@ final class MultipeerService: NSObject {
     }
 }
 
+extension MultipeerService: MultipeerServicing {}
+
 // MARK: - Private
 private extension MultipeerService {
+    /// The stable handle for `peerID`, created on first sight.
+    func handle(for peerID: MCPeerID) -> PeerHandle {
+        if let handle = handles[peerID] { return handle }
+        let handle = PeerHandle(id: UUID(), name: peerID.displayName)
+        handles[peerID] = handle
+        peers[handle.id] = peerID
+        return handle
+    }
+
     func emit(_ event: MultipeerEvent) {
         for continuation in subscribers.values {
             continuation.yield(event)
@@ -209,11 +253,11 @@ extension MultipeerService: MCSessionDelegate {
             switch state {
             case .connected:
                 self.stopDiscovery()
-                self.emit(.peerConnected(peerID))
+                self.emit(.peerConnected(self.handle(for: peerID)))
             case .connecting:
-                self.emit(.peerConnecting(peerID))
+                self.emit(.peerConnecting(self.handle(for: peerID)))
             case .notConnected:
-                self.emit(.peerDisconnected(peerID))
+                self.emit(.peerDisconnected(self.handle(for: peerID)))
             @unknown default:
                 break
             }
@@ -280,11 +324,11 @@ private final class InvitationReply: @unchecked Sendable {
 // MARK: - MCNearbyServiceBrowserDelegate
 extension MultipeerService: MCNearbyServiceBrowserDelegate {
     nonisolated func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String: String]?) {
-        onMain { self.emit(.peerFound(peerID)) }
+        onMain { self.emit(.peerFound(self.handle(for: peerID))) }
     }
 
     nonisolated func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {
-        onMain { self.emit(.peerLost(peerID)) }
+        onMain { self.emit(.peerLost(self.handle(for: peerID))) }
     }
 
     nonisolated func browser(_ browser: MCNearbyServiceBrowser, didNotStartBrowsingForPeers error: Error) {

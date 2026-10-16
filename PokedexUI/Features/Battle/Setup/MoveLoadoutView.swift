@@ -8,6 +8,7 @@ struct MoveLoadoutView<BottomBar: View>: View {
     let pokemon: Pokemon
     let moveSelection: MoveSelection
     var opponentTypes: [String] = []
+    var typeChart: TypeChart?
     var isDisabled: Bool = false
     @ViewBuilder let bottomBar: () -> BottomBar
 
@@ -17,7 +18,8 @@ struct MoveLoadoutView<BottomBar: View>: View {
                 MoveLoadoutSummary(pokemon: pokemon)
                 MovePickerGrid(
                     moveSelection: moveSelection,
-                    opponentTypes: opponentTypes
+                    opponentTypes: opponentTypes,
+                    typeChart: typeChart
                 )
             }
         }

@@ -14,6 +14,8 @@ import PokeBattleKit
 struct MovePickerGrid: View {
     let moveSelection: MoveSelection
     var opponentTypes: [String] = []
+    /// For effectiveness labels; none are shown while it's `nil`.
+    var typeChart: TypeChart?
 
     @State private var showsFullHint = false
 
@@ -46,9 +48,9 @@ private extension MovePickerGrid {
     var header: some View {
         VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s4) {
             HStack(spacing: DesignKit.Spacing.Primitive.s8) {
-                Text(LocalizedKey("loadout.moves.count", moveSelection.selectedNames.count, moveSelection.maxSelections))
+                Text("loadout.moves.count \(moveSelection.selectedNames.count) \(moveSelection.maxSelections)")
                 if moveSelection.isRecommended {
-                    Chip(Localized("loadout.recommended"), style: .primary, size: .small)
+                    Chip("loadout.recommended", style: .primary, size: .small)
                 }
                 Spacer()
                 if !moveSelection.recommendedNames.isEmpty, !moveSelection.isRecommended {
@@ -69,7 +71,7 @@ private extension MovePickerGrid {
     }
 
     func effectiveness(of move: Move) -> Double? {
-        opponentTypes.isEmpty ? nil : PokeBattleKit.loadedTypeChart?.multiplier(attacking: move.typeName, defenders: opponentTypes)
+        opponentTypes.isEmpty ? nil : typeChart?.multiplier(attacking: move.typeName, defenders: opponentTypes)
     }
 }
 

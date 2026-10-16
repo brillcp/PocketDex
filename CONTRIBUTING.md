@@ -15,7 +15,7 @@ Open `PokedexUI.xcodeproj` in Xcode (see the README for the required version), p
 
 - Swift 6 language mode with strict concurrency: new code should build without warnings.
 - Follow the existing structure (`App` / `Core` / `Features` / `DesignSystem`) and keep views behind their view model protocols.
-- User-facing text goes in `Localizable.strings` with a dotted key (`screen.element`), and is read with a SwiftUI literal key (`Text("myTeam.title")`) or `Localized("key", args)` where a `String` is needed. Plurals go in `Localizable.stringsdict`.
+- User-facing text goes in `Localizable.strings` with a dotted key (`screen.element`). Views pass the key as a literal (`Text("myTeam.title")`), interpolating values for formatted strings (`Text("move.pp \(pp)")` is the key `"move.pp %lld"`); new components take `LocalizedStringKey` for their text. Use `Localized("key", args)` only where a `String` is needed. Plurals go in `Localizable.stringsdict`.
 - Comment the *why* (threading decisions, non-obvious workarounds), not the *what*.
 
 ## Pull requests

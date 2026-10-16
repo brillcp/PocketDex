@@ -30,7 +30,7 @@ private struct RootView: View {
         RootTabView(
             viewModel: PokedexViewModel(
                 modelContext: modelContext,
-                container: container
+                repository: container.repository
             )
         )
     }
@@ -39,7 +39,7 @@ private struct RootView: View {
 // MARK: - AppDelegate
 
 /// UIKit lifecycle hook, bridged in via `@UIApplicationDelegateAdaptor`.
-/// Only used to kick off `PokeBattleKit.initialize()` at launch. The call
+/// Only used to start loading the battle catalogue at launch. The call
 /// runs in an unstructured `Task` so `didFinishLaunching` returns
 /// immediately instead of waiting on it. A failure is ignored here: the
 /// loadout screen calls `initialize()` again before a battle (it's safe to
@@ -49,7 +49,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
-        Task { try? await PokeBattleKit.initialize() }
+        Task { try? await AppContainer.live.battleCatalog.load() }
         return true
     }
 }

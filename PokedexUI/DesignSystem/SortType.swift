@@ -1,4 +1,4 @@
-import Foundation
+import SwiftUI
 
 /// Sort options for the pokedex toolbar menu.
 enum SortType: Hashable {
@@ -20,10 +20,10 @@ enum SortDirection: Hashable {
         self = self == .ascending ? .descending : .ascending
     }
 
-    var label: String {
+    var label: LocalizedStringKey {
         switch self {
-        case .ascending: Localized("sort.direction.ascending")
-        case .descending: Localized("sort.direction.descending")
+        case .ascending: "sort.direction.ascending"
+        case .descending: "sort.direction.descending"
         }
     }
 
@@ -39,24 +39,24 @@ enum SortDirection: Hashable {
 enum Stats: String, CaseIterable {
     case hp, attack, defense, speed
 
-    var displayName: String {
+    var displayName: LocalizedStringKey {
         switch self {
-        case .hp: Localized("sort.stat.hp")
-        case .attack: Localized("sort.stat.attack")
-        case .defense: Localized("sort.stat.defense")
-        case .speed: Localized("sort.stat.speed")
+        case .hp: "sort.stat.hp"
+        case .attack: "sort.stat.attack"
+        case .defense: "sort.stat.defense"
+        case .speed: "sort.stat.speed"
         }
     }
 }
 
 extension SortType {
-    var title: String {
+    var title: LocalizedStringKey {
         switch self {
-        case .number: Localized("sort.type.number")
-        case .name: Localized("sort.type.name")
-        case .height: Localized("sort.type.height")
-        case .weight: Localized("sort.type.weight")
-        case .catchRate: Localized("sort.type.catchRate")
+        case .number: "sort.type.number"
+        case .name: "sort.type.name"
+        case .height: "sort.type.height"
+        case .weight: "sort.type.weight"
+        case .catchRate: "sort.type.catchRate"
         case .stat(let name): name.displayName
         }
     }

@@ -21,7 +21,7 @@ struct BattleLoadoutView<ViewModel: BattleSetupViewModelProtocol>: View {
 
     var body: some View {
         content
-            .applyPokedexStyling(title: Localized("loadout.title"), navColor: .darkGrey)
+            .applyPokedexStyling(title: "loadout.title", navColor: .darkGrey)
             .foregroundStyle(.white)
             .task { await viewModel.prepare() }
             .onChange(of: viewModel.phase) { _, newPhase in
@@ -43,7 +43,8 @@ private extension BattleLoadoutView {
             playerMoves: viewModel.selection.selectedMoves,
             opponentMoves: opponentMoves,
             difficulty: difficulty,
-            container: container
+            aiService: container.battleAI,
+            services: container.battleServices
         )
         onStart(BattleLaunch(viewModel: battleViewModel))
     }
@@ -125,7 +126,7 @@ private extension BattleLoadoutView {
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
 
-            Text(LocalizedKey("battle.level", level))
+            Text("battle.level \(level)")
                 .font(.pixel12)
                 .foregroundStyle(.secondary)
                 .contentTransition(.numericText(value: Double(level)))
@@ -146,13 +147,13 @@ private extension BattleLoadoutView {
 
     func statGrid(pokemon: PokemonViewModel) -> some View {
         let byName = Dictionary(uniqueKeysWithValues: pokemon.stats.map { ($0.stat.name, $0.baseStat) })
-        let entries: [(String, Int)] = [
-            (Localized("stat.short.hp"), byName["hp"] ?? 0),
-            (Localized("stat.short.attack"), byName["attack"] ?? 0),
-            (Localized("stat.short.defense"), byName["defense"] ?? 0),
-            (Localized("stat.short.specialAttack"), byName["special-attack"] ?? 0),
-            (Localized("stat.short.specialDefense"), byName["special-defense"] ?? 0),
-            (Localized("stat.short.speed"), byName["speed"] ?? 0)
+        let entries: [(LocalizedStringKey, Int)] = [
+            ("stat.short.hp", byName["hp"] ?? 0),
+            ("stat.short.attack", byName["attack"] ?? 0),
+            ("stat.short.defense", byName["defense"] ?? 0),
+            ("stat.short.specialAttack", byName["special-attack"] ?? 0),
+            ("stat.short.specialDefense", byName["special-defense"] ?? 0),
+            ("stat.short.speed", byName["speed"] ?? 0)
         ]
         return VStack(spacing: DesignKit.Spacing.Primitive.s2) {
             ForEach(0..<2) { rowIdx in
@@ -203,7 +204,7 @@ private extension BattleLoadoutView {
     }
 
     func matchupLine(fromName: String, fromTypes: [String], toName: String, toTypes: [String]) -> some View {
-        let chart = PokeBattleKit.loadedTypeChart
+        let chart = viewModel.typeChart
         let multipliers = fromTypes.compactMap { chart?.multiplier(attacking: $0, defenders: toTypes) }
         let best = multipliers.max() ?? 1
         return HStack(spacing: DesignKit.Spacing.Primitive.s6) {
@@ -226,7 +227,8 @@ private extension BattleLoadoutView {
     var movePicker: some View {
         MovePickerGrid(
             moveSelection: viewModel.selection,
-            opponentTypes: viewModel.opponentPokemon?.typeNames ?? []
+            opponentTypes: viewModel.opponentPokemon?.typeNames ?? [],
+            typeChart: viewModel.typeChart
         )
     }
 
@@ -249,7 +251,7 @@ private extension BattleLoadoutView {
         let phase = viewModel.phase
         return PrimaryCapsuleButton(
             icon: "bolt.fill",
-            title: Localized("loadout.start"),
+            title: "loadout.start",
             isEnabled: phase == .readyToStart || phase == .readyToRequest,
             isLoading: phase == .awaitingAI,
             action: phase == .readyToStart

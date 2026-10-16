@@ -41,7 +41,7 @@ private extension RootTabView {
     }
 
     func itemsTab() -> some View {
-        ItemListView(viewModel: ItemListViewModel(modelContext: modelContext, container: container))
+        ItemListView(viewModel: ItemListViewModel(modelContext: modelContext, repository: container.repository))
     }
 
     func searchTab() -> some View {
@@ -49,6 +49,9 @@ private extension RootTabView {
     }
 
     func battleTab() -> some View {
-        MultiplayerSetupView(viewModel: MultiplayerSetupViewModel(container: container))
+        MultiplayerSetupView(viewModel: MultiplayerSetupViewModel(
+            multipeer: container.multipeerService,
+            battleServices: container.battleServices
+        ))
     }
 }

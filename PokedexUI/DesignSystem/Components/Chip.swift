@@ -5,19 +5,29 @@ import SwiftUI
 /// One component with a `Style` (colors) and `Size` (font and padding)
 /// instead of ad-hoc capsules, so every tag in the app stays consistent.
 /// Use `Chip.type(_:)` for Pokémon types, which picks the type's color.
+///
+/// Like `Text`, a string literal is a localization key, and a `String` value
+/// (a type or status name from the data) is shown as is.
 struct Chip: View {
-    let text: String
+    let text: Text
     let style: Style
     let size: Size
 
-    init(_ text: String, style: Style = .neutral, size: Size = .small) {
-        self.text = text
+    init(_ key: LocalizedStringKey, style: Style = .neutral, size: Size = .small) {
+        self.text = Text(key)
+        self.style = style
+        self.size = size
+    }
+
+    @_disfavoredOverload
+    init<S: StringProtocol>(_ text: S, style: Style = .neutral, size: Size = .small) {
+        self.text = Text(text)
         self.style = style
         self.size = size
     }
 
     var body: some View {
-        Text(text)
+        text
             .font(size.font)
             .lineLimit(1)
             .padding(.horizontal, size.horizontalPadding)

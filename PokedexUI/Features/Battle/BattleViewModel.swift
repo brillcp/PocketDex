@@ -27,6 +27,8 @@ protocol BattleViewModelProtocol: AnyObject {
     /// Play one turn with the player's `move`, animating events in order.
     func submit(_ move: Move) async
 
+    /// The battle's type chart; `nil` if the catalogue hadn't loaded.
+    var typeChart: TypeChart? { get }
     /// Type effectiveness of `move` against current opponent.
     func effectiveness(for move: Move) -> Double?
 }
@@ -34,7 +36,7 @@ protocol BattleViewModelProtocol: AnyObject {
 extension BattleViewModelProtocol {
     func effectiveness(for move: Move) -> Double? {
         guard let types = state?.opponent.typeNames, !types.isEmpty else { return nil }
-        return PokeBattleKit.loadedTypeChart?.multiplier(attacking: move.typeName, defenders: types)
+        return typeChart?.multiplier(attacking: move.typeName, defenders: types)
     }
 }
 
@@ -54,7 +56,7 @@ final class BattleViewModel {
     private let audioPlayer:   AudioPlaying
     private let aiDriver:      BattleAIDriver
     private let spriteColors:  SpriteColorResolver
-    private var typeChart:     TypeChart?
+    private(set) var typeChart: TypeChart?
 
     let playerPokemon:   PokemonViewModel
     let opponentPokemon: PokemonViewModel
@@ -76,18 +78,19 @@ final class BattleViewModel {
         playerMoves: [Move],
         opponentMoves: [Move],
         difficulty: Difficulty,
-        container: AppContainer
+        aiService: BattleAIServiceProtocol,
+        services: BattleServices
     ) {
         self.playerPokemon   = player
         self.opponentPokemon = opponent
         self.displayMoves    = playerMoves
         self.playerMoves     = playerMoves
         self.opponentMoves   = opponentMoves
-        self.audioPlayer     = container.audioPlayer
-        self.aiDriver        = BattleAIDriver(service: container.battleAI, difficulty: difficulty)
+        self.audioPlayer     = services.audioPlayer
+        self.aiDriver        = BattleAIDriver(service: aiService, difficulty: difficulty)
         self.spriteColors    = SpriteColorResolver(
-            spriteLoader: container.spriteLoader,
-            imageColorAnalyzer: container.imageColorAnalyzer
+            spriteLoader: services.spriteLoader,
+            imageColorAnalyzer: services.imageColorAnalyzer
         )
         self.animator = BattleAnimator()
         self.formatter = BattleLogFormatter(
@@ -100,19 +103,19 @@ final class BattleViewModel {
         let p = Combatant(
             pokemon: player,
             moves: playerMoves.map { MoveSnapshot(from: $0) },
-            rules: container.battleRules
+            rules: services.rules
         )
         let o = Combatant(
             pokemon: opponent,
             moves: opponentMoves.map { MoveSnapshot(from: $0) },
-            rules: container.battleRules,
-            level: container.battleRules.opponentLevel(for: difficulty)
+            rules: services.rules,
+            level: services.rules.opponentLevel(for: difficulty)
         )
         let initialState = BattleState(player: p, opponent: o)
         self.state = initialState
         // Read without trapping: if the battle catalogue hasn't loaded, the
         // battle can't start and says so instead of crashing.
-        if let chart = PokeBattleKit.loadedTypeChart {
+        if let chart = services.catalog.typeChart {
             activateEngine(state: initialState, chart: chart)
         } else {
             errorMessage = Localized("battle.error.dataNotLoaded")

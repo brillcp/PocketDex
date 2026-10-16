@@ -1,16 +1,16 @@
-import Foundation
+import SwiftUI
 
 enum Tabs: Int {
     case pokedex, items, battle, search
 }
 
 extension Tabs {
-    var title: String {
+    var title: LocalizedStringKey {
         switch self {
             case .pokedex: "PocketDex+"
-            case .items: Localized("tab.items")
-            case .battle: Localized("tab.battle")
-            case .search: Localized("tab.search")
+            case .items: "tab.items"
+            case .battle: "tab.battle"
+            case .search: "tab.search"
         }
     }
 

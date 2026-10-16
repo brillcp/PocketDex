@@ -72,8 +72,11 @@ actor BattleAIService {
     private var recentFighters: [Int: [Int]] = [:]
     /// How many recent fighters to skip.
     private let recentFighterMemory: Int
+    /// For Struggle, the fallback when an attacker has no moves.
+    private let catalog: BattleCatalog
 
-    init(recentFighterMemory: Int = 10) {
+    init(catalog: BattleCatalog, recentFighterMemory: Int = 10) {
+        self.catalog = catalog
         self.recentFighterMemory = recentFighterMemory
     }
 }
@@ -91,7 +94,9 @@ extension BattleAIService: BattleAIServiceProtocol {
         turnNumber: Int,
         difficulty: Difficulty
     ) async -> Move {
-        guard let first = moves.first else { return PokeBattleKit.move(named: "struggle")! }
+        guard let first = moves.first ?? catalog.move(named: "struggle") else {
+            preconditionFailure("chooseMove needs a move: every loadout has one, and Struggle is loaded with the catalogue")
+        }
         // Information parity: the AI only knows the player's moves it has
         // seen used, as a human opponent would.
         let scouted = defender.knowing(onlyMoves: defenderSeenMoves)

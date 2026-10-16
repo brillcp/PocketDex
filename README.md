@@ -36,19 +36,19 @@ PocketDex+ is **Protocol-Oriented MVVM** with clear layer boundaries and **Swift
 - ✅ **Battle AI**: rule-based AI from [PokeBattleKit](https://github.com/brillcp/PokeBattleKit), with opponents matched by simulated strength ratings and three difficulty levels.
 - ✅ **Local Multiplayer**: host-authoritative architecture with a typed, versioned `Codable` message protocol over MultipeerConnectivity. The same `BattleViewModelProtocol` drives both AI and peer-to-peer battles with zero view changes.
 
-### SOLID audit: 0.76 / 1.00
+### SOLID audit: 0.85 / 1.00
 
 Scored from an audit of the app target's code (the mean of the five principles, each scored on evidence: 1.0 means essentially no violations, 0.8 minor isolated ones, 0.6 several real ones in important places):
 
 | Principle | Score | Where it holds | Where it doesn't (yet) |
 | --- | --- | --- | --- |
-| **S**ingle Responsibility | 0.75 | Battle flow split into formatter, animator, color resolver and AI driver; persistence only in `PokedexStore` | `MultiplayerSetupViewModel` handles discovery, connection, picking and handshake; `FighterPickerView` runs Smart pick itself |
-| **O**pen/Closed | 0.80 | Services behind protocols; one `BattleView` serves both battle modes; AI behaviour lives in PokeBattleKit strategies | New multiplayer messages touch the encoder, decoder and two view models; display enums use many `switch`es |
-| **L**iskov Substitution | 0.90 | Both `BattleViewModelProtocol` conformers are interchangeable in the generic `BattleView`; no trapping conformers | A force-unwrapped Struggle lookup in `BattleAIService` |
-| **I**nterface Segregation | 0.75 | Small service protocols (one or two members); each view model exposes only what its view needs | View models take the whole `AppContainer`; each client uses one of `BattleAIServiceProtocol`'s three methods |
-| **D**ependency Inversion | 0.60 | One composition root injected through the environment; views generic over view model protocols | `MultipeerService` and `EvolutionService` are concrete; PokeBattleKit's catalogue is read through globals |
+| **S**ingle Responsibility | 0.85 | The multiplayer lobby and the battle handshake are separate types; Smart pick lives in `FighterPickerViewModel`; battle screens get a `BattleServices` slice, not the container | `MoveSelection` holds selection state and also fetches base forms from SwiftData; the two battle view models repeat the event-playback loop |
+| **O**pen/Closed | 0.85 | Every service is behind a protocol; one `BattleView` serves both battle modes through `BattleViewModelProtocol` | A new multiplayer message means editing the `switch` in two view models |
+| **L**iskov Substitution | 0.90 | Both battle view models are interchangeable in the generic `BattleView`; a missing catalogue is handled, not a crash | `canSelectMove` means slightly different things in the two conformers |
+| **I**nterface Segregation | 0.85 | Small protocols (`PokeAPIFetching`, `EvolutionPrefetching`, `SpriteLoading`, `AudioPlaying`) | `MultipeerServicing` and `BattleCatalog` each mix two roles (discovery and messaging, loading and reading) |
+| **D**ependency Inversion | 0.80 | One composition root; MultipeerConnectivity is hidden behind `MultipeerServicing`, and PokeBattleKit's globals behind `BattleCatalog`; view models get only the services they use | Views build their view models from the container; the app delegate preloads through `AppContainer.live` |
 
-The biggest wins left: put `MultipeerService` behind a protocol, wrap PokeBattleKit's catalogue in one injected dependency, and pass view models only the services they use.
+Next steps that would raise it: build view models in a small factory instead of in views, move the base-form lookup out of `MoveSelection`, and split the two wider protocols.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -443,7 +443,7 @@ Multiplayer needs two devices on the same network; the Gym tab asks for Local Ne
 
 # Localization 🌍
 
-All user-facing text lives in `Localizable.strings` with dotted keys grouped by screen (`"myTeam.title" = "My team";`), and plurals in `Localizable.stringsdict`. Views pass keys straight to SwiftUI (`Text("myTeam.title")`); code that needs a `String` uses `Localized("key", args…)`. Battle log lines are whole-sentence keys with placeholders (`"%1$@ used %2$@"`), filled with styled parts by `LocalizedAttributed`, so a translation can reorder the words and keep the colors. English is the only language so far.
+All user-facing text lives in `Localizable.strings` with dotted keys grouped by screen (`"myTeam.title" = "My team";`), and plurals in `Localizable.stringsdict`. Views and the app's components take `LocalizedStringKey`s, so they pass keys straight in (`Text("myTeam.title")`, `Chip("matchup.strong")`), with interpolated values for formatted strings (`Text("move.pp \(pp)")` looks up `"move.pp %lld"`). A `String` value (a name from the data) is shown as is. Code that needs a `String` (view models, the battle log) uses `Localized("key", args…)`. Battle log lines are whole-sentence keys with placeholders (`"%1$@ used %2$@"`), filled with styled parts by `LocalizedAttributed`, so a translation can reorder the words and keep the colors. English is the only language so far.
 
 ---
 

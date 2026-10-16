@@ -8,6 +8,7 @@ import SwiftData
 /// `NavigationStack`: the compact pokedex stack, the regular-width detail
 /// column, search, my team, and type lists.
 struct PokemonDetailView<ViewModel: PokemonDetailViewModelProtocol>: View {
+    @Environment(\.container) private var container
 
     @State private var viewModel: ViewModel
     /// "Battle" challenges this Pokémon; the sheet picks the player's fighter.
@@ -58,8 +59,14 @@ struct PokemonDetailView<ViewModel: PokemonDetailViewModelProtocol>: View {
         }
         .sheet(isPresented: $showFighterPicker) {
             FighterPickerView(
-                opponent: viewModel.pokemon.pokemon,
-                opponentTypes: viewModel.pokemon.typeNames
+                viewModel: FighterPickerViewModel(
+                    opponent: viewModel.pokemon.pokemon,
+                    opponentTypes: viewModel.pokemon.typeNames,
+                    repository: container.repository,
+                    aiService: container.battleAI,
+                    catalog: container.battleCatalog,
+                    rules: container.battleRules
+                )
             ) { launch in
                 showFighterPicker = false
                 battleLaunch = launch
@@ -114,32 +121,33 @@ private extension PokemonDetailView {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            DetailSection(title: Localized("detail.section.data")) {
+            DetailSection(title: "detail.section.data") {
                 TypesRow(typeNames: pokemon.typeNames) { selectedType = $0 }
-                DetailRow(title: Localized("detail.height"), subtitle: pokemon.height)
-                DetailRow(title: Localized("detail.weight"), subtitle: pokemon.weight)
+                DetailRow(title: "detail.height", subtitle: pokemon.height)
+                DetailRow(title: "detail.weight", subtitle: pokemon.weight)
 
                 if let habitat = pokemon.habitat {
-                    DetailRow(title: Localized("detail.habitat"), subtitle: habitat)
+                    DetailRow(title: "detail.habitat", subtitle: habitat)
                 }
-                DetailRow(title: Localized("detail.capture"), subtitle: pokemon.capturePercent)
+                DetailRow(title: "detail.capture", subtitle: pokemon.capturePercent)
                 if pokemon.genderRate > 0 {
                     GenderRow(rate: pokemon.genderRate, textColor: textColor)
                 }
             }
 
-            DetailSection(title: Localized("detail.section.typeChart")) {
+            DetailSection(title: "detail.section.typeChart") {
                 WeaknessGridView(
                     typeNames: pokemon.typeNames,
+                    typeChart: viewModel.typeChart,
                     textColor: textColor,
                     onSelectType: { selectedType = $0 }
                 )
             }
-            DetailSection(title: Localized("detail.section.movesAbilities")) {
+            DetailSection(title: "detail.section.movesAbilities") {
                 DetailRow(subtitle: pokemon.moves, axis: .vertical)
                 DetailRow(subtitle: pokemon.abilities, axis: .vertical)
             }
-            DetailSection(title: Localized("detail.section.stats")) {
+            DetailSection(title: "detail.section.stats") {
                 ForEach(pokemon.stats) { stat in
                     DetailRowStat(
                         title: stat.stat.name,
@@ -155,7 +163,7 @@ private extension PokemonDetailView {
             }
 
             if viewModel.evolutionStages.count > 1 {
-                DetailSection(title: Localized("detail.section.evolution")) {
+                DetailSection(title: "detail.section.evolution") {
                     EvolutionChainView(
                         stages: viewModel.evolutionStages,
                         textColor: textColor,
@@ -183,7 +191,7 @@ private extension PokemonDetailView {
                 }
             }
             Spacer()
-            SecondaryCapsuleButton(icon: "bolt.fill", title: Localized("detail.battle"), color: textColor) {
+            SecondaryCapsuleButton(icon: "bolt.fill", title: "detail.battle", color: textColor) {
                 showFighterPicker = true
             }
         }

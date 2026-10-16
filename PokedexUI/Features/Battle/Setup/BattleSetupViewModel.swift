@@ -28,6 +28,8 @@ protocol BattleSetupViewModelProtocol {
     var playerPokemon:   PokemonViewModel? { get }
     var opponentPokemon: PokemonViewModel? { get }
     var selection: MoveSelection { get }
+    /// For move effectiveness labels; `nil` while the catalogue loads.
+    var typeChart: TypeChart? { get }
     var opponentLoadout: [Move]? { get }
     var errorMessage: String? { get }
     var phase: BattleSetupPhase { get }
@@ -43,6 +45,7 @@ protocol BattleSetupViewModelProtocol {
 final class BattleSetupViewModel {
     private var opponentPool: [Move] = []
     private let aiService:    BattleAIServiceProtocol
+    private let catalog:      BattleCatalog
     private let rules:        BattleRules
 
     let playerSummary:   Pokemon
@@ -59,11 +62,13 @@ final class BattleSetupViewModel {
         player: Pokemon,
         opponent: Pokemon,
         aiService: BattleAIServiceProtocol,
+        catalog: BattleCatalog,
         rules: BattleRules
     ) {
         self.playerSummary   = player
         self.opponentSummary = opponent
         self.aiService       = aiService
+        self.catalog         = catalog
         self.rules           = rules
     }
 }
@@ -71,6 +76,8 @@ final class BattleSetupViewModel {
 // MARK: - BattleSetupViewModelProtocol
 
 extension BattleSetupViewModel: BattleSetupViewModelProtocol {
+    var typeChart: TypeChart? { catalog.typeChart }
+
     var phase: BattleSetupPhase {
         guard playerPokemon != nil,
               opponentPokemon != nil,
@@ -91,18 +98,18 @@ extension BattleSetupViewModel: BattleSetupViewModelProtocol {
         // The move catalogue loads at launch; wait for it (or retry it, if
         // that load failed) before building movepools from it.
         do {
-            try await PokeBattleKit.initialize()
+            try await catalog.load()
         } catch {
             errorMessage = Localized("battleSetup.error.catalogue")
             return
         }
-        guard let chart = PokeBattleKit.loadedTypeChart else {
+        guard let chart = catalog.typeChart else {
             errorMessage = Localized("battleSetup.error.catalogue")
             return
         }
 
-        let playerMoves   = MoveSelection.movesForPokemon(player.pokemon)
-        let opponentMoves = MoveSelection.movesForPokemon(opponent.pokemon)
+        let playerMoves   = MoveSelection.movesForPokemon(player.pokemon, catalog: catalog)
+        let opponentMoves = MoveSelection.movesForPokemon(opponent.pokemon, catalog: catalog)
 
         guard !playerMoves.isEmpty else {
             errorMessage = Localized("battleSetup.error.movepool", playerSummary.name)
@@ -130,7 +137,7 @@ extension BattleSetupViewModel: BattleSetupViewModelProtocol {
         guard let player = playerPokemon,
               let opponent = opponentPokemon else { return }
 
-        guard let chart = PokeBattleKit.loadedTypeChart else { return }
+        guard let chart = catalog.typeChart else { return }
         isPickingLoadout = true
         let fighter = Combatant(pokemon: opponent, moves: [], rules: rules, level: rules.opponentLevel(for: difficulty))
         let foe     = Combatant(pokemon: player,  moves: [], rules: rules)
