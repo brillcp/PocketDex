@@ -47,10 +47,14 @@ final class MoveSelection {
 
     /// Selects `moves` (in order, up to the limit) and remembers them as the
     /// recommendation, so the player can reset to them after changing moves.
-    /// Moves not in the pool are ignored.
+    /// The recommended moves also move to the front of the pool, ahead of
+    /// the rest in their existing order. Moves not in the pool are ignored.
     func recommend(_ moves: [Move]) {
         let available = Set(pool.map(\.name))
         recommendedNames = Array(moves.map(\.name).filter(available.contains).prefix(maxSelections))
+        let recommended = Set(recommendedNames)
+        pool = Self.resolve(selectionOrder: recommendedNames, from: pool)
+            + pool.filter { !recommended.contains($0.name) }
         resetToRecommended()
     }
 
@@ -64,9 +68,6 @@ final class MoveSelection {
     var isRecommended: Bool {
         !recommendedNames.isEmpty && Set(recommendedNames) == selectedNames
     }
-
-    /// The moves not selected, in pool order.
-    var unselectedMoves: [Move] { pool.filter { !selectedNames.contains($0.name) } }
 
     /// Toggle a move in/out of the selection.
     func toggle(_ move: Move) {
