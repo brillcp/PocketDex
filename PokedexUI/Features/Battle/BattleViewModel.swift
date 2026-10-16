@@ -34,7 +34,7 @@ protocol BattleViewModelProtocol: AnyObject {
 extension BattleViewModelProtocol {
     func effectiveness(for move: Move) -> Double? {
         guard let types = state?.opponent.typeNames, !types.isEmpty else { return nil }
-        return PokeBattleKit.typeChartIfLoaded?.multiplier(attacking: move.typeName, defenders: types)
+        return PokeBattleKit.loadedTypeChart?.multiplier(attacking: move.typeName, defenders: types)
     }
 }
 

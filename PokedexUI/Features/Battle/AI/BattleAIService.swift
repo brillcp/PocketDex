@@ -50,7 +50,7 @@ protocol BattleAIServiceProtocol: Sendable {
 }
 
 /// The AI opponent, built entirely on PokeBattleKit's rule-based AI:
-/// - **Fighters:** `OpponentStrategy.pick` from the opponent's side, a
+/// - **Fighters:** `MatchmakingStrategy.pick` from the opponent's side, a
 ///   random fair matchup by simulated battle strength (`PokemonStrength`),
 ///   favouring tense ones and skipping fighters suggested against this
 ///   opponent recently.
@@ -114,14 +114,14 @@ extension BattleAIService: BattleAIServiceProtocol {
         typeChart: TypeChart?
     ) async -> Int? {
         // Fairness is symmetric (a 35-65% win chance either way, and the
-        // same type checks), so the opponent strategy picks a fair fighter
+        // same type checks), so the matchmaking strategy picks a fair fighter
         // when asked from the opponent's side.
         let recent = recentFighters[opponent.id, default: []]
-        guard let pick = OpponentStrategy.pick(
+        guard let pick = MatchmakingStrategy.pick(
             for: opponent, from: candidates, typeChart: typeChart, excluding: Set(recent)
         ) else { return nil }
         recentFighters[opponent.id] = Array((recent + [pick.id]).suffix(recentFighterMemory))
-        let chance = OpponentStrategy.predictedWinChance(of: pick, against: opponent)
+        let chance = MatchmakingStrategy.predictedWinChance(of: pick, against: opponent)
         aiLog("Fighter vs \(opponent.name) (\(Int(opponent.strength))): \(pick.name) (\(Int(pick.strength))), predicted win chance \(Int(chance * 100))%")
         return pick.id
     }

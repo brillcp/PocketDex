@@ -234,7 +234,7 @@ Base stat total (BST) is a poor guide to how strong a Pokémon is in battle: it 
 - **`MoveScoring`**: values every move in HP of damage, using a short forecast of the fight (each side's damage per turn, who moves first, how many actions each side gets).
 - **`MoveStrategy`**: the pick for the difficulty (weighted random among the near-best moves on fair) and corrections (replace moves that can't work, replace support moves that would do nothing, take a guaranteed KO).
 - **`LoadoutStrategy`**: role-based loadouts.
-- **`OpponentStrategy`** + **`PokemonStrength`**: fair pools and picks by simulated strength.
+- **`MatchmakingStrategy`** + **`PokemonStrength`**: fair pools and picks by simulated strength, from either side.
 
 ## One system for every battle
 

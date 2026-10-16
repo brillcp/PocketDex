@@ -182,10 +182,10 @@ private extension FighterPickerView {
     /// level, using the same fair range as "Smart pick".
     func buildMatchups(_ candidates: [Candidate]) -> [Int: Matchup] {
         let target = opponentCandidate
-        let fair = OpponentStrategy.fairWinChance
+        let fair = MatchmakingStrategy.fairWinChance
         var result: [Int: Matchup] = [:]
         for candidate in candidates {
-            let chance = OpponentStrategy.predictedWinChance(of: candidate, against: target)
+            let chance = MatchmakingStrategy.predictedWinChance(of: candidate, against: target)
             result[candidate.id] = chance > fair.upperBound ? .strong : chance < fair.lowerBound ? .weak : .even
         }
         return result
@@ -209,13 +209,13 @@ private extension FighterPickerView {
 
         let target = opponentCandidate
         let teamCandidates = team.map { Candidate(pokemon: $0) }
-        let chart = PokeBattleKit.typeChartIfLoaded
+        let chart = PokeBattleKit.loadedTypeChart
         let aiService = container.battleAI
 
         smartPickTask = Task {
             // The team first; everyone when no team member is a fair match.
             let hasFairTeamMember = teamCandidates.contains {
-                OpponentStrategy.fairWinChance.contains(OpponentStrategy.predictedWinChance(of: $0, against: target))
+                MatchmakingStrategy.fairWinChance.contains(MatchmakingStrategy.predictedWinChance(of: $0, against: target))
             }
             let candidates = hasFairTeamMember ? teamCandidates : await ensureCandidates()
 

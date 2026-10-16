@@ -34,7 +34,7 @@ private extension WeaknessGridView {
     var defensiveBuckets: [(label: String, types: [String])] {
         let defenders = typeNames
         // Empty until the battle catalogue has loaded (first launch).
-        guard let chart = PokeBattleKit.typeChartIfLoaded else { return [] }
+        guard let chart = PokeBattleKit.loadedTypeChart else { return [] }
 
         var rows: [Double: [String]] = [:]
         for (attackerName, _) in chart.attackers {
@@ -55,7 +55,7 @@ private extension WeaknessGridView {
     /// can pick whichever STAB type suits the defender.
     var offensiveBuckets: [(label: String, types: [String])] {
         let attackers = typeNames
-        guard !attackers.isEmpty, let chart = PokeBattleKit.typeChartIfLoaded else { return [] }
+        guard !attackers.isEmpty, let chart = PokeBattleKit.loadedTypeChart else { return [] }
 
         var rows: [Double: [String]] = [:]
         for (defenderName, _) in chart.attackers {

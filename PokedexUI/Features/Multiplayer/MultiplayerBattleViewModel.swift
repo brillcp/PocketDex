@@ -87,7 +87,7 @@ final class MultiplayerBattleViewModel {
         self.state = BattleState(player: selfCombatant, opponent: peerCombatant)
         if role == .host {
             // Read without trapping: the catalogue may still be loading.
-            if let chart = PokeBattleKit.typeChartIfLoaded {
+            if let chart = PokeBattleKit.loadedTypeChart {
                 self.typeChart = chart
                 self.engine = BattleEngine(state: state!, typeChart: chart)
             } else {
