@@ -108,7 +108,7 @@ private struct PokedexGridItem: View {
             guard let resolved = await container.imageColorAnalyzer.dominantColor(for: pokemon.id, image: uiImage)
             else { return }
             isLight = resolved.isLight
-            withAnimation(.easeInOut(duration: 0.2)) {
+            withAnimation(DesignKit.Animation.Primitive.easeInOut20) {
                 color = resolved
             }
         }

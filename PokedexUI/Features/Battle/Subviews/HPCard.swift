@@ -24,12 +24,12 @@ struct HPCard: View, Equatable {
             }
             ProgressView(value: Double(currentHP), total: Double(maxHP))
                 .tint(hpTint)
-                .animation(.easeOut(duration: 0.4), value: currentHP)
+                .animation(DesignKit.Animation.Primitive.easeOut40, value: currentHP)
             Text("\(currentHP) / \(maxHP)")
                 .font(.pixel12)
                 .foregroundStyle(.secondary)
                 .contentTransition(.numericText(value: Double(currentHP)))
-                .animation(.easeOut(duration: 0.4), value: currentHP)
+                .animation(DesignKit.Animation.Primitive.easeOut40, value: currentHP)
         }
         .padding(.horizontal, DesignKit.Spacing.Primitive.s12)
         .padding(.vertical, DesignKit.Spacing.Primitive.s12)

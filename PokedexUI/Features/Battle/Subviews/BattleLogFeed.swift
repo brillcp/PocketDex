@@ -34,7 +34,7 @@ struct BattleLogFeed: View {
         .scrollIndicators(.hidden)
         .frame(height: Layout.visibleHeight)
         .defaultScrollAnchor(.bottom)
-        .animation(.easeOut, value: log.count)
+        .animation(DesignKit.Animation.Primitive.easeOut, value: log.count)
     }
 }
 

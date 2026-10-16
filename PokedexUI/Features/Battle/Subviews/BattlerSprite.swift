@@ -29,15 +29,15 @@ struct BattlerSprite: View {
         )
         .opacity(isFainted ? 0 : 1)
         .overlay(alignment: .top) { damagePopup }
-        .animation(.spring(response: 0.35, dampingFraction: 0.5), value: shakeTick)
-        .animation(.easeOut(duration: 0.5), value: isFainted)
+        .animation(DesignKit.Animation.Primitive.spring35d50, value: shakeTick)
+        .animation(DesignKit.Animation.Primitive.easeOut50, value: isFainted)
         .onChange(of: isWinner) { _, newValue in
             if newValue {
-                withAnimation(.bouncy(duration: 0.35).repeatForever(autoreverses: true)) {
+                withAnimation(DesignKit.Animation.Primitive.bouncy35.repeatForever(autoreverses: true)) {
                     celebratingTilt = 10
                 }
             } else {
-                withAnimation { celebratingTilt = 0 }
+                withAnimation(DesignKit.Animation.Primitive.default) { celebratingTilt = 0 }
             }
         }
     }
@@ -88,7 +88,7 @@ private struct DamagePopup: View {
             .onAppear {
                 verticalOffset = 0
                 opacity = 1
-                withAnimation(.easeOut(duration: 1.2)) {
+                withAnimation(DesignKit.Animation.Primitive.easeOut120) {
                     verticalOffset = -48
                     opacity = 0
                 }

@@ -56,7 +56,7 @@ struct FighterPickerView: View {
                 .opacity(isAIThinking ? Opacity.disabled : 1)
                 .safeAreaBar(edge: .bottom) { pickerButton }
                 .disabled(isAIThinking)
-                .animation(.easeInOut(duration: 0.2), value: isAIThinking)
+                .animation(DesignKit.Animation.Primitive.easeInOut20, value: isAIThinking)
                 .foregroundStyle(.white)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
@@ -68,7 +68,7 @@ struct FighterPickerView: View {
                     await prebuildCandidatesIfNeeded()
                 }
                 .navigationDestination(item: $fighter) { fighter in
-                    BattleSetupView(
+                    BattleLoadOutView(
                         viewModel: BattleSetupViewModel(
                             player: fighter,
                             opponent: opponent,

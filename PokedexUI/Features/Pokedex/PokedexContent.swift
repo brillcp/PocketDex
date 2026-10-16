@@ -83,8 +83,8 @@ private struct PokedexGridColumn<ViewModel: PokedexViewModelProtocol>: View {
         )
         .applyPokedexStyling(title: Tabs.pokedex.title)
         .toolbar { PokedexToolbar(viewModel: viewModel) }
-        .animation(.snappy(duration: 0.25), value: viewModel.sortType)
-        .animation(.snappy(duration: 0.25), value: viewModel.sortDirection)
+        .animation(DesignKit.Animation.Primitive.snappy25, value: viewModel.sortType)
+        .animation(DesignKit.Animation.Primitive.snappy25, value: viewModel.sortDirection)
     }
 }
 
@@ -130,7 +130,7 @@ private struct PokedexToolbar<ViewModel: PokedexViewModelProtocol>: ToolbarConte
 
     private var gridLayoutButton: some View {
         Button("Change grid layout", systemImage: viewModel.grid.otherIcon) {
-            withAnimation(.bouncy(duration: 0.25)) { viewModel.grid.toggle() }
+            withAnimation(DesignKit.Animation.Primitive.bouncy25) { viewModel.grid.toggle() }
         }
         .labelStyle(.iconOnly)
     }

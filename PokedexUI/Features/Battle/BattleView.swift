@@ -85,7 +85,7 @@ private extension BattleView {
         }
         .disabled(disabled)
         .opacity(disabled ? Opacity.disabled : 1)
-        .animation(.easeInOut(duration: 0.2), value: disabled)
+        .animation(DesignKit.Animation.Primitive.easeInOut20, value: disabled)
     }
 }
 

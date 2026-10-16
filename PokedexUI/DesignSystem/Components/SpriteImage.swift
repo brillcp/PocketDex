@@ -32,7 +32,7 @@ struct SpriteImage: View {
                   let uiImage = await container.spriteLoader.spriteImage(from: url)
             else { return }
             await onLoaded?(uiImage)
-            withAnimation(.easeInOut(duration: 0.2)) {
+            withAnimation(DesignKit.Animation.Primitive.easeInOut20) {
                 image = Image(uiImage: uiImage)
             }
         }

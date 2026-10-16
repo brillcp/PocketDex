@@ -7,7 +7,7 @@ import PokeBattleKit
 /// loadout), and the battle launches automatically once `phase` reaches
 /// `.readyToStart`. The `BattleViewModel` is built here and passed up
 /// through `onStart` in a `BattleLaunch`.
-struct BattleSetupView<ViewModel: BattleSetupViewModelProtocol>: View {
+struct BattleLoadoutView<ViewModel: BattleSetupViewModelProtocol>: View {
     @Environment(\.container) private var container
     @AppStorage(BattleDifficulty.key) private var difficulty = BattleDifficulty.defaultValue
 
@@ -31,7 +31,7 @@ struct BattleSetupView<ViewModel: BattleSetupViewModelProtocol>: View {
 }
 
 // MARK: - Private
-private extension BattleSetupView {
+private extension BattleLoadoutView {
     func startBattle() {
         guard let player = viewModel.playerPokemon,
               let opponent = viewModel.opponentPokemon,
@@ -58,8 +58,8 @@ private extension BattleSetupView {
                 loadout.transition(.opacity)
             }
         }
-        .animation(.easeInOut(duration: 0.2), value: viewModel.phase)
-        .animation(.easeInOut(duration: 0.2), value: viewModel.errorMessage)
+        .animation(DesignKit.Animation.Primitive.easeInOut20, value: viewModel.phase)
+        .animation(DesignKit.Animation.Primitive.easeInOut20, value: viewModel.errorMessage)
     }
 
     // MARK: - States
@@ -89,10 +89,10 @@ private extension BattleSetupView {
         }
         .disabled(busy)
         .opacity(busy ? Opacity.disabled : 1)
-        .animation(.easeInOut(duration: 0.2), value: busy)
+        .animation(DesignKit.Animation.Primitive.easeInOut20, value: busy)
         .scrollIndicators(.hidden)
         .safeAreaBar(edge: .bottom) { bottomBar }
-        .animation(.snappy(duration: 0.2), value: viewModel.selection.isFull)
+        .animation(DesignKit.Animation.Primitive.snappy20, value: viewModel.selection.isFull)
     }
 
     var matchupRow: some View {
@@ -129,7 +129,7 @@ private extension BattleSetupView {
                 .font(.pixel12)
                 .foregroundStyle(.secondary)
                 .contentTransition(.numericText(value: Double(level)))
-                .animation(.snappy, value: level)
+                .animation(DesignKit.Animation.Primitive.snappy, value: level)
 
             HStack(spacing: DesignKit.Spacing.Primitive.s4) {
                 ForEach(pokemon.typeNames, id: \.self) { type in
@@ -271,7 +271,7 @@ private extension BattleSetupView {
     vm.playerPokemon   = pikachuVM
     vm.opponentPokemon = pikachuVM
     return NavigationStack {
-        BattleSetupView(viewModel: vm, onStart: { _ in })
+        BattleLoadoutView(viewModel: vm, onStart: { _ in })
     }
     .colorScheme(.dark)
 }

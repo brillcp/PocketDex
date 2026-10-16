@@ -138,7 +138,7 @@ extension BattleSetupViewModel: BattleSetupViewModelProtocol {
             isPickingLoadout = false
             return
         }
-        withAnimation(.easeInOut(duration: 0.25)) {
+        withAnimation(DesignKit.Animation.Primitive.easeInOut25) {
             self.opponentLoadout = picks
         }
         isPickingLoadout = false

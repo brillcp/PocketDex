@@ -26,13 +26,13 @@ struct MovePickerGrid: View {
                 section(header: otherMovesHeader, moves: moveSelection.unselectedMoves, selected: false)
             }
         }
-        .animation(.snappy(duration: 0.25), value: moveSelection.selectionOrder)
+        .animation(DesignKit.Animation.Primitive.snappy25, value: moveSelection.selectionOrder)
         .sensoryFeedback(.warning, trigger: moveSelection.fullTapCount)
         .onChange(of: moveSelection.fullTapCount) {
-            withAnimation(.easeOut(duration: 0.2)) { showsFullHint = true }
+            withAnimation(DesignKit.Animation.Primitive.easeOut20) { showsFullHint = true }
         }
         .onChange(of: moveSelection.selectedNames.count) {
-            withAnimation(.easeOut(duration: 0.2)) { showsFullHint = false }
+            withAnimation(DesignKit.Animation.Primitive.easeOut20) { showsFullHint = false }
         }
     }
 }
@@ -64,7 +64,7 @@ private extension MovePickerGrid {
             Spacer()
             if !moveSelection.recommendedNames.isEmpty, !moveSelection.isRecommended {
                 Button("Reset") {
-                    withAnimation(.snappy(duration: 0.25)) { moveSelection.resetToRecommended() }
+                    withAnimation(DesignKit.Animation.Primitive.snappy25) { moveSelection.resetToRecommended() }
                 }
                 .font(.pixel12)
             }
@@ -104,7 +104,7 @@ private struct MovePickerCard: View {
 
     var body: some View {
         Button {
-            withAnimation(.snappy(duration: 0.25)) {
+            withAnimation(DesignKit.Animation.Primitive.snappy25) {
                 moveSelection.toggle(move)
             }
         } label: {

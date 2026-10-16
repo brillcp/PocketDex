@@ -44,15 +44,15 @@ final class BattleAnimator {
 
     func playEntrance() async {
         try? await Task.sleep(for: .milliseconds(250))
-        withAnimation(.spring(response: 0.6, dampingFraction: 0.75)) {
+        withAnimation(DesignKit.Animation.Primitive.spring60d75) {
             hasEntered = true
         }
     }
 
     func playAttack(side: Side) async {
-        withAnimation(.easeOut(duration: 0.10)) { attackingSide = side }
+        withAnimation(DesignKit.Animation.Primitive.easeOut10) { attackingSide = side }
         try? await Task.sleep(for: .milliseconds(110))
-        withAnimation(.spring(response: 0.18, dampingFraction: 0.4)) { attackingSide = nil }
+        withAnimation(DesignKit.Animation.Primitive.spring18d40) { attackingSide = nil }
     }
 
     func playHit(side: Side, amount: Int, effectiveness: Double) async {
@@ -70,7 +70,7 @@ final class BattleAnimator {
     }
 
     func playFaint(side: Side) async {
-        withAnimation(.easeIn(duration: 0.5)) { faintedSide = side }
+        withAnimation(DesignKit.Animation.Primitive.easeIn50) { faintedSide = side }
         try? await Task.sleep(for: .milliseconds(450))
     }
 

@@ -24,13 +24,13 @@ struct MoveLoadoutView<BottomBar: View>: View {
         .scrollIndicators(.hidden)
         .disabled(isDisabled)
         .opacity(isDisabled ? Opacity.disabled : 1)
-        .animation(.easeInOut(duration: 0.2), value: isDisabled)
+        .animation(DesignKit.Animation.Primitive.easeInOut20, value: isDisabled)
         .safeAreaBar(edge: .bottom) {
             if moveSelection.isFull {
                 bottomBar().transition(.move(edge: .bottom).combined(with: .blurReplace))
             }
         }
-        .animation(.snappy(duration: 0.2), value: moveSelection.isFull)
+        .animation(DesignKit.Animation.Primitive.snappy20, value: moveSelection.isFull)
     }
 }
 

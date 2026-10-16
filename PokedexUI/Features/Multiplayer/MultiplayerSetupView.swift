@@ -20,7 +20,7 @@ struct MultiplayerSetupView: View {
                 .task { viewModel.startListening() }
                 .onAppear(perform: viewModel.startDiscovery)
                 .onDisappear(perform: viewModel.stopDiscovery)
-                .animation(.default, value: viewModel.phase)
+                .animation(DesignKit.Animation.Primitive.default, value: viewModel.phase)
                 .sheet(isPresented: $viewModel.showPicker, onDismiss: viewModel.pickerDismissed) {
                     MultiplayerPickerSheet(viewModel: viewModel)
                 }

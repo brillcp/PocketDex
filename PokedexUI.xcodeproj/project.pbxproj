@@ -38,6 +38,7 @@
 		D58C0DFB2E398709003098EC /* MyTeamView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58C0DFA2E398709003098EC /* MyTeamView.swift */; };
 		D58F8D992E3970F300BB9A45 /* SortType.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58F8D982E3970F300BB9A45 /* SortType.swift */; };
 		D58F9B032E1FC82800BB2D36 /* ItemListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58F9B022E1FC82800BB2D36 /* ItemListView.swift */; };
+		D5942DCB3082135600AC6A0B /* Animation.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5942DCA3082135600AC6A0B /* Animation.swift */; };
 		D5A1C00000000000000000A1 /* BattleAIDriver.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5A1C00000000000000000B1 /* BattleAIDriver.swift */; };
 		D5A1C00000000000000000A2 /* SpriteColorResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5A1C00000000000000000B2 /* SpriteColorResolver.swift */; };
 		D5B0CAFE2FC2000000000102 /* APIItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5B0CAFE2FC2000000000101 /* APIItem.swift */; };
@@ -65,7 +66,7 @@
 		D5BA12172E70000000000057 /* BattleAnimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5BA12162E70000000000056 /* BattleAnimator.swift */; };
 		D5BA12192E70000000000059 /* BattleLogFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5BA12182E70000000000058 /* BattleLogFormatter.swift */; };
 		D5BA13082E70000000000301 /* BattleSetupViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5BA13092E70000000000302 /* BattleSetupViewModel.swift */; };
-		D5BA130A2E70000000000303 /* BattleSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5BA130B2E70000000000304 /* BattleSetupView.swift */; };
+		D5BA130A2E70000000000303 /* BattleLoadoutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5BA130B2E70000000000304 /* BattleLoadoutView.swift */; };
 		D5BA130E2E70000000000307 /* BattleLaunch.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5BA130F2E70000000000308 /* BattleLaunch.swift */; };
 		D5BA14002E70000000000401 /* Chip.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5BA14012E70000000000402 /* Chip.swift */; };
 		D5BA14022E70000000000403 /* MoveCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5BA14032E70000000000404 /* MoveCell.swift */; };
@@ -130,6 +131,7 @@
 		D58C0DFA2E398709003098EC /* MyTeamView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyTeamView.swift; sourceTree = "<group>"; };
 		D58F8D982E3970F300BB9A45 /* SortType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SortType.swift; sourceTree = "<group>"; };
 		D58F9B022E1FC82800BB2D36 /* ItemListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemListView.swift; sourceTree = "<group>"; };
+		D5942DCA3082135600AC6A0B /* Animation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Animation.swift; sourceTree = "<group>"; };
 		D5A1C00000000000000000B1 /* BattleAIDriver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleAIDriver.swift; sourceTree = "<group>"; };
 		D5A1C00000000000000000B2 /* SpriteColorResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpriteColorResolver.swift; sourceTree = "<group>"; };
 		D5B0CAFE2FC2000000000101 /* APIItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIItem.swift; sourceTree = "<group>"; };
@@ -157,7 +159,7 @@
 		D5BA12162E70000000000056 /* BattleAnimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleAnimator.swift; sourceTree = "<group>"; };
 		D5BA12182E70000000000058 /* BattleLogFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleLogFormatter.swift; sourceTree = "<group>"; };
 		D5BA13092E70000000000302 /* BattleSetupViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleSetupViewModel.swift; sourceTree = "<group>"; };
-		D5BA130B2E70000000000304 /* BattleSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleSetupView.swift; sourceTree = "<group>"; };
+		D5BA130B2E70000000000304 /* BattleLoadoutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleLoadoutView.swift; sourceTree = "<group>"; };
 		D5BA130F2E70000000000308 /* BattleLaunch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleLaunch.swift; sourceTree = "<group>"; };
 		D5BA14012E70000000000402 /* Chip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chip.swift; sourceTree = "<group>"; };
 		D5BA14032E70000000000404 /* MoveCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoveCell.swift; sourceTree = "<group>"; };
@@ -302,7 +304,7 @@
 			isa = PBXGroup;
 			children = (
 				D5BA13092E70000000000302 /* BattleSetupViewModel.swift */,
-				D5BA130B2E70000000000304 /* BattleSetupView.swift */,
+				D5BA130B2E70000000000304 /* BattleLoadoutView.swift */,
 				D5BA130F2E70000000000308 /* BattleLaunch.swift */,
 				D5E00000000000000000F5F7 /* MoveSelection.swift */,
 				D53B9A193080F48700C51FC7 /* DifficultyMenu.swift */,
@@ -466,6 +468,7 @@
 				D58F8D982E3970F300BB9A45 /* SortType.swift */,
 				D5D503082E39305500AC4BC5 /* Tabs.swift */,
 				D53B84B1307FE69C00C51FC7 /* Spacing.swift */,
+				D5942DCA3082135600AC6A0B /* Animation.swift */,
 			);
 			path = DesignSystem;
 			sourceTree = "<group>";
@@ -634,7 +637,7 @@
 				D5A1C00000000000000000A2 /* SpriteColorResolver.swift in Sources */,
 				D5BA12192E70000000000059 /* BattleLogFormatter.swift in Sources */,
 				D5BA13082E70000000000301 /* BattleSetupViewModel.swift in Sources */,
-				D5BA130A2E70000000000303 /* BattleSetupView.swift in Sources */,
+				D5BA130A2E70000000000303 /* BattleLoadoutView.swift in Sources */,
 				D5BA130E2E70000000000307 /* BattleLaunch.swift in Sources */,
 				D53B84B2307FE69C00C51FC7 /* Spacing.swift in Sources */,
 				D5BA12082E70000000000048 /* BattleView.swift in Sources */,
@@ -676,6 +679,7 @@
 				D5DA000000000000000000A3 /* MultipeerService.swift in Sources */,
 				D5DA000000000000000000C1 /* MultiplayerBattleViewModel.swift in Sources */,
 				D5DA000000000000000000C2 /* MultiplayerSetupViewModel.swift in Sources */,
+				D5942DCB3082135600AC6A0B /* Animation.swift in Sources */,
 				D5DA000000000000000000C3 /* MultiplayerSetupView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -256,7 +256,7 @@ private extension MultiplayerBattleViewModel {
     }
 
     func removePromptLines() {
-        withAnimation(.easeOut(duration: 0.25)) {
+        withAnimation(DesignKit.Animation.Primitive.easeOut25) {
             log.removeAll { $0.kind == .prompt }
         }
     }
