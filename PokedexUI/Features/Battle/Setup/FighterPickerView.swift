@@ -15,8 +15,7 @@ import PokeBattleKit
 /// Every cell is tagged with how the matchup looks (predicted at equal
 /// level from the simulated strength ratings).
 ///
-/// "Smart pick" chooses a fair fighter from the team, or from everyone when
-/// no team member is a fair match. The opponent is excluded from both
+/// "Smart pick" chooses a fair fighter from everyone, team members included. The opponent is excluded from both
 /// sections and the candidates, so no path can pick a mirror match.
 struct FighterPickerView: View {
     let opponent: Pokemon
@@ -208,19 +207,14 @@ private extension FighterPickerView {
         isAIThinking = true
 
         let target = opponentCandidate
-        let teamCandidates = team.map { Candidate(pokemon: $0) }
         let chart = PokeBattleKit.loadedTypeChart
         let aiService = container.battleAI
 
         smartPickTask = Task {
-            // The team first; everyone when no team member is a fair match.
-            let hasFairTeamMember = teamCandidates.contains {
-                MatchmakingStrategy.fairWinChance.contains(MatchmakingStrategy.predictedWinChance(of: $0, against: target))
-            }
-            let candidates = hasFairTeamMember ? teamCandidates : await ensureCandidates()
-
-            // The AI service filters the fair pool itself, off the main
-            // actor (it's an actor).
+            // Everyone (team members included): a big pool always has fair
+            // matchups to vary between. The AI service picks among them,
+            // skipping recent suggestions, off the main actor (it's an actor).
+            let candidates = await ensureCandidates()
             let pickedId = await aiService.chooseFighter(
                 against: target,
                 candidates: candidates,

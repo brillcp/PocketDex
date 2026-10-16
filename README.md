@@ -217,7 +217,7 @@ The opponent is driven by [PokeBattleKit](https://github.com/brillcp/PokeBattleK
 ## What the AI does
 
 1. **Fighter picking** ("Smart pick" button in the picker sheet)
-   "Battle" on a Pokémon's page challenges that Pokémon; you then choose your fighter, from **My team** or everyone, grouped by generation. Every Pokémon has a **strength rating** from simulated battles (see below), and every Pokémon in the picker is tagged Strong, Even or Weak against the opponent. A fair matchup is one you're predicted to win 35-65% of the time at equal level, with no one-sided type matchup (where one side hits super-effectively and is resisted back). "Smart pick" chooses at random among the fair fighters in your team (or among all when none is fair), favouring tense matchups (close to 50/50, both sides able to hit hard), and skips the last ten fighters it suggested against that opponent.
+   "Battle" on a Pokémon's page challenges that Pokémon; you then choose your fighter, from **My team** or everyone, grouped by generation. Every Pokémon has a **strength rating** from simulated battles (see below), and every Pokémon in the picker is tagged Strong, Even or Weak against the opponent. A fair matchup is one you're predicted to win 35-65% of the time at equal level, with no one-sided type matchup (where one side hits super-effectively and is resisted back). "Smart pick" chooses at random among the fair fighters in the whole Pokédex (your team included), favouring tense matchups (close to 50/50, both sides able to hit hard), and skips the last ten fighters it suggested against that opponent.
 2. **Loadout selection** (when you lock in your moves)
    Role-based: the best attack, an attack of a different type, then a status, boost or heal move, or more coverage. On easy, the AI's strongest attack is swapped for a weaker one.
 3. **Per-turn move selection**
@@ -308,7 +308,7 @@ The guest reverses `.player`/`.opponent` in received events via `side.opposite` 
 Detail view
    │ (tap Battle: challenge this Pokémon)
    ▼
-Fighter picker sheet  <-- your team first, Smart pick (AI)
+Fighter picker sheet  <-- My team section first, Smart pick (AI)
    │ (tap your fighter)
    ▼
 Loadout screen
