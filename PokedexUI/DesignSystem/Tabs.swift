@@ -1,7 +1,7 @@
 import Foundation
 
 enum Tabs: Int {
-    case pokedex, items, myTeam, battle, search
+    case pokedex, items, battle, search
 }
 
 extension Tabs {
@@ -9,7 +9,6 @@ extension Tabs {
         switch self {
             case .pokedex: "PocketDex+"
             case .items: "Items"
-            case .myTeam: "My team"
             case .battle: "Gym"
             case .search: "Search"
         }
@@ -19,7 +18,6 @@ extension Tabs {
         switch self {
             case .pokedex: GridLayout.three.icon
             case .items: "xmark.triangle.circle.square.fill"
-            case .myTeam: "person.2.fill"
             case .battle: "bolt.shield.fill"
             case .search: "magnifyingglass"
         }

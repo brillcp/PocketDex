@@ -47,7 +47,7 @@ actor PokedexStore {
     /// Battle-matchmaking snapshots for every stored pokemon. `Candidate`
     /// is a Sendable value copy, so it can leave this actor where the
     /// `Pokemon` row can't.
-    func opponentCandidates() -> [Candidate] {
+    func battleCandidates() -> [Candidate] {
         allPokemon().map { Candidate(pokemon: $0) }
     }
 

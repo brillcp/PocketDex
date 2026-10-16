@@ -1,7 +1,7 @@
 import SwiftUI
 import SwiftData
 
-/// Root tab host for pokedex, items, favourites, and search. Each tab
+/// Root tab host for pokedex, battle, items, and search. Each tab
 /// builds its own view model inline; only the pokedex view model is
 /// hoisted here so its grid + sort state survives tab switches.
 ///

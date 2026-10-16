@@ -52,7 +52,7 @@ PocketDex+ is **Protocol-Oriented MVVM** with clear layer boundaries and **Swift
 ├──────────────────────────────────────────────────────────────┤
 │  Features/                                                   │
 │    Pokedex   PokemonDetail   Battle   Search                 │
-│    Bookmarks  Items  Multiplayer                             │
+│    MyTeam     Items  Multiplayer                             │
 ├──────────────────────────────────────────────────────────────┤
 │  Core/                                                       │
 │    Models/      SwiftData @Model classes                     │
@@ -88,16 +88,16 @@ PokedexUI/
 │       ├── AudioPlayer             Pokemon cries
 │       └── Multipeer/              MultipeerService, BattleMessage, PokemonSummary
 ├── Features/
-│   ├── Pokedex/                    Root tabs, grid, adaptive split layout
-│   ├── PokemonDetail/              Detail screen + subviews (stats, evolutions, matchups)
-│   ├── Items/  Search/  Bookmarks/
+│   ├── Pokedex/                    Root tabs, grid + routes, adaptive split layout
+│   ├── PokemonDetail/              Detail screen + subviews, shared detail destination
+│   ├── Items/  Search/  MyTeam/
 │   ├── Battle/                     BattleView, view model, animator, reducer, log
 │   │   ├── AI/                     BattleAIService (PokeBattleKit's AI), BattleAIDriver
-│   │   ├── Setup/                  Loadout screen
+│   │   ├── Setup/                  Fighter picker, loadout screen
 │   │   └── Subviews/
 │   └── Multiplayer/                Gym lobby, peer battle view model
 └── DesignSystem/
-    ├── Components/                 Chip, MoveCell, PokemonGrid, PokedexGridView, ...
+    ├── Components/                 Chip, MoveCell, PokemonGrid, PokemonPickerGrid, ...
     ├── Colors/                     TypeColor
     └── Spacing, Font, Color, GridLayout, SortType, Tabs, View, String+Formatting
 ```
@@ -172,17 +172,17 @@ extension EnvironmentValues {
 @Environment(\.container) private var container
 ```
 
-Tests and previews swap in a custom container with mocks (or an in-memory `ModelContainer` via `AppContainer.makeModelContainer(inMemory: true)`); the rest of the app is unaware.
+Previews (and future tests) swap in a custom container with mocks (or an in-memory `ModelContainer` via `AppContainer.makeModelContainer(inMemory: true)`); the rest of the app is unaware.
 
 ## Storage
 
 Three top-level `@Model` types, each deduped on a unique key. Nested rows (stats, abilities, sprites, etc.) live under their parent.
 
-- `Pokemon` (id-unique): full hydrated detail, stats, sprites, moves, species fields, bookmark flag
+- `Pokemon` (id-unique): full hydrated detail, stats, sprites, moves, species fields, team flag (`isBookmarked`)
 - `ItemData` (title-keyed): item catalogue bucketed by category title (English effect texts only)
 - `EvolutionChainEntity` (chainId-unique): evolution chains stored as their JSON payload
 
-`@Model` classes are persistence-only: they're built from DTOs by `PokedexStore` and never decoded from JSON directly. The UI reads them through the main `ModelContext` or `@Query`; bookmarks are the only field the app writes after import.
+`@Model` classes are persistence-only: they're built from DTOs by `PokedexStore` and never decoded from JSON directly. The UI reads them through the main `ModelContext` or `@Query`; the team flag (`isBookmarked`, named for the original bookmarks feature) is the only field the app writes after import.
 
 Move and type effectiveness data are owned by PokeBattleKit, which caches them as JSON files on disk via its own `DiskCache`. Pokemon data is immutable, so full hydration runs once and is cached forever.
 
@@ -380,8 +380,8 @@ Pixel font, gameboy-style aesthetic, glass effects:
 - **`TypeColor`**: centralized type-to-color map used by every move chip, type tag, and weakness grid row.
 - **`PokemonGrid<Cell>`**: generic grid taking a `GridLayout` and a `@ViewBuilder` cell closure. Handles only scrolling and layout; navigation, search, and overlays are the caller's responsibility.
 - **`PokedexGridView`**: wraps `PokemonGrid` with color-analyzed cells (dominant-color backgrounds via `ImageColorAnalyzer`), a loading overlay, and either `NavigationLink` routing (compact width) or selection (side-by-side layout). Toggleable between 3 and 4 columns.
-- **`PokemonSpriteCard`**: sprite-over-name grid cell with type chips. Used by search results, bookmarks, type lists, opponent picker, and multiplayer fighter picker.
-- **`PokemonPickerGrid`**: wraps `PokemonGrid` with a toolbar search bar and cached haystack filtering (name, type, genus, habitat, legendary/mythical, abilities). Used by opponent picker, multiplayer fighter picker, and bookmarks.
+- **`PokemonSpriteCard`**: sprite-over-name grid cell with type chips. Used by search results, my team, type lists, the fighter picker, and the multiplayer fighter picker.
+- **`PokemonPickerGrid`**: wraps `PokemonGrid` with a toolbar search bar and cached haystack filtering (name, type, genus, habitat, legendary/mythical, abilities). Takes titled sections with optional tags (the fighter picker's My team and generations) and search can be turned off (my team). Used by the fighter picker, the multiplayer fighter picker, and my team.
 - **`GridLayout`**: single source of truth for grid column counts and spacing across the app (`.two`, `.three`, `.four`).
 - **`MoveLoadoutView`**: pokemon summary card + `MovePickerGrid` + caller-provided bottom bar slot. Shared across single-player and multiplayer move selection.
 - **`MovePickerGrid`**: 2-column move grid with toggle selection and optional type effectiveness annotations.

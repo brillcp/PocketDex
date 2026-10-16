@@ -203,7 +203,8 @@ private extension BattleLoadoutView {
     }
 
     func matchupLine(fromName: String, fromTypes: [String], toName: String, toTypes: [String]) -> some View {
-        let multipliers = fromTypes.map { PokeBattleKit.typeChart.multiplier(attacking: $0, defenders: toTypes) }
+        let chart = PokeBattleKit.typeChartIfLoaded
+        let multipliers = fromTypes.compactMap { chart?.multiplier(attacking: $0, defenders: toTypes) }
         let best = multipliers.max() ?? 1
         return HStack(spacing: DesignKit.Spacing.Primitive.s6) {
             Text(fromName)

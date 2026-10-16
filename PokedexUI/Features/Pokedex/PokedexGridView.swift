@@ -1,9 +1,11 @@
 import SwiftUI
 import SwiftData
 
-/// Screens pushed onto the pokedex navigation stack. One route type, so
-/// every push in the stack goes through its path (mixing path pushes with
-/// `navigationDestination(isPresented:)` froze the app).
+/// Screens pushed onto the pokedex navigation stacks' paths. The tab's own
+/// screens all go through this one route type: mixing path pushes with an
+/// `isPresented` destination froze the app. Screens they open push their
+/// own children with item destinations (a team member's or an evolution's
+/// detail, a type list), which is fine.
 enum PokedexRoute: Hashable {
     case pokemon(Pokemon)
     case myTeam
@@ -13,8 +15,6 @@ enum PokedexRoute: Hashable {
 /// navigation destinations, and a loading overlay for first-launch fetch.
 struct PokedexGridView: View {
     @Namespace private var namespace
-    @Environment(\.container) private var container
-    @Environment(\.modelContext) private var modelContext
 
     let pokemon: [Pokemon]
     var grid: GridLayout = .three
@@ -46,16 +46,10 @@ struct PokedexGridView: View {
         .navigationDestination(for: PokedexRoute.self) { route in
             switch route {
             case .pokemon(let pokemon):
-                PokemonDetailView(
-                    viewModel: PokemonDetailViewModel(
-                        summary: pokemon,
-                        container: container,
-                        modelContext: modelContext
-                    )
-                )
-                .navigationTransition(.zoom(sourceID: pokemon.id, in: namespace))
+                PokemonDetailScreen(pokemon: pokemon, zoomNamespace: namespace)
             case .myTeam:
-                MyTeamView()
+                // In regular width, team members open in the detail column.
+                MyTeamView(selection: selection)
             }
         }
     }

@@ -3,12 +3,10 @@ import SwiftData
 
 /// Grid of all Pokemon matching a given type, pushed from a tappable
 /// type chip in the detail view. Uses the same `PokemonSpriteCard` cells
-/// as search and bookmarks.
+/// as search and my team.
 struct TypePokemonListView: View {
     let typeName: String
 
-    @Environment(\.container) private var container
-    @Environment(\.modelContext) private var modelContext
     @Namespace private var namespace
     @Query private var pokemonOfType: [Pokemon]
     @State private var selectedPokemon: Pokemon?
@@ -36,15 +34,6 @@ struct TypePokemonListView: View {
             .buttonStyle(.plain)
         }
         .applyPokedexStyling(title: typeName.capitalized, navColor: .darkGrey)
-        .navigationDestination(item: $selectedPokemon) { pokemon in
-            PokemonDetailView(
-                viewModel: PokemonDetailViewModel(
-                    summary: pokemon,
-                    container: container,
-                    modelContext: modelContext
-                )
-            )
-            .navigationTransition(.zoom(sourceID: pokemon.id, in: namespace))
-        }
+        .pokemonDetailDestination(item: $selectedPokemon, zoomIn: namespace)
     }
 }

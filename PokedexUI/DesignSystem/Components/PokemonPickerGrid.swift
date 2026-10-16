@@ -99,7 +99,7 @@ struct PokemonGrid<Cell: View>: View {
 }
 
 /// Searchable Pokemon grid used by the fighter picker, multiplayer fighter
-/// picker, and bookmarks. Wraps `PokemonGrid` with a toolbar search bar and
+/// picker, and my team. Wraps `PokemonGrid` with a toolbar search bar and
 /// haystack-based filtering. Search filters every section; sections with no
 /// matches are hidden.
 ///
@@ -164,6 +164,12 @@ struct PokemonPickerGrid: View {
         .modifier(PickerSearch(isEnabled: isSearchable, text: $searchText))
         .onAppear(perform: buildIndex)
         .onChange(of: searchText, updateFilteredSections)
+        // New rows (team edits, the first-launch import) while a search is
+        // showing: index them and re-filter, so results aren't stale.
+        .onChange(of: sections.map { $0.pokemon.map(\.id) }) {
+            buildIndex()
+            updateFilteredSections()
+        }
     }
 }
 
@@ -190,13 +196,13 @@ private extension PokemonPickerGrid {
         }
     }
 
+    /// Indexes any Pokémon not indexed yet.
     func buildIndex() {
-        guard haystacks.isEmpty else { return }
-        var built: [Int: String] = [:]
+        var built = haystacks
         for pokemon in sections.flatMap(\.pokemon) where built[pokemon.id] == nil {
             built[pokemon.id] = Pokemon.searchHaystack(for: pokemon)
         }
-        haystacks = built
+        if built.count != haystacks.count { haystacks = built }
     }
 }
 

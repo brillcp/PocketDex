@@ -6,8 +6,8 @@ import SwiftData
 protocol PokemonDetailViewModelProtocol {
     /// Display-ready data for the focused pokemon.
     var pokemon: PokemonViewModel { get }
-    /// Bookmark state mirrored from SwiftData.
-    var isBookmarked: Bool { get }
+    /// Whether this Pokémon is on "My team", mirrored from SwiftData.
+    var isOnTeam: Bool { get }
     /// Front sprite image once loaded, otherwise `nil`.
     var sprite: Image? { get }
     /// Dominant color extracted from the sprite, used as accent.
@@ -19,8 +19,8 @@ protocol PokemonDetailViewModelProtocol {
     func loadSpritesAndColor() async
     /// Fetch evolution chain from cache or network.
     func loadEvolutionChain() async
-    /// Toggle bookmark on disk.
-    func toggleBookmark()
+    /// Add to or remove from "My team" on disk.
+    func toggleTeamMembership()
     /// Play the pokemon's cry audio.
     func playCry() async
     /// Fetch a Pokemon by species id for evolution navigation.
@@ -43,13 +43,13 @@ final class PokemonDetailViewModel {
     private let modelContext: ModelContext
 
     var pokemon: PokemonViewModel
-    var isBookmarked: Bool
+    var isOnTeam: Bool
     var sprite: Image?
     var color: Color?
     var evolutionStages: [EvolutionChain.Stage] = []
 
     init(summary: Pokemon, container: AppContainer, modelContext: ModelContext) {
-        self.isBookmarked = summary.isBookmarked
+        self.isOnTeam = summary.isBookmarked
         self.pokemon = PokemonViewModel(pokemon: summary)
         self.evolutionService = container.evolutionService
         self.spriteLoader = container.spriteLoader
@@ -80,13 +80,13 @@ extension PokemonDetailViewModel: PokemonDetailViewModelProtocol {
 
     /// Re-fetches the model by id in the main context rather than holding
     /// on to it, then mirrors the new value into the display snapshot.
-    func toggleBookmark() {
+    func toggleTeamMembership() {
         let id = pokemon.id
         let descriptor = FetchDescriptor<Pokemon>(predicate: #Predicate { $0.id == id })
         guard let model = try? modelContext.fetch(descriptor).first else { return }
         model.isBookmarked.toggle()
-        pokemon.isBookmarked = model.isBookmarked
-        isBookmarked = model.isBookmarked
+        pokemon.isOnTeam = model.isBookmarked
+        isOnTeam = model.isBookmarked
         try? modelContext.save()
     }
 

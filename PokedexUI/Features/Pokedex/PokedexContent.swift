@@ -13,7 +13,8 @@ import SwiftData
 /// than a `NavigationSplitView`, because the split view can only place its
 /// sidebar on the leading edge and the grid is meant to sit on the right.
 /// The open Pokémon lives in `path` (compact) or `selection` (regular), and
-/// is moved between the two whenever the size class changes.
+/// an open "My team" in `path` or `columnPath`; both are moved across
+/// whenever the size class changes.
 struct PokedexContent<ViewModel: PokedexViewModelProtocol>: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
@@ -23,6 +24,8 @@ struct PokedexContent<ViewModel: PokedexViewModelProtocol>: View {
     @State private var path: [PokedexRoute] = []
     /// Detail shown in the leading column in regular width.
     @State private var selection: Pokemon?
+    /// Screens pushed in the grid column in regular width ("My team").
+    @State private var columnPath: [PokedexRoute] = []
 
     var body: some View {
         Group {
@@ -39,13 +42,16 @@ struct PokedexContent<ViewModel: PokedexViewModelProtocol>: View {
                 }
             }
         }
-        // Carry the open Pokémon across fold/unfold so it stays on screen.
+        // Carry the open Pokémon and "My team" across fold/unfold so they
+        // stay on screen.
         .onChange(of: horizontalSizeClass) { _, sizeClass in
             if sizeClass == .regular {
-                if case .pokemon(let pokemon) = path.first { selection = pokemon }
+                for case .pokemon(let pokemon) in path { selection = pokemon }
+                columnPath = path.contains(.myTeam) ? [.myTeam] : []
                 path = []
             } else {
-                path = selection.map { [.pokemon($0)] } ?? []
+                path = columnPath + (selection.map { [.pokemon($0)] } ?? [])
+                columnPath = []
             }
         }
     }
@@ -59,7 +65,7 @@ struct PokedexContent<ViewModel: PokedexViewModelProtocol>: View {
 
             Divider()
 
-            NavigationStack {
+            NavigationStack(path: $columnPath) {
                 PokedexGridColumn(viewModel: viewModel, selection: $selection)
             }
             .containerRelativeFrame(.horizontal) { width, _ in width * 0.4 }
@@ -91,23 +97,15 @@ private struct PokedexGridColumn<ViewModel: PokedexViewModelProtocol>: View {
 /// Leading column in regular width: the selected Pokémon's detail, or a
 /// placeholder (untitled, so only the grid column shows the app title).
 private struct PokedexDetailColumn: View {
-    @Environment(\.container) private var container
-    @Environment(\.modelContext) private var modelContext
 
     let selection: Pokemon?
 
     var body: some View {
         NavigationStack {
             if let selection {
-                PokemonDetailView(
-                    viewModel: PokemonDetailViewModel(
-                        summary: selection,
-                        container: container,
-                        modelContext: modelContext
-                    )
-                )
+                PokemonDetailScreen(pokemon: selection)
             } else {
-                ContentUnavailableView("Select a Pokémon", systemImage: "square.grid.3x3.fill")
+                ContentUnavailableView("Nothing selected", systemImage: "square.grid.3x3.fill")
                     .font(.pixel14)
                     .applyPokedexStyling(title: "")
             }
@@ -137,7 +135,7 @@ private struct PokedexToolbar<ViewModel: PokedexViewModelProtocol>: ToolbarConte
 
     private var myTeam: some View {
         NavigationLink(value: PokedexRoute.myTeam) {
-            Label(Tabs.myTeam.title, systemImage: Tabs.myTeam.icon)
+            Label(MyTeam.title, systemImage: MyTeam.icon)
         }
         .labelStyle(.iconOnly)
     }

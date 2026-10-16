@@ -86,10 +86,20 @@ final class MultiplayerBattleViewModel {
         )
         self.state = BattleState(player: selfCombatant, opponent: peerCombatant)
         if role == .host {
-            let chart = PokeBattleKit.typeChart
-            self.typeChart = chart
-            self.engine = BattleEngine(state: state!, typeChart: chart)
+            // Read without trapping: the catalogue may still be loading.
+            if let chart = PokeBattleKit.typeChartIfLoaded {
+                self.typeChart = chart
+                self.engine = BattleEngine(state: state!, typeChart: chart)
+            } else {
+                self.errorMessage = "Battle data is still loading. Try again in a moment."
+            }
         }
+    }
+
+    /// Ends the listen loop with the screen, rather than at the next event
+    /// after deinit.
+    isolated deinit {
+        listenTask?.cancel()
     }
 }
 
@@ -127,8 +137,8 @@ extension MultiplayerBattleViewModel: BattleViewModelProtocol {
 // MARK: - Message handling
 private extension MultiplayerBattleViewModel {
     /// Consumes the multipeer event stream for the lifetime of the screen.
-    /// `[weak self]` lets the view model deinit (and the task end) when the
-    /// battle is popped.
+    /// `[weak self]` lets the view model deinit when the battle is popped,
+    /// and `deinit` cancels the task.
     func startListening() {
         guard listenTask == nil else { return }
 

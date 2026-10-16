@@ -30,6 +30,12 @@ struct FighterPickerView: View {
     @State private var isAIThinking = false
     @State private var fighter: Pokemon?
     @State private var candidateCache: [Candidate]?
+    /// Built when the team or the Pokédex changes, not on every render.
+    @State private var sections: [PokemonGridSection] = []
+    /// Each candidate's matchup against the opponent, by id, built once the
+    /// candidates are; cells read it instead of rating themselves.
+    @State private var matchups: [Int: Matchup] = [:]
+    @State private var smartPickTask: Task<Void, Never>?
 
     init(
         opponent: Pokemon,
@@ -64,9 +70,14 @@ struct FighterPickerView: View {
                     }
                 }
                 .applyPokedexStyling(title: "Choose player", navColor: .darkGrey)
+                .onChange(of: SectionsKey(all: allPokemon, team: team), initial: true) {
+                    sections = buildSections()
+                }
                 .task(id: allPokemon.count) {
                     await prebuildCandidatesIfNeeded()
                 }
+                // A pick finishing after the sheet closes mustn't push.
+                .onDisappear { smartPickTask?.cancel() }
                 .navigationDestination(item: $fighter) { fighter in
                     BattleLoadoutView(
                         viewModel: BattleSetupViewModel(
@@ -86,9 +97,26 @@ struct FighterPickerView: View {
 
 // MARK: - Private
 private extension FighterPickerView {
-    var sections: [PokemonGridSection] {
+    /// How a candidate is predicted to do against the opponent.
+    enum Matchup {
+        case strong, even, weak
+    }
+
+    /// Changes when either query's rows change, so the sections are rebuilt
+    /// only then.
+    struct SectionsKey: Equatable {
+        let all: [Int]
+        let team: [Int]
+
+        init(all: [Pokemon], team: [Pokemon]) {
+            self.all = all.map(\.id)
+            self.team = team.map(\.id)
+        }
+    }
+
+    func buildSections() -> [PokemonGridSection] {
         let teamSection = team.isEmpty ? [] : [
-            PokemonGridSection(id: "team", title: Tabs.myTeam.title, pokemon: team, showsBadges: true)
+            PokemonGridSection(id: "team", title: MyTeam.title, pokemon: team, showsBadges: true)
         ]
         return teamSection + generationSections
     }
@@ -141,14 +169,26 @@ private extension FighterPickerView {
         Candidate(pokemon: opponent, fallbackTypes: opponentTypes)
     }
 
-    /// How `pokemon` is predicted to do against the opponent at equal
-    /// level, using the same fair range as "Smart pick".
     func matchupChip(for pokemon: Pokemon) -> Chip? {
-        let chance = OpponentStrategy.predictedWinChance(of: Candidate(pokemon: pokemon), against: opponentCandidate)
+        switch matchups[pokemon.id] {
+        case .strong: Chip("Strong", style: .success)
+        case .even: Chip("Even")
+        case .weak: Chip("Weak", style: .danger)
+        case nil: nil
+        }
+    }
+
+    /// How each candidate is predicted to do against the opponent at equal
+    /// level, using the same fair range as "Smart pick".
+    func buildMatchups(_ candidates: [Candidate]) -> [Int: Matchup] {
+        let target = opponentCandidate
         let fair = OpponentStrategy.fairWinChance
-        if chance > fair.upperBound { return Chip("Strong", style: .success) }
-        if chance < fair.lowerBound { return Chip("Weak", style: .danger) }
-        return Chip("Even")
+        var result: [Int: Matchup] = [:]
+        for candidate in candidates {
+            let chance = OpponentStrategy.predictedWinChance(of: candidate, against: target)
+            result[candidate.id] = chance > fair.upperBound ? .strong : chance < fair.lowerBound ? .weak : .even
+        }
+        return result
     }
 
     var pickerButton: some View {
@@ -169,10 +209,10 @@ private extension FighterPickerView {
 
         let target = opponentCandidate
         let teamCandidates = team.map { Candidate(pokemon: $0) }
-        let chart: TypeChart? = PokeBattleKit.isInitialized ? PokeBattleKit.typeChart : nil
+        let chart = PokeBattleKit.typeChartIfLoaded
         let aiService = container.battleAI
 
-        Task {
+        smartPickTask = Task {
             // The team first; everyone when no team member is a fair match.
             let hasFairTeamMember = teamCandidates.contains {
                 OpponentStrategy.fairWinChance.contains(OpponentStrategy.predictedWinChance(of: $0, against: target))
@@ -187,6 +227,7 @@ private extension FighterPickerView {
                 typeChart: chart
             )
             isAIThinking = false
+            guard !Task.isCancelled else { return }
             // Map the id back to a main-context model; fall back to a random
             // candidate if the AI returned nothing usable.
             if let pickedId, let match = allPokemon.first(where: { $0.id == pickedId }) {
@@ -203,7 +244,9 @@ private extension FighterPickerView {
     /// background store, off the main actor.
     func prebuildCandidatesIfNeeded() async {
         guard candidateCache == nil, !allPokemon.isEmpty else { return }
-        candidateCache = await fighterCandidates()
+        let built = await fighterCandidates()
+        candidateCache = built
+        matchups = buildMatchups(built)
     }
 
     /// Returns the cached candidates, building them if the prebuild
@@ -212,6 +255,7 @@ private extension FighterPickerView {
         if let cached = candidateCache { return cached }
         let built = await fighterCandidates()
         candidateCache = built
+        matchups = buildMatchups(built)
         return built
     }
 
@@ -219,6 +263,6 @@ private extension FighterPickerView {
     /// query, so the AI and random fallback can never pick a mirror match.
     func fighterCandidates() async -> [Candidate] {
         let opponentId = opponent.id
-        return await container.repository.opponentCandidates().filter { $0.id != opponentId }
+        return await container.repository.battleCandidates().filter { $0.id != opponentId }
     }
 }

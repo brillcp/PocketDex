@@ -11,7 +11,7 @@ struct PokemonViewModel {
     let id: Int
     let name: String
     let frontSprite: String
-    var isBookmarked: Bool
+    var isOnTeam: Bool
 
     let statLookup: [String: Int]
     let typeNames: [String]
@@ -26,7 +26,7 @@ struct PokemonViewModel {
         self.id = pokemon.id
         self.name = pokemon.name.capitalized
         self.frontSprite = pokemon.sprite.front
-        self.isBookmarked = pokemon.isBookmarked
+        self.isOnTeam = pokemon.isBookmarked
 
         self.statLookup = Dictionary(
             uniqueKeysWithValues: pokemon.stats.map { ($0.stat.name, $0.baseStat) }

@@ -6,10 +6,8 @@ import SwiftData
 /// Navigation out of the screen (evolutions, type lists, battles) is
 /// item-driven local state, so the same view works inside any parent
 /// `NavigationStack`: the compact pokedex stack, the regular-width detail
-/// column, search, and bookmarks.
+/// column, search, my team, and type lists.
 struct PokemonDetailView<ViewModel: PokemonDetailViewModelProtocol>: View {
-    @Environment(\.container) private var container
-    @Environment(\.modelContext) private var modelContext
 
     @State private var viewModel: ViewModel
     /// "Battle" challenges this Pokémon; the sheet picks the player's fighter.
@@ -73,24 +71,16 @@ struct PokemonDetailView<ViewModel: PokemonDetailViewModelProtocol>: View {
         .navigationDestination(item: $selectedType) { typeName in
             TypePokemonListView(typeName: typeName)
         }
-        .navigationDestination(item: $evolutionTarget) { target in
-            PokemonDetailView<PokemonDetailViewModel>(
-                viewModel: PokemonDetailViewModel(
-                    summary: target,
-                    container: container,
-                    modelContext: modelContext
-                )
-            )
-        }
+        .pokemonDetailDestination(item: $evolutionTarget)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
-                    viewModel.toggleBookmark()
+                    viewModel.toggleTeamMembership()
                 } label: {
-                    Image(systemName: viewModel.isBookmarked ? "person.2.fill" : "person.2")
+                    Image(systemName: viewModel.isOnTeam ? "person.2.fill" : "person.2")
                         .foregroundStyle(textColor)
                 }
-                .accessibilityLabel(viewModel.isBookmarked ? "Remove from my team" : "Add to my team")
+                .accessibilityLabel(viewModel.isOnTeam ? "Remove from my team" : "Add to my team")
             }
         }
         .applyPokedexStyling(

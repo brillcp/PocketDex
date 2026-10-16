@@ -11,8 +11,6 @@ import SwiftData
 struct SearchView<ViewModel: SearchViewModelProtocol>: View {
     @FocusState private var isSearchFocused: Bool
     @Namespace private var namespace
-    @Environment(\.container) private var container
-    @Environment(\.modelContext) private var modelContext
     @Query(sort: \Pokemon.id) private var corpus: [Pokemon]
 
     @State var viewModel: ViewModel
@@ -44,16 +42,7 @@ struct SearchView<ViewModel: SearchViewModelProtocol>: View {
             .scrollDismissesKeyboard(.immediately)
             .sensoryFeedback(.impact(weight: .light), trigger: viewModel.query)
             .applyPokedexStyling(title: Tabs.search.title)
-            .navigationDestination(item: $selectedPokemon) { pokemon in
-                PokemonDetailView(
-                    viewModel: PokemonDetailViewModel(
-                        summary: pokemon,
-                        container: container,
-                        modelContext: modelContext
-                    )
-                )
-                .navigationTransition(.zoom(sourceID: pokemon.id, in: namespace))
-            }
+            .pokemonDetailDestination(item: $selectedPokemon, zoomIn: namespace)
         }
         .searchable(text: $viewModel.query)
         .searchFocused($isSearchFocused)
@@ -71,7 +60,9 @@ private extension SearchView {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s24) {
                 if !viewModel.suggestedPokemon.isEmpty {
-                    SuggestedPokemonSection(pokemon: viewModel.suggestedPokemon, namespace: namespace)
+                    SuggestedPokemonSection(pokemon: viewModel.suggestedPokemon, namespace: namespace) {
+                        selectedPokemon = $0
+                    }
                 }
                 SuggestedTermsSection(terms: ViewModel.suggestedTerms, onSelect: selectSuggestedTerm)
                 if !viewModel.recentSearches.isEmpty {
@@ -81,7 +72,7 @@ private extension SearchView {
                         onClear: viewModel.clearRecentSearches
                     )
                 } else {
-                    Text("Search Pokemon, types, habitats or abilities")
+                    Text("Search names, types, habitats or abilities")
                         .frame(maxWidth: .infinity, alignment: .center)
                         .multilineTextAlignment(.center)
                         .padding(.top, DesignKit.Spacing.Primitive.s56 + DesignKit.Spacing.Primitive.s24)
@@ -93,16 +84,6 @@ private extension SearchView {
             .padding(.top, DesignKit.Spacing.Primitive.s16)
         }
         .scrollIndicators(.hidden)
-        .navigationDestination(for: Pokemon.self) { pokemon in
-            PokemonDetailView(
-                viewModel: PokemonDetailViewModel(
-                    summary: pokemon,
-                    container: container,
-                    modelContext: modelContext
-                )
-            )
-            .navigationTransition(.zoom(sourceID: pokemon.id, in: namespace))
-        }
     }
 
     func selectSuggestedTerm(_ term: String) {
@@ -138,6 +119,8 @@ private struct SuggestedTermsSection: View {
 private struct SuggestedPokemonSection: View {
     let pokemon: [Pokemon]
     let namespace: Namespace.ID
+    /// Pushes through the search stack's single detail destination.
+    let onSelect: (Pokemon) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: DesignKit.Spacing.Primitive.s8) {
@@ -145,10 +128,13 @@ private struct SuggestedPokemonSection: View {
                 .padding(.horizontal, DesignKit.Spacing.Primitive.s16)
             LazyVGrid(columns: GridLayout.two.layout, spacing: GridLayout.two.spacing) {
                 ForEach(pokemon, id: \.id) { pokemon in
-                    NavigationLink(value: pokemon) {
+                    Button {
+                        onSelect(pokemon)
+                    } label: {
                         PokemonSpriteCard(pokemon: pokemon)
                             .matchedTransitionSource(id: pokemon.id, in: namespace)
                     }
+                    .buttonStyle(.plain)
                 }
             }
         }

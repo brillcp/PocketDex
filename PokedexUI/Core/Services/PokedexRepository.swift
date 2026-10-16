@@ -20,7 +20,7 @@ protocol PokedexRepositoryProtocol: Sendable {
     func searchIndex() async -> [PokemonSearchEntry]
     /// Matchmaking snapshots for every stored pokemon, built off the main
     /// actor.
-    func opponentCandidates() async -> [Candidate]
+    func battleCandidates() async -> [Candidate]
 }
 
 /// Production `PokedexRepositoryProtocol`. An actor so its lazily created
@@ -135,8 +135,8 @@ extension PokedexRepository: PokedexRepositoryProtocol {
         await resolvedStore().searchIndex()
     }
 
-    func opponentCandidates() async -> [Candidate] {
-        await resolvedStore().opponentCandidates()
+    func battleCandidates() async -> [Candidate] {
+        await resolvedStore().battleCandidates()
     }
 }
 

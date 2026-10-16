@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Sprite-over-name grid cell used in search, bookmarks, type lists, and
+/// Sprite-over-name grid cell used in search, my team, type lists, and
 /// opponent picker grids. Reads only the passed-in model, so a cell
 /// re-renders only when that Pokémon's own properties change.
 struct PokemonSpriteCard: View, Equatable {

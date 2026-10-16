@@ -71,8 +71,14 @@ final class MultiplayerSetupViewModel {
         self.multipeer = container.multipeerService
     }
 
-    /// Begin listening for multipeer events. Call once from the view's `.task`
-    /// modifier so the listen loop is tied to view lifetime, not init.
+    isolated deinit {
+        listenTask?.cancel()
+    }
+
+    /// Begin listening for multipeer events, for the view model's lifetime
+    /// (it keeps listening while a battle is pushed over the lobby, and
+    /// `deinit` cancels it). Call from the view's `.task`; later calls are
+    /// no-ops.
     func startListening() {
         guard listenTask == nil else { return }
         let stream = multipeer.events()

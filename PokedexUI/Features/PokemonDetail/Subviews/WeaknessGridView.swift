@@ -33,7 +33,8 @@ private extension WeaknessGridView {
     /// types can produce x4 or x0.25). Neutral matchups are omitted.
     var defensiveBuckets: [(label: String, types: [String])] {
         let defenders = typeNames
-        let chart = PokeBattleKit.typeChart
+        // Empty until the battle catalogue has loaded (first launch).
+        guard let chart = PokeBattleKit.typeChartIfLoaded else { return [] }
 
         var rows: [Double: [String]] = [:]
         for (attackerName, _) in chart.attackers {
@@ -54,8 +55,7 @@ private extension WeaknessGridView {
     /// can pick whichever STAB type suits the defender.
     var offensiveBuckets: [(label: String, types: [String])] {
         let attackers = typeNames
-        guard !attackers.isEmpty else { return [] }
-        let chart = PokeBattleKit.typeChart
+        guard !attackers.isEmpty, let chart = PokeBattleKit.typeChartIfLoaded else { return [] }
 
         var rows: [Double: [String]] = [:]
         for (defenderName, _) in chart.attackers {

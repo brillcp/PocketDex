@@ -88,7 +88,7 @@ private extension MovePickerGrid {
     }
 
     func effectiveness(of move: Move) -> Double? {
-        opponentTypes.isEmpty ? nil : PokeBattleKit.typeChart.multiplier(attacking: move.typeName, defenders: opponentTypes)
+        opponentTypes.isEmpty ? nil : PokeBattleKit.typeChartIfLoaded?.multiplier(attacking: move.typeName, defenders: opponentTypes)
     }
 }
 
