@@ -8,7 +8,7 @@ import SwiftData
 /// `NavigationStack`: the compact pokedex stack, the regular-width detail
 /// column, search, my team, and type lists.
 struct PokemonDetailView<ViewModel: PokemonDetailViewModelProtocol>: View {
-    @Environment(\.container) private var container
+    @Environment(\.viewModels) private var viewModels
 
     @State private var viewModel: ViewModel
     /// "Battle" challenges this Pokémon; the sheet picks the player's fighter.
@@ -59,13 +59,9 @@ struct PokemonDetailView<ViewModel: PokemonDetailViewModelProtocol>: View {
         }
         .sheet(isPresented: $showFighterPicker) {
             FighterPickerView(
-                viewModel: FighterPickerViewModel(
-                    opponent: viewModel.pokemon.pokemon,
-                    opponentTypes: viewModel.pokemon.typeNames,
-                    repository: container.repository,
-                    aiService: container.battleAI,
-                    catalog: container.battleCatalog,
-                    rules: container.battleRules
+                viewModel: viewModels.fighterPicker(
+                    against: viewModel.pokemon.pokemon,
+                    opponentTypes: viewModel.pokemon.typeNames
                 )
             ) { launch in
                 showFighterPicker = false

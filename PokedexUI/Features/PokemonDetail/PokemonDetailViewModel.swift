@@ -43,7 +43,7 @@ final class PokemonDetailViewModel {
     private let spriteLoader: SpriteLoading
     private let imageColorAnalyzer: ImageColorAnalyzing
     private let audioPlayer: AudioPlaying
-    private let battleCatalog: BattleCatalog
+    private let battleCatalog: any BattleCatalogReading
     private let modelContext: ModelContext
 
     var pokemon: PokemonViewModel
@@ -59,7 +59,7 @@ final class PokemonDetailViewModel {
         spriteLoader: SpriteLoading,
         imageColorAnalyzer: ImageColorAnalyzing,
         audioPlayer: AudioPlaying,
-        battleCatalog: BattleCatalog
+        battleCatalog: any BattleCatalogReading
     ) {
         self.isOnTeam = summary.isBookmarked
         self.pokemon = PokemonViewModel(pokemon: summary)

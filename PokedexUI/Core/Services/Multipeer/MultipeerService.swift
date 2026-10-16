@@ -43,15 +43,10 @@ enum MultipeerEvent {
     case message(BattleMessage)
 }
 
-/// Local peer-to-peer connection for multiplayer battles: discovery,
-/// invitations, and a typed message channel. View models depend on this
-/// protocol, not on MultipeerConnectivity.
+/// Finding a nearby device and setting up the connection: discovery and
+/// invitations. Only the lobby needs this.
 @MainActor
-protocol MultipeerServicing: AnyObject, Sendable {
-    /// This device's role once connected (`nil` before then).
-    var role: MultipeerRole? { get }
-    /// A new stream of every future event; each caller gets its own.
-    func events() -> AsyncStream<MultipeerEvent>
+protocol PeerDiscovering: AnyObject, Sendable {
     func startDiscovery()
     func stopDiscovery()
     /// Invite a discovered peer. The inviter becomes the guest.
@@ -59,11 +54,25 @@ protocol MultipeerServicing: AnyObject, Sendable {
     /// Accept the pending invitation. The accepter becomes the host.
     func acceptInvitation()
     func declineInvitation()
+}
+
+/// The connection itself: this device's role, its events, and a typed
+/// message channel. The handshake and the battle only need this.
+@MainActor
+protocol PeerMessaging: AnyObject, Sendable {
+    /// This device's role once connected (`nil` before then).
+    var role: MultipeerRole? { get }
+    /// A new stream of every future event; each caller gets its own.
+    func events() -> AsyncStream<MultipeerEvent>
     /// Send a message to the connected peer, in order and reliably.
     func send(_ message: BattleMessage)
     /// Tell the peer we're leaving, then tear down the session.
     func disconnect()
 }
+
+/// Local peer-to-peer connection for multiplayer battles. View models
+/// depend on these protocols, not on MultipeerConnectivity.
+typealias MultipeerServicing = PeerDiscovering & PeerMessaging
 
 /// Process-wide MultipeerConnectivity wrapper. Owns the `MCSession`,
 /// advertiser, and browser; emits typed `MultipeerEvent`s via AsyncStream
@@ -216,7 +225,7 @@ final class MultipeerService: NSObject {
     }
 }
 
-extension MultipeerService: MultipeerServicing {}
+extension MultipeerService: PeerDiscovering, PeerMessaging {}
 
 // MARK: - Private
 private extension MultipeerService {

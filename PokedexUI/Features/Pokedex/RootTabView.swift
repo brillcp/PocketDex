@@ -16,8 +16,7 @@ import SwiftData
 /// stores its model in `@State`, which keeps the first instance for the
 /// view's lifetime and ignores the new ones built on later evaluations.
 struct RootTabView<PokedexViewModel: PokedexViewModelProtocol>: View {
-    @Environment(\.modelContext) private var modelContext
-    @Environment(\.container) private var container
+    @Environment(\.viewModels) private var viewModels
 
     @State var viewModel: PokedexViewModel
 
@@ -41,17 +40,14 @@ private extension RootTabView {
     }
 
     func itemsTab() -> some View {
-        ItemListView(viewModel: ItemListViewModel(modelContext: modelContext, repository: container.repository))
+        ItemListView(viewModel: viewModels.items())
     }
 
     func searchTab() -> some View {
-        SearchView(viewModel: SearchViewModel(repository: container.repository))
+        SearchView(viewModel: viewModels.search())
     }
 
     func battleTab() -> some View {
-        MultiplayerSetupView(viewModel: MultiplayerSetupViewModel(
-            multipeer: container.multipeerService,
-            battleServices: container.battleServices
-        ))
+        MultiplayerSetupView(viewModel: viewModels.multiplayerSetup())
     }
 }

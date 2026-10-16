@@ -25,8 +25,9 @@ final class MultiplayerHandshake {
         case invalidPeerLoadout
     }
 
-    private let multipeer: any MultipeerServicing
+    private let multipeer: any PeerMessaging
     private let services: BattleServices
+    private let movePools: MovePoolBuilder
     private var peerChallenge: ChallengePayload?
     private(set) var ownChallengeSent = false
 
@@ -36,14 +37,15 @@ final class MultiplayerHandshake {
     /// For move effectiveness labels; `nil` while the catalogue loads.
     var typeChart: TypeChart? { services.catalog.typeChart }
 
-    init(multipeer: any MultipeerServicing, services: BattleServices) {
+    init(multipeer: any PeerMessaging, services: BattleServices, movePools: MovePoolBuilder) {
         self.multipeer = multipeer
         self.services = services
+        self.movePools = movePools
     }
 
     func select(_ pokemon: Pokemon) {
         selectedPokemon = pokemon
-        selection.load(for: pokemon, catalog: services.catalog)
+        selection.load(ranked: movePools.moves(for: pokemon))
     }
 
     /// Send the chosen loadout to the peer. `nil` if there's nothing to send

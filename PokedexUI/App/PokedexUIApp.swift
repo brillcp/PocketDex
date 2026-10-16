@@ -1,6 +1,5 @@
 import SwiftUI
 import SwiftData
-import PokeBattleKit
 
 /// App entry point. Installs the shared `ModelContainer` from
 /// `AppContainer.live` into the scene, so every view's `@Query` and
@@ -8,8 +7,6 @@ import PokeBattleKit
 /// background.
 @main
 struct PokedexUIApp: App {
-    @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate
-
     var body: some Scene {
         WindowGroup {
             RootView()
@@ -18,38 +15,17 @@ struct PokedexUIApp: App {
     }
 }
 
-/// Root view that wires up the composition root to the main content.
-/// Lives below `.modelContainer(...)` so it can hand the main-actor
-/// `ModelContext` (for UI-side reads) and the `AppContainer`
-/// services to the root view model.
+/// Root view that wires up the composition root to the main content, and
+/// starts loading the battle catalogue at launch through the injected
+/// container. A failed load is ignored here: the loadout screen loads again
+/// before a battle (it's safe to call repeatedly) and shows the error if it
+/// still fails.
 private struct RootView: View {
-    @Environment(\.modelContext) private var modelContext
     @Environment(\.container) private var container
+    @Environment(\.viewModels) private var viewModels
 
     var body: some View {
-        RootTabView(
-            viewModel: PokedexViewModel(
-                modelContext: modelContext,
-                repository: container.repository
-            )
-        )
-    }
-}
-
-// MARK: - AppDelegate
-
-/// UIKit lifecycle hook, bridged in via `@UIApplicationDelegateAdaptor`.
-/// Only used to start loading the battle catalogue at launch. The call
-/// runs in an unstructured `Task` so `didFinishLaunching` returns
-/// immediately instead of waiting on it. A failure is ignored here: the
-/// loadout screen calls `initialize()` again before a battle (it's safe to
-/// call repeatedly) and shows the error if it still fails.
-final class AppDelegate: NSObject, UIApplicationDelegate {
-    func application(
-        _ application: UIApplication,
-        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
-    ) -> Bool {
-        Task { try? await AppContainer.live.battleCatalog.load() }
-        return true
+        RootTabView(viewModel: viewModels.pokedex())
+            .task { try? await container.battleCatalog.load() }
     }
 }

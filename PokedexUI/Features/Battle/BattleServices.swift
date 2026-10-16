@@ -7,7 +7,7 @@ struct BattleServices: Sendable {
     let audioPlayer: AudioPlaying
     let spriteLoader: SpriteLoading
     let imageColorAnalyzer: ImageColorAnalyzing
-    let catalog: BattleCatalog
+    let catalog: any BattleCatalogReading
     /// Level and battle length; both sides (and both peers) build their
     /// combatants with these.
     let rules: BattleRules

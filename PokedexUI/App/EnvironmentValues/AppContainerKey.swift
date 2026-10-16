@@ -8,4 +8,15 @@ extension EnvironmentValues {
     /// rather than a fresh instance because `@Entry` re-evaluates its default
     /// expression on each read.
     @Entry var container: AppContainer = .live
+
+    /// Builds view models for views, read with `@Environment(\.viewModels)`.
+    /// A small value over the same live container, so building it per read
+    /// is cheap.
+    @Entry var viewModels: ViewModelFactory = ViewModelFactory(container: .live)
+
+    /// Sprite downloads, for leaf views that need only this service.
+    @Entry var spriteLoader: any SpriteLoading = AppContainer.live.spriteLoader
+
+    /// Dominant sprite colors, for leaf views that need only this service.
+    @Entry var imageColorAnalyzer: any ImageColorAnalyzing = AppContainer.live.imageColorAnalyzer
 }

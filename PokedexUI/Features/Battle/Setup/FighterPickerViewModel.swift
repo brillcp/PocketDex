@@ -21,6 +21,7 @@ final class FighterPickerViewModel {
     private let repository: PokedexRepositoryProtocol
     private let aiService: BattleAIServiceProtocol
     private let catalog: BattleCatalog
+    private let movePools: MovePoolBuilder
     private let rules: BattleRules
 
     private var allPokemon: [Pokemon] = []
@@ -42,6 +43,7 @@ final class FighterPickerViewModel {
         repository: PokedexRepositoryProtocol,
         aiService: BattleAIServiceProtocol,
         catalog: BattleCatalog,
+        movePools: MovePoolBuilder,
         rules: BattleRules
     ) {
         self.opponent = opponent
@@ -49,6 +51,7 @@ final class FighterPickerViewModel {
         self.repository = repository
         self.aiService = aiService
         self.catalog = catalog
+        self.movePools = movePools
         self.rules = rules
     }
 
@@ -97,7 +100,7 @@ final class FighterPickerViewModel {
 
     /// The loadout screen for `fighter` against the opponent.
     func setupViewModel(for fighter: Pokemon) -> BattleSetupViewModel {
-        BattleSetupViewModel(player: fighter, opponent: opponent, aiService: aiService, catalog: catalog, rules: rules)
+        BattleSetupViewModel(player: fighter, opponent: opponent, aiService: aiService, catalog: catalog, movePools: movePools, rules: rules)
     }
 }
 

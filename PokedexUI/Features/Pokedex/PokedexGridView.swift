@@ -79,7 +79,7 @@ private struct IndexingOverlay: View {
 
 /// Single cell in the pokedex grid with sprite and color-tinted background.
 private struct PokedexGridItem: View {
-    @Environment(\.container) private var container
+    @Environment(\.imageColorAnalyzer) private var imageColorAnalyzer
 
     @State private var color: Color?
     @State private var isLight = false
@@ -102,7 +102,7 @@ private struct PokedexGridItem: View {
 
     private var card: some View {
         SpriteImage(url: pokemon.frontSprite, style: .plain) { uiImage in
-            guard let resolved = await container.imageColorAnalyzer.dominantColor(for: pokemon.id, image: uiImage)
+            guard let resolved = await imageColorAnalyzer.dominantColor(for: pokemon.id, image: uiImage)
             else { return }
             isLight = resolved.isLight
             withAnimation(DesignKit.Animation.Primitive.easeInOut20) {

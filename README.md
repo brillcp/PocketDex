@@ -36,19 +36,19 @@ PocketDex+ is **Protocol-Oriented MVVM** with clear layer boundaries and **Swift
 - ✅ **Battle AI**: rule-based AI from [PokeBattleKit](https://github.com/brillcp/PokeBattleKit), with opponents matched by simulated strength ratings and three difficulty levels.
 - ✅ **Local Multiplayer**: host-authoritative architecture with a typed, versioned `Codable` message protocol over MultipeerConnectivity. The same `BattleViewModelProtocol` drives both AI and peer-to-peer battles with zero view changes.
 
-### SOLID audit: 0.85 / 1.00
+### SOLID audit: 0.88 / 1.00
 
 Scored from an audit of the app target's code (the mean of the five principles, each scored on evidence: 1.0 means essentially no violations, 0.8 minor isolated ones, 0.6 several real ones in important places):
 
 | Principle | Score | Where it holds | Where it doesn't (yet) |
 | --- | --- | --- | --- |
-| **S**ingle Responsibility | 0.85 | The multiplayer lobby and the battle handshake are separate types; Smart pick lives in `FighterPickerViewModel`; battle screens get a `BattleServices` slice, not the container | `MoveSelection` holds selection state and also fetches base forms from SwiftData; the two battle view models repeat the event-playback loop |
-| **O**pen/Closed | 0.85 | Every service is behind a protocol; one `BattleView` serves both battle modes through `BattleViewModelProtocol` | A new multiplayer message means editing the `switch` in two view models |
+| **S**ingle Responsibility | 0.87 | Lobby and battle handshake are separate types; Smart pick lives in `FighterPickerViewModel`; move pools come from `MovePoolBuilder`, with SwiftData behind `BaseFormLookup` | The two battle view models repeat the event-playback loop and winner cry; the multiplayer battle view model also mirrors events for the guest |
+| **O**pen/Closed | 0.85 | Every service is behind a protocol; new screens plug into `ViewModelFactory`; one `BattleView` serves both battle modes | A new multiplayer message or engine event means editing `switch`es in the view models |
 | **L**iskov Substitution | 0.90 | Both battle view models are interchangeable in the generic `BattleView`; a missing catalogue is handled, not a crash | `canSelectMove` means slightly different things in the two conformers |
-| **I**nterface Segregation | 0.85 | Small protocols (`PokeAPIFetching`, `EvolutionPrefetching`, `SpriteLoading`, `AudioPlaying`) | `MultipeerServicing` and `BattleCatalog` each mix two roles (discovery and messaging, loading and reading) |
-| **D**ependency Inversion | 0.80 | One composition root; MultipeerConnectivity is hidden behind `MultipeerServicing`, and PokeBattleKit's globals behind `BattleCatalog`; view models get only the services they use | Views build their view models from the container; the app delegate preloads through `AppContainer.live` |
+| **I**nterface Segregation | 0.93 | Small, role-based protocols: `PeerDiscovering` / `PeerMessaging`, `BattleCatalogReading` / `BattleCatalogLoading`, single-service environment values for leaf views | A couple of view models take a wider dependency only to pass it on |
+| **D**ependency Inversion | 0.85 | One composition root; views get view models from `ViewModelFactory`; MultipeerConnectivity and PokeBattleKit's globals sit behind protocols | Services create their own `PokedexStore`; a few view models are built outside the factory; the environment defaults are wired to `.live` individually |
 
-Next steps that would raise it: build view models in a small factory instead of in views, move the base-form lookup out of `MoveSelection`, and split the two wider protocols.
+Next steps that would raise it: a shared battle event player for both battle modes, one meaning for `canSelectMove`, and routing the last few constructions (store, nested view models) through the composition root.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -152,11 +152,11 @@ Only `Sendable` values cross actor boundaries: DTOs, counts, raw `Data` payloads
 
 The few escape hatches are all in `MultipeerService`, because MultipeerConnectivity isn't annotated for Swift concurrency yet: a `@preconcurrency import`, one documented `@unchecked Sendable` wrapper for the invitation callback, and a `DispatchQueue.main` hop that preserves message order.
 
-The type chart lives in PokeBattleKit as a `Sendable` value type (`TypeChart`), initialized once at app launch via `PokeBattleKit.initialize()`. `BattleEngine` is also a plain `Sendable` struct in PokeBattleKit, used on the main actor inside `BattleViewModel` but not isolated itself.
+The type chart lives in PokeBattleKit as a `Sendable` value type (`TypeChart`), loaded once at app launch through `BattleCatalog.load()`. `BattleEngine` is also a plain `Sendable` struct in PokeBattleKit, used on the main actor inside `BattleViewModel` but not isolated itself.
 
 ## Dependency injection
 
-A single `AppContainer` is the composition root. Every service and long-lived worker is constructed there and handed to the view tree through one environment key:
+A single `AppContainer` is the composition root: every service is constructed there, behind a protocol. Views never pick services out of it; a `ViewModelFactory` builds each screen's view model with exactly the services that screen uses:
 
 ```swift
 final class AppContainer: Sendable {
@@ -167,18 +167,20 @@ final class AppContainer: Sendable {
     let imageColorAnalyzer: ImageColorAnalyzing
     let audioPlayer:        AudioPlaying
     let battleAI:           BattleAIServiceProtocol
-    let multipeerService:   MultipeerService
+    let battleCatalog:      BattleCatalog          // PokeBattleKit's moves + type chart
+    let multipeerService:   any MultipeerServicing // PeerDiscovering & PeerMessaging
     static let live = AppContainer()
 }
 
 extension EnvironmentValues {
-    @Entry var container: AppContainer = .live
+    @Entry var viewModels: ViewModelFactory = ViewModelFactory(container: .live)
 }
 
-@Environment(\.container) private var container
+@Environment(\.viewModels) private var viewModels
+PokemonDetailView(viewModel: viewModels.pokemonDetail(for: pokemon))
 ```
 
-A different container (with stub services, or an in-memory `ModelContainer` via `AppContainer.makeModelContainer(inMemory: true)`) can be injected the same way; the rest of the app is unaware.
+View models take only what they use: the Pokédex and Items view models take the repository, battle screens a `BattleServices` slice, the multiplayer handshake and battle only the messaging half of the multipeer service (`PeerMessaging`), and read-only code only `BattleCatalogReading`. A different container (with stub services, or an in-memory `ModelContainer` via `AppContainer.makeModelContainer(inMemory: true)`) can be injected the same way; the rest of the app is unaware.
 
 ## Storage
 
@@ -284,7 +286,7 @@ A single `Codable` enum (`BattleMessage`) covers the full lifecycle. It's a vers
 | Battle | `.moveCommitted`, `.roundResolved`, `.battleEnded` | Move name + turn number, resolved `[Event]` array, winner side |
 | Session | `.rematch`, `.disconnect` | Control signals only |
 
-Move names resolve locally via `PokeBattleKit.move(named:)`. Full `Move` objects never cross the wire. Both devices share the same move database from `PokeBattleKit.initialize()`.
+Move names resolve locally via `BattleCatalog.move(named:)`. Full `Move` objects never cross the wire. Both devices share the same move database from PokeBattleKit.
 
 ## Turn synchronization
 
@@ -367,7 +369,7 @@ The first launch downloads everything once; every later launch reads from SwiftD
 
 | Worker | What it pulls | When |
 | --- | --- | --- |
-| `PokeBattleKit` | Type chart (18 type damage relations) + full move catalogue | App launch via `PokeBattleKit.initialize()` |
+| `PokeBattleKit` | Type chart (18 type damage relations) + full move catalogue | App launch via `BattleCatalog.load()` (retried by the loadout screen if it failed) |
 | `PokedexRepository` | `/pokemon?limit=1150` index, then every detail + species in parallel | First launch, with a progress overlay |
 | `EvolutionService` | Every evolution chain referenced by the species | First launch (prefetch), then cache-first on detail screens |
 | `PokedexRepository` | Full item catalogue, grouped by category | First visit to the Items tab |

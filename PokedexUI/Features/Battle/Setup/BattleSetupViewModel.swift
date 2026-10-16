@@ -30,6 +30,10 @@ protocol BattleSetupViewModelProtocol {
     var selection: MoveSelection { get }
     /// For move effectiveness labels; `nil` while the catalogue loads.
     var typeChart: TypeChart? { get }
+    /// The player's level.
+    var playerLevel: Int { get }
+    /// The opponent's level at `difficulty`.
+    func opponentLevel(for difficulty: Difficulty) -> Int
     var opponentLoadout: [Move]? { get }
     var errorMessage: String? { get }
     var phase: BattleSetupPhase { get }
@@ -46,6 +50,7 @@ final class BattleSetupViewModel {
     private var opponentPool: [Move] = []
     private let aiService:    BattleAIServiceProtocol
     private let catalog:      BattleCatalog
+    private let movePools:    MovePoolBuilder
     private let rules:        BattleRules
 
     let playerSummary:   Pokemon
@@ -63,12 +68,14 @@ final class BattleSetupViewModel {
         opponent: Pokemon,
         aiService: BattleAIServiceProtocol,
         catalog: BattleCatalog,
+        movePools: MovePoolBuilder,
         rules: BattleRules
     ) {
         self.playerSummary   = player
         self.opponentSummary = opponent
         self.aiService       = aiService
         self.catalog         = catalog
+        self.movePools       = movePools
         self.rules           = rules
     }
 }
@@ -77,6 +84,11 @@ final class BattleSetupViewModel {
 
 extension BattleSetupViewModel: BattleSetupViewModelProtocol {
     var typeChart: TypeChart? { catalog.typeChart }
+    var playerLevel: Int { rules.level }
+
+    func opponentLevel(for difficulty: Difficulty) -> Int {
+        rules.opponentLevel(for: difficulty)
+    }
 
     var phase: BattleSetupPhase {
         guard playerPokemon != nil,
@@ -108,8 +120,8 @@ extension BattleSetupViewModel: BattleSetupViewModelProtocol {
             return
         }
 
-        let playerMoves   = MoveSelection.movesForPokemon(player.pokemon, catalog: catalog)
-        let opponentMoves = MoveSelection.movesForPokemon(opponent.pokemon, catalog: catalog)
+        let playerMoves   = movePools.moves(for: player.pokemon)
+        let opponentMoves = movePools.moves(for: opponent.pokemon)
 
         guard !playerMoves.isEmpty else {
             errorMessage = Localized("battleSetup.error.movepool", playerSummary.name)

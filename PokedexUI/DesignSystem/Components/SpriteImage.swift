@@ -9,7 +9,7 @@ import SwiftUI
 struct SpriteImage: View {
     enum Style { case circle, plain }
 
-    @Environment(\.container) private var container
+    @Environment(\.spriteLoader) private var spriteLoader
     @State private var image: Image?
 
     let url: String?
@@ -29,7 +29,7 @@ struct SpriteImage: View {
         .aspectRatio(1, contentMode: .fit)
         .task(id: url) {
             guard let url,
-                  let uiImage = await container.spriteLoader.spriteImage(from: url)
+                  let uiImage = await spriteLoader.spriteImage(from: url)
             else { return }
             await onLoaded?(uiImage)
             withAnimation(DesignKit.Animation.Primitive.easeInOut20) {

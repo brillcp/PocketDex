@@ -55,9 +55,9 @@ final class MultiplayerSetupViewModel {
     var discoveredPeers: [PeerHandle] = []
     var pendingInvitation: PendingInvitation?
 
-    init(multipeer: any MultipeerServicing, battleServices: BattleServices) {
+    init(multipeer: any MultipeerServicing, battleServices: BattleServices, movePools: MovePoolBuilder) {
         self.multipeer = multipeer
-        self.handshake = MultiplayerHandshake(multipeer: multipeer, services: battleServices)
+        self.handshake = MultiplayerHandshake(multipeer: multipeer, services: battleServices, movePools: movePools)
     }
 
     isolated deinit {

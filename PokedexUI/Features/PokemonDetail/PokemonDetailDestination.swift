@@ -1,15 +1,14 @@
 import SwiftUI
 import SwiftData
 
-/// A Pokémon's detail screen, built from the environment's container and
-/// model context, optionally zooming from its grid cell.
+/// A Pokémon's detail screen, built by the environment's view model
+/// factory, optionally zooming from its grid cell.
 ///
 /// The one place a detail view is built for navigation, so every grid
 /// (pokedex, search, type lists, my team, evolutions) pushes the same
 /// screen the same way.
 struct PokemonDetailScreen: View {
-    @Environment(\.container) private var container
-    @Environment(\.modelContext) private var modelContext
+    @Environment(\.viewModels) private var viewModels
 
     let pokemon: Pokemon
     /// Zooms from the cell marked with `matchedTransitionSource(id: pokemon.id, in:)`
@@ -18,15 +17,7 @@ struct PokemonDetailScreen: View {
 
     var body: some View {
         let detail = PokemonDetailView(
-            viewModel: PokemonDetailViewModel(
-                summary: pokemon,
-                modelContext: modelContext,
-                evolutionService: container.evolutionService,
-                spriteLoader: container.spriteLoader,
-                imageColorAnalyzer: container.imageColorAnalyzer,
-                audioPlayer: container.audioPlayer,
-                battleCatalog: container.battleCatalog
-            )
+            viewModel: viewModels.pokemonDetail(for: pokemon)
         )
         if let zoomNamespace {
             detail.navigationTransition(.zoom(sourceID: pokemon.id, in: zoomNamespace))

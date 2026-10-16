@@ -73,9 +73,9 @@ actor BattleAIService {
     /// How many recent fighters to skip.
     private let recentFighterMemory: Int
     /// For Struggle, the fallback when an attacker has no moves.
-    private let catalog: BattleCatalog
+    private let catalog: any BattleCatalogReading
 
-    init(catalog: BattleCatalog, recentFighterMemory: Int = 10) {
+    init(catalog: any BattleCatalogReading, recentFighterMemory: Int = 10) {
         self.catalog = catalog
         self.recentFighterMemory = recentFighterMemory
     }

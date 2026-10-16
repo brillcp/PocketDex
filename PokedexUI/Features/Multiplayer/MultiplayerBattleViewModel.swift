@@ -18,7 +18,7 @@ import PokeBattleKit
 @Observable
 final class MultiplayerBattleViewModel {
     private let role: MultipeerRole
-    private let multipeer: any MultipeerServicing
+    private let multipeer: any PeerMessaging
     private let audioPlayer: AudioPlaying
     private let formatter: BattleLogFormatter
     private let spriteColors: SpriteColorResolver
@@ -27,7 +27,7 @@ final class MultiplayerBattleViewModel {
     private let selfMoves: [Move]
     private let peerMoves: [Move]
     private(set) var typeChart: TypeChart?
-    private let catalog: BattleCatalog
+    private let catalog: any BattleCatalogReading
     /// Host only; the guest never resolves rounds locally.
     private var engine: BattleEngine?
     /// Incremented on each local commit; both peers stay in lockstep.
@@ -53,7 +53,7 @@ final class MultiplayerBattleViewModel {
         selfMoves: [Move],
         peerSummary: PokemonSummary,
         peerMoves: [Move],
-        multipeer: any MultipeerServicing,
+        multipeer: any PeerMessaging,
         services: BattleServices
     ) {
         self.role = role

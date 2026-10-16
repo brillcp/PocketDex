@@ -43,6 +43,8 @@
 		D58900BE308252BF00C96B56 /* BattleServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58900BD308252BF00C96B56 /* BattleServices.swift */; };
 		D58900C0308252D500C96B56 /* MultiplayerHandshake.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58900BF308252D500C96B56 /* MultiplayerHandshake.swift */; };
 		D58900C23082533300C96B56 /* FighterPickerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58900C13082533300C96B56 /* FighterPickerViewModel.swift */; };
+		D58900C4308254D800C96B56 /* MovePoolBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58900C3308254D800C96B56 /* MovePoolBuilder.swift */; };
+		D58900C63082553C00C96B56 /* ViewModelFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58900C53082553C00C96B56 /* ViewModelFactory.swift */; };
 		D589FD4230822B9B00C96B56 /* PokemonDetailDestination.swift in Sources */ = {isa = PBXBuildFile; fileRef = D589FD4130822B9B00C96B56 /* PokemonDetailDestination.swift */; };
 		D58C0DFB2E398709003098EC /* MyTeamView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58C0DFA2E398709003098EC /* MyTeamView.swift */; };
 		D58F8D992E3970F300BB9A45 /* SortType.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58F8D982E3970F300BB9A45 /* SortType.swift */; };
@@ -145,6 +147,8 @@
 		D58900BD308252BF00C96B56 /* BattleServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleServices.swift; sourceTree = "<group>"; };
 		D58900BF308252D500C96B56 /* MultiplayerHandshake.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiplayerHandshake.swift; sourceTree = "<group>"; };
 		D58900C13082533300C96B56 /* FighterPickerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FighterPickerViewModel.swift; sourceTree = "<group>"; };
+		D58900C3308254D800C96B56 /* MovePoolBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MovePoolBuilder.swift; sourceTree = "<group>"; };
+		D58900C53082553C00C96B56 /* ViewModelFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewModelFactory.swift; sourceTree = "<group>"; };
 		D589FD4130822B9B00C96B56 /* PokemonDetailDestination.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PokemonDetailDestination.swift; sourceTree = "<group>"; };
 		D58C0DFA2E398709003098EC /* MyTeamView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyTeamView.swift; sourceTree = "<group>"; };
 		D58F8D982E3970F300BB9A45 /* SortType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SortType.swift; sourceTree = "<group>"; };
@@ -332,6 +336,7 @@
 				D56F11102FC2FC360002A450 /* MovePickerGrid.swift */,
 				D56F11142FC3022F0002A450 /* MoveLoadoutView.swift */,
 				D58900C13082533300C96B56 /* FighterPickerViewModel.swift */,
+				D58900C3308254D800C96B56 /* MovePoolBuilder.swift */,
 			);
 			path = Setup;
 			sourceTree = "<group>";
@@ -371,6 +376,7 @@
 				9396D239273EBBED00AF0C94 /* PokedexUIApp.swift */,
 				D5E0000000000000000000C2 /* AppContainer.swift */,
 				D551306A2E3C0CEC0004A44B /* EnvironmentValues */,
+				D58900C53082553C00C96B56 /* ViewModelFactory.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -694,6 +700,7 @@
 				D58900BE308252BF00C96B56 /* BattleServices.swift in Sources */,
 				D57366002E2110E000FE4ED0 /* ItemListViewModel.swift in Sources */,
 				D5D6250D2E2194230030867D /* ItemDetailView.swift in Sources */,
+				D58900C4308254D800C96B56 /* MovePoolBuilder.swift in Sources */,
 				D54F5AF22E1DA61400411759 /* PokedexViewModel.swift in Sources */,
 				9396D23A273EBBED00AF0C94 /* PokedexUIApp.swift in Sources */,
 				D5E0000000000000000000C1 /* AppContainer.swift in Sources */,
@@ -706,6 +713,7 @@
 				D5E0000000000000000000D9 /* TypePokemonListView.swift in Sources */,
 				D5E0000000000000000000E1 /* HPCard.swift in Sources */,
 				D5E0000000000000000000E5 /* BattlerSprite.swift in Sources */,
+				D58900C63082553C00C96B56 /* ViewModelFactory.swift in Sources */,
 				D5E0000000000000000000F1 /* BattleLogFeed.swift in Sources */,
 				D5E0000000000000000000E7 /* ShakeEffect.swift in Sources */,
 				D5E00000000000000000F2F3 /* BattleStateReducer.swift in Sources */,

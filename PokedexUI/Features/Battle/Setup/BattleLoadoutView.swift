@@ -8,7 +8,7 @@ import PokeBattleKit
 /// `.readyToStart`. The `BattleViewModel` is built here and passed up
 /// through `onStart` in a `BattleLaunch`.
 struct BattleLoadoutView<ViewModel: BattleSetupViewModelProtocol>: View {
-    @Environment(\.container) private var container
+    @Environment(\.viewModels) private var viewModels
     @AppStorage(BattleDifficulty.key) private var difficulty = BattleDifficulty.defaultValue
 
     @State private var viewModel: ViewModel
@@ -37,14 +37,12 @@ private extension BattleLoadoutView {
               let opponent = viewModel.opponentPokemon,
               let opponentMoves = viewModel.opponentLoadout
         else { return }
-        let battleViewModel = BattleViewModel(
+        let battleViewModel = viewModels.battle(
             player: player,
             opponent: opponent,
             playerMoves: viewModel.selection.selectedMoves,
             opponentMoves: opponentMoves,
-            difficulty: difficulty,
-            aiService: container.battleAI,
-            services: container.battleServices
+            difficulty: difficulty
         )
         onStart(BattleLaunch(viewModel: battleViewModel))
     }
@@ -99,7 +97,7 @@ private extension BattleLoadoutView {
     var matchupRow: some View {
         HStack(alignment: .top, spacing: DesignKit.Spacing.Primitive.s2) {
             if let player = viewModel.playerPokemon {
-                fighterCard(pokemon: player, summary: viewModel.playerSummary, level: container.battleRules.level)
+                fighterCard(pokemon: player, summary: viewModel.playerSummary, level: viewModel.playerLevel)
             }
             VStack {
                 Spacer()
@@ -110,7 +108,7 @@ private extension BattleLoadoutView {
                 fighterCard(
                     pokemon: opponent,
                     summary: viewModel.opponentSummary,
-                    level: container.battleRules.opponentLevel(for: difficulty)
+                    level: viewModel.opponentLevel(for: difficulty)
                 )
             }
         }
