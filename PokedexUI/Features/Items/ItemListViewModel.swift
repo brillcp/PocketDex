@@ -23,14 +23,14 @@ protocol ItemListViewModelProtocol {
 @MainActor
 @Observable
 final class ItemListViewModel {
-    private let repository: PokedexRepositoryProtocol
+    private let repository: any PokedexImporting
     private let modelContext: ModelContext
 
     var items: [ItemData] = []
     var isLoading: Bool = false
     var loadFailed = false
 
-    init(modelContext: ModelContext, repository: PokedexRepositoryProtocol) {
+    init(modelContext: ModelContext, repository: any PokedexImporting) {
         self.repository = repository
         self.modelContext = modelContext
     }

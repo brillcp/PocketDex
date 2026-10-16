@@ -2,39 +2,25 @@ import SwiftUI
 import PokeBattleKit
 
 /// `BattleViewModelProtocol` implementation that runs a turn-based battle
-/// across two devices over `MultipeerService`. Host runs the engine and
-/// broadcasts resolved events; guest renders received events with sides
-/// flipped so its own pokemon always appears as `.player`.
+/// across two devices over `MultipeerService`.
 ///
-/// Turn protocol (commit, collect, resolve):
-/// 1. Each side commits a move with `.moveCommitted(turnNumber:)`.
-/// 2. The host waits until it holds both its own and the peer's move for
-///    the same turn, then resolves the round with its `BattleEngine`.
-/// 3. The host broadcasts `.roundResolved(events:turnNumber:)` and both
-///    sides play the identical event list, so damage rolls and crits can't
-///    diverge between devices.
-/// Turn numbers let each side ignore stale or out-of-order messages.
+/// The turn protocol is PokeBattleKit's `PeerBattle`: the host runs the
+/// engine and both devices play its resolved rounds (the guest's mirrored,
+/// so its own pokemon is always `.player`), with turn numbers to ignore
+/// stale messages. This view model feeds it moves and the peer's `.turn`
+/// messages, and carries out the steps it returns: send, prompt, play.
 @MainActor
 @Observable
 final class MultiplayerBattleViewModel {
-    private let role: MultipeerRole
     private let multipeer: any PeerMessaging
-    private let audioPlayer: AudioPlaying
     private let formatter: BattleLogFormatter
     private let spriteColors: SpriteColorResolver
     private let eventPlayer: BattleEventPlayer
     private let selfSummary: PokemonSummary
     private let peerSummary: PokemonSummary
-    private let selfMoves: [Move]
-    private let peerMoves: [Move]
     private(set) var typeChart: TypeChart?
-    private let catalog: any BattleCatalogReading
-    /// Host only; the guest never resolves rounds locally.
-    private var engine: BattleEngine?
-    /// Incremented on each local commit; both peers stay in lockstep.
-    private var turnNumber: Int = 0
-    private var pendingSelfMove: Move?
-    private var pendingPeerMoveName: String?
+    /// `nil` if the catalogue hadn't loaded, so the battle can't start.
+    private var battle: PeerBattle?
     private var listenTask: Task<Void, Never>?
 
     let animator: BattleAnimator
@@ -49,7 +35,7 @@ final class MultiplayerBattleViewModel {
     var errorMessage: String?
 
     init(
-        role: MultipeerRole,
+        role: PeerBattle.Role,
         selfSummary: PokemonSummary,
         selfMoves: [Move],
         peerSummary: PokemonSummary,
@@ -57,14 +43,9 @@ final class MultiplayerBattleViewModel {
         multipeer: any PeerMessaging,
         services: BattleServices
     ) {
-        self.role = role
         self.multipeer = multipeer
-        self.audioPlayer = services.audioPlayer
-        self.catalog = services.catalog
         self.selfSummary = selfSummary
         self.peerSummary = peerSummary
-        self.selfMoves = selfMoves
-        self.peerMoves = peerMoves
         self.displayMoves = selfMoves
         self.playerName = selfSummary.name
         self.opponentName = peerSummary.name
@@ -96,14 +77,13 @@ final class MultiplayerBattleViewModel {
             moves: peerMoves.map { MoveSnapshot(from: $0) },
             rules: services.rules
         )
-        self.state = BattleState(player: selfCombatant, opponent: peerCombatant)
-        // Both peers use the chart for effectiveness labels; only the host
-        // runs the engine.
-        if let chart = catalog.typeChart {
+        let initialState = BattleState(player: selfCombatant, opponent: peerCombatant)
+        self.state = initialState
+        // Both peers use the chart for effectiveness labels; only the host's
+        // `PeerBattle` runs the engine.
+        if let chart = services.catalog.typeChart {
             self.typeChart = chart
-            if role == .host {
-                self.engine = BattleEngine(state: state!, typeChart: chart)
-            }
+            self.battle = PeerBattle(role: role, state: initialState, typeChart: chart, peerMoves: peerMoves)
         } else {
             self.errorMessage = Localized("battle.error.dataNotLoaded")
         }
@@ -119,7 +99,8 @@ final class MultiplayerBattleViewModel {
 // MARK: - BattleViewModelProtocol
 extension MultiplayerBattleViewModel: BattleViewModelProtocol {
     var canSelectMove: Bool {
-        typeChart != nil && state != nil && pendingSelfMove == nil && winner == nil && !isResolvingTurn
+        guard let battle else { return false }
+        return battle.committedMove == nil && errorMessage == nil && winner == nil && !isResolvingTurn
     }
 
     func prepare() async {
@@ -136,14 +117,11 @@ extension MultiplayerBattleViewModel: BattleViewModelProtocol {
     }
 
     func submit(_ move: Move) async {
-        guard canSelectMove else { return }
+        guard canSelectMove, let steps = battle?.commit(move) else { return }
 
         animator.attackTick += 1
-        pendingSelfMove = move
-        turnNumber += 1
         log.append(.prompt(formatter.waitingForOpponent()))
-        multipeer.send(.moveCommitted(moveName: move.name, turnNumber: turnNumber))
-        if role == .host { await tryResolveHostTurn() }
+        await perform(steps)
     }
 }
 
@@ -166,70 +144,46 @@ private extension MultiplayerBattleViewModel {
         }
     }
 
-    func handle(_ message: BattleMessage) async {
+    func handle(_ message: BattleMessage<PokemonSummary>) async {
         switch message {
-        case .moveCommitted(let moveName, let turn):
-            await receivePeerMove(name: moveName, turn: turn)
-        case .roundResolved(let events, let turn):
-            await receiveResolution(events: events, turn: turn)
-        case .battleEnded(let w):
-            // The host's `Side` is from its own perspective; flip for the
-            // guest. A draw is shown as a player win, as in `BattleEventPlayer`.
-            self.winner = (role == .host ? w : w?.opposite) ?? .player
+        case .turn(let turn):
+            guard let steps = battle?.receive(turn) else { return }
+            await perform(steps)
         case .disconnect:
+            // Leaving after the battle is decided is normal; keep the result.
+            guard winner == nil else { return }
             errorMessage = Localized("multiplayer.error.disconnected")
-            winner = nil
         case .hello, .challengeProposed, .challengeAccepted, .challengeDeclined, .rematch:
             break
         }
     }
 
-    func receivePeerMove(name: String, turn: Int) async {
-        if pendingSelfMove == nil {
-            log.append(.prompt(formatter.chooseMove()))
+    /// Carries out `PeerBattle`'s steps in order. Its messages come before
+    /// the round's events, so both devices play the round together.
+    func perform(_ steps: [PeerBattle.Step]) async {
+        for step in steps {
+            switch step {
+            case .send(let turn):
+                multipeer.send(.turn(turn))
+            case .peerCommitted:
+                log.append(.prompt(formatter.chooseMove()))
+            case .play(let events):
+                await playRound(events)
+            case .ended(let w):
+                winner = BattleEventPlayer.shownWinner(w)
+            }
         }
-        // Host accepts the peer's move for the current turn, or for the next
-        // turn when the peer committed first (host hasn't bumped `turnNumber`
-        // yet). The guest only shows the prompt and waits for the resolution.
-        guard role == .host,
-              turn == turnNumber || turn == turnNumber + (pendingSelfMove == nil ? 1 : 0)
-        else { return }
-
-        pendingPeerMoveName = name
-        await tryResolveHostTurn()
     }
 
-    func receiveResolution(events: [Event], turn: Int) async {
-        guard role == .guest, turn == turnNumber else { return }
-
+    func playRound(_ events: [Event]) async {
         isResolvingTurn = true
         removePromptLines()
-        await eventPlayer.play(events.map(\.mirrored), into: self)
-        pendingSelfMove = nil
-        isResolvingTurn = false
-    }
-
-    /// Resolves only once both moves for the turn are in; called after
-    /// either side's commit arrives, whichever comes last does the work.
-    func tryResolveHostTurn() async {
-        guard role == .host,
-              let selfMove = pendingSelfMove,
-              let peerName = pendingPeerMoveName,
-              let peerMove = peerMoves.first(where: { $0.name == peerName }) ?? catalog.move(named: peerName),
-              var eng = engine
-        else { return }
-        isResolvingTurn = true
-        removePromptLines()
-        let events = eng.resolveRound(playerMove: selfMove, opponentMove: peerMove)
-        self.engine = eng
-        // Send before animating so both devices play the turn together.
-        multipeer.send(.roundResolved(events: events, turnNumber: turnNumber))
-        if case .ended(let w) = await eventPlayer.play(events, into: self) {
-            multipeer.send(.battleEnded(winner: w))
+        await eventPlayer.play(events, into: self)
+        // The host re-syncs with its engine, so bookkeeping the reducer
+        // doesn't mirror can't drift from the display.
+        if let hostState = battle?.hostState {
+            state = hostState
         }
-        pendingSelfMove = nil
-        pendingPeerMoveName = nil
-        state = eng.state
         isResolvingTurn = false
     }
 }
@@ -237,11 +191,7 @@ private extension MultiplayerBattleViewModel {
 // MARK: - Rendering
 private extension MultiplayerBattleViewModel {
     func playEntrance() async {
-        await animator.playEntrance()
-        log.append(.regular(formatter.opponentReady(opponentColor: animator.opponentCues.color)))
-        if let cry = peerSummary.cryURL {
-            await audioPlayer.play(from: cry)
-        }
+        await eventPlayer.playEntrance(into: self, announcement: formatter.opponentReady)
     }
 
     func removePromptLines() {

@@ -18,8 +18,8 @@ final class FighterPickerViewModel {
 
     let opponent: Pokemon
     private let opponentTypes: [String]
-    private let repository: PokedexRepositoryProtocol
-    private let aiService: BattleAIServiceProtocol
+    private let repository: any PokedexSnapshotReading
+    private let aiService: any FighterChoosing
     private let catalog: any BattleCatalogReading
     private let makeSetup: @MainActor (Pokemon) -> BattleSetupViewModel
 
@@ -41,8 +41,8 @@ final class FighterPickerViewModel {
     init(
         opponent: Pokemon,
         opponentTypes: [String],
-        repository: PokedexRepositoryProtocol,
-        aiService: BattleAIServiceProtocol,
+        repository: any PokedexSnapshotReading,
+        aiService: any FighterChoosing,
         catalog: any BattleCatalogReading,
         makeSetup: @escaping @MainActor (Pokemon) -> BattleSetupViewModel
     ) {

@@ -1,6 +1,6 @@
 import PokeBattleKit
 
-/// Per-battle wrapper around `BattleAIServiceProtocol` that tracks the
+/// Per-battle wrapper around the AI's `MoveChoosing` that tracks the
 /// opponent's recent picks (for recency penalty) and which player moves
 /// have been observed (so the AI only reasons about scouted threats).
 ///
@@ -10,7 +10,7 @@ import PokeBattleKit
 /// suggestions across battles).
 @MainActor
 final class BattleAIDriver {
-    private let service: BattleAIServiceProtocol
+    private let service: any MoveChoosing
     private let historyLimit: Int
     /// The difficulty this battle is played at, fixed when it starts.
     private let difficulty: Difficulty
@@ -18,7 +18,7 @@ final class BattleAIDriver {
     private var turnNumber: Int = 0
     private(set) var playerSeenMoves: Set<String> = []
 
-    init(service: BattleAIServiceProtocol, difficulty: Difficulty, historyLimit: Int = 4) {
+    init(service: any MoveChoosing, difficulty: Difficulty, historyLimit: Int = 4) {
         self.service = service
         self.difficulty = difficulty
         self.historyLimit = historyLimit
@@ -26,7 +26,7 @@ final class BattleAIDriver {
 
     /// Ask the service for the AI's next move. Updates the rolling
     /// recent-moves window on its way out. `nil` if the AI has no move to
-    /// use (see `BattleAIServiceProtocol.chooseMove`).
+    /// use (see `MoveChoosing.chooseMove`).
     func nextOpponentMove(
         attacker: Combatant,
         defender: Combatant,

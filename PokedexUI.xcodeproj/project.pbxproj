@@ -46,7 +46,6 @@
 		D58900C4308254D800C96B56 /* MovePoolBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58900C3308254D800C96B56 /* MovePoolBuilder.swift */; };
 		D58900C63082553C00C96B56 /* ViewModelFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58900C53082553C00C96B56 /* ViewModelFactory.swift */; };
 		D58900C83082575A00C96B56 /* BattleEventPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58900C73082575A00C96B56 /* BattleEventPlayer.swift */; };
-		D58900CA3082576100C96B56 /* Event+Mirrored.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58900C93082576100C96B56 /* Event+Mirrored.swift */; };
 		D58900CC3082578D00C96B56 /* PokedexStoreProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58900CB3082578D00C96B56 /* PokedexStoreProvider.swift */; };
 		D589FD4230822B9B00C96B56 /* PokemonDetailDestination.swift in Sources */ = {isa = PBXBuildFile; fileRef = D589FD4130822B9B00C96B56 /* PokemonDetailDestination.swift */; };
 		D58C0DFB2E398709003098EC /* MyTeamView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58C0DFA2E398709003098EC /* MyTeamView.swift */; };
@@ -153,7 +152,6 @@
 		D58900C3308254D800C96B56 /* MovePoolBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MovePoolBuilder.swift; sourceTree = "<group>"; };
 		D58900C53082553C00C96B56 /* ViewModelFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewModelFactory.swift; sourceTree = "<group>"; };
 		D58900C73082575A00C96B56 /* BattleEventPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleEventPlayer.swift; sourceTree = "<group>"; };
-		D58900C93082576100C96B56 /* Event+Mirrored.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Event+Mirrored.swift"; sourceTree = "<group>"; };
 		D58900CB3082578D00C96B56 /* PokedexStoreProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PokedexStoreProvider.swift; sourceTree = "<group>"; };
 		D589FD4130822B9B00C96B56 /* PokemonDetailDestination.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PokemonDetailDestination.swift; sourceTree = "<group>"; };
 		D58C0DFA2E398709003098EC /* MyTeamView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyTeamView.swift; sourceTree = "<group>"; };
@@ -373,7 +371,6 @@
 				D5DA000000000000000000D2 /* MultiplayerSetupViewModel.swift */,
 				D5DA000000000000000000D3 /* MultiplayerSetupView.swift */,
 				D58900BF308252D500C96B56 /* MultiplayerHandshake.swift */,
-				D58900C93082576100C96B56 /* Event+Mirrored.swift */,
 			);
 			path = Multiplayer;
 			sourceTree = "<group>";
@@ -727,7 +724,6 @@
 				D58900C63082553C00C96B56 /* ViewModelFactory.swift in Sources */,
 				D5E0000000000000000000F1 /* BattleLogFeed.swift in Sources */,
 				D5E0000000000000000000E7 /* ShakeEffect.swift in Sources */,
-				D58900CA3082576100C96B56 /* Event+Mirrored.swift in Sources */,
 				D5E00000000000000000F2F3 /* BattleStateReducer.swift in Sources */,
 				D5E00000000000000000F5F6 /* MoveSelection.swift in Sources */,
 				D5D4590E2E40F28600ADB89A /* PokemonDetailViewModel.swift in Sources */,
@@ -982,7 +978,7 @@
 			repositoryURL = "https://github.com/brillcp/pokebattlekit";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 0.2.0;
+				minimumVersion = 0.2.1;
 			};
 		};
 		D57366012E2114C100FE4ED0 /* XCRemoteSwiftPackageReference "Networking" */ = {

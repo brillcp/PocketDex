@@ -48,7 +48,7 @@ final class SearchViewModel {
 
     /// Main-context models paired with their background-built haystack.
     private var index: [(pokemon: Pokemon, haystack: String)] = []
-    private let repository: PokedexRepositoryProtocol
+    private let repository: any PokedexSnapshotReading
     private let defaults: UserDefaults
 
     var filtered: [Pokemon] = []
@@ -56,7 +56,7 @@ final class SearchViewModel {
     var recentSearches: [String]
     var suggestedPokemon: [Pokemon] = []
 
-    init(repository: PokedexRepositoryProtocol, defaults: UserDefaults = .standard) {
+    init(repository: any PokedexSnapshotReading, defaults: UserDefaults = .standard) {
         self.repository = repository
         self.defaults = defaults
         self.recentSearches = defaults.stringArray(forKey: Self.recentSearchesKey) ?? []

@@ -36,19 +36,19 @@ PocketDex+ is **Protocol-Oriented MVVM** with clear layer boundaries and **Swift
 - ✅ **Battle AI**: rule-based AI from [PokeBattleKit](https://github.com/brillcp/PokeBattleKit), with opponents matched by simulated strength ratings and three difficulty levels.
 - ✅ **Local Multiplayer**: host-authoritative architecture with a typed, versioned `Codable` message protocol over MultipeerConnectivity. The same `BattleViewModelProtocol` drives both AI and peer-to-peer battles with zero view changes.
 
-### SOLID audit: 0.89 / 1.00
+### SOLID audit: 0.91 / 1.00
 
 Scored from an audit of the app target's code (the mean of the five principles, each scored on evidence: 1.0 means essentially no violations, 0.8 minor isolated ones, 0.6 several real ones in important places):
 
 | Principle | Score | Where it holds | Where it doesn't (yet) |
 | --- | --- | --- | --- |
-| **S**ingle Responsibility | 0.89 | Lobby and battle handshake are separate types; both battle modes play turns through one `BattleEventPlayer`; guest-side event mirroring lives on `Event`; move pools come from `MovePoolBuilder` | The multiplayer battle view model handles both host and guest roles; the two battle view models still repeat their setup and entrance |
-| **O**pen/Closed | 0.86 | Every service is behind a protocol; new screens plug into `ViewModelFactory`; one `BattleView` serves both battle modes | A new multiplayer message or engine event means editing several `switch`es |
-| **L**iskov Substitution | 0.91 | Both battle view models are interchangeable in the generic `BattleView` and agree on `canSelectMove`; a missing catalogue or move is handled, not a crash | A peer disconnect clears the multiplayer winner, which a single-player battle never does |
-| **I**nterface Segregation | 0.91 | Small, role-based protocols: `PeerDiscovering` / `PeerMessaging`, `BattleCatalogReading` / `BattleCatalogLoading`, single-service environment values for leaf views | The repository and AI service protocols each bundle operations that different screens use one at a time |
-| **D**ependency Inversion | 0.87 | One composition root builds every service (including the shared background store) and, through `ViewModelFactory`, every view model; environment values derive from the injected container | Battle view models build their own playback helpers; some view models use SwiftData's `ModelContext` directly |
+| **S**ingle Responsibility | 0.91 | Lobby and battle handshake are separate types; both battle modes play their entrance and turns through one `BattleEventPlayer`; the multiplayer battle view model only carries out PokeBattleKit's `PeerBattle` turn protocol; move pools come from `MovePoolBuilder` | The multiplayer lobby view model and `MultipeerService` are still fairly large |
+| **O**pen/Closed | 0.88 | Every service is behind a protocol; new screens plug into `ViewModelFactory`; one `BattleView` serves both battle modes | A new message case in PokeBattleKit, or a new engine event, means editing several exhaustive `switch`es |
+| **L**iskov Substitution | 0.92 | Both battle view models are interchangeable in the generic `BattleView`: they agree on `canSelectMove`, draws, and keeping the result after a disconnect; a missing catalogue or move is handled, not a crash | Only the host can re-sync its display with the engine (the guest has none) |
+| **I**nterface Segregation | 0.94 | Role-based protocols, each consumer taking only its own: `PokedexImporting` / `PokedexSnapshotReading`, `MoveChoosing` / `FighterChoosing` / `LoadoutChoosing`, `PeerDiscovering` / `PeerMessaging`, `BattleCatalogReading` / `BattleCatalogLoading` | `chooseMove` still takes nine parameters |
+| **D**ependency Inversion | 0.88 | One composition root builds every service (including the shared background store) and, through `ViewModelFactory`, every view model; environment values derive from the injected container | Battle view models build their own per-battle helpers; some view models use SwiftData's `ModelContext` directly; the multipeer transport names PokeBattleKit's message and role types |
 
-Next steps that would raise it: split the repository and AI service protocols by consumer, and inject the battle playback helpers.
+What's left is deliberate: injecting the per-battle helpers or wrapping SwiftData would add indirection without real benefit at this size.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -279,25 +279,25 @@ Both players open the Gym tab, which advertises and browses simultaneously. Near
 
 ## Message protocol
 
-A single `Codable` enum (`BattleMessage`) covers the full lifecycle. It's a versioned wire format (`MultipeerProtocol.version`); peers reject mismatches.
+The messages and the turn protocol come from PokeBattleKit; the app adds the transport (`MultipeerService`), the lobby and the screens. A single `Codable` enum (PokeBattleKit's `BattleMessage<PokemonSummary>`) covers the full lifecycle. It's a versioned wire format (`MultipeerProtocol.version`); peers reject mismatches.
 
 | Phase | Messages | What crosses the wire |
 | --- | --- | --- |
 | Handshake | `.hello`, `.challengeProposed`, `.challengeAccepted`, `.challengeDeclined` | Protocol version, `PokemonSummary` (id, name, sprites, types, stats), 4 move names |
-| Battle | `.moveCommitted`, `.roundResolved`, `.battleEnded` | Move name + turn number, resolved `[Event]` array, winner side |
+| Battle | `.turn(.moveCommitted)`, `.turn(.roundResolved)`, `.turn(.battleEnded)` | Move name + turn number, resolved `[Event]` array, winner side |
 | Session | `.rematch`, `.disconnect` | Control signals only |
 
 Move names resolve locally via `BattleCatalog.move(named:)`. Full `Move` objects never cross the wire. Both devices share the same move database from PokeBattleKit.
 
 ## Turn synchronization
 
-Commit-collect-resolve pattern with no races:
+PokeBattleKit's `PeerBattle` runs the commit-collect-resolve protocol; `MultiplayerBattleViewModel` feeds it moves and messages and carries out the steps it returns:
 
 1. Both players see the move grid
 2. Player taps a move, sends `.moveCommitted(name, turnN)` to peer
 3. **Host collects**: stores own move + guest's move. When both present for turn N, runs `engine.resolveRound()`, sends `.roundResolved(events, N)` to guest
-4. **Guest receives**: applies events to local state, animates via `BattleAnimator`
-5. Both reset for turn N+1
+4. **Guest receives**: plays the events mirrored (`Event.mirrored`), so its own pokemon is the player, and animates via `BattleAnimator`
+5. Both reset for turn N+1; turn numbers make each side ignore stale or out-of-order messages
 
 The guest reverses `.player`/`.opponent` in received events via `side.opposite` before rendering. `turnNumber` on every message prevents stale/duplicate processing.
 
@@ -428,7 +428,7 @@ On top of that, the project moved to the Swift 6 language mode with the concurre
 ```swift
 dependencies: [
     .package(url: "https://github.com/brillcp/Networking.git", .upToNextMajor(from: "0.10.1")),
-    .package(url: "https://github.com/brillcp/PokeBattleKit.git", .upToNextMajor(from: "0.2.0"))
+    .package(url: "https://github.com/brillcp/PokeBattleKit.git", .upToNextMajor(from: "0.2.1"))
 ]
 ```
 

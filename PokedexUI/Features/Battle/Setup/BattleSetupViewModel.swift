@@ -48,7 +48,7 @@ protocol BattleSetupViewModelProtocol {
 @Observable
 final class BattleSetupViewModel {
     private var opponentPool: [Move] = []
-    private let aiService:    BattleAIServiceProtocol
+    private let aiService:    any LoadoutChoosing
     private let catalog:      BattleCatalog
     private let movePools:    MovePoolBuilder
     private let rules:        BattleRules
@@ -66,7 +66,7 @@ final class BattleSetupViewModel {
     init(
         player: Pokemon,
         opponent: Pokemon,
-        aiService: BattleAIServiceProtocol,
+        aiService: any LoadoutChoosing,
         catalog: BattleCatalog,
         movePools: MovePoolBuilder,
         rules: BattleRules

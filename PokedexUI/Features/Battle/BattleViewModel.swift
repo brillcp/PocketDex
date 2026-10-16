@@ -13,9 +13,9 @@ protocol BattleViewModelProtocol: AnyObject {
     var opponentName: String { get }
     var animator: BattleAnimator { get }
     var state: BattleState? { get }
-    /// Whether a move can be chosen right now: the battle is ready, no turn
-    /// is playing, there's no winner yet, and (in multiplayer) no move is
-    /// already committed.
+    /// Whether a move can be chosen right now: the battle is ready with no
+    /// error, no turn is playing, there's no winner yet, and (in
+    /// multiplayer) no move is already committed.
     var canSelectMove: Bool { get }
     var log: [BattleLogEntry] { get }
     var isResolvingTurn: Bool { get }
@@ -54,8 +54,7 @@ final class BattleViewModel {
     private let opponentMoves: [Move]
     private let playerMoves:   [Move]
     private let formatter:     BattleLogFormatter
-    private let audioPlayer:   AudioPlaying
-    private let aiDriver:      BattleAIDriver
+    private let aiDriver:     BattleAIDriver
     private let spriteColors:  SpriteColorResolver
     private let eventPlayer:   BattleEventPlayer
     private(set) var typeChart: TypeChart?
@@ -80,7 +79,7 @@ final class BattleViewModel {
         playerMoves: [Move],
         opponentMoves: [Move],
         difficulty: Difficulty,
-        aiService: BattleAIServiceProtocol,
+        aiService: any MoveChoosing,
         services: BattleServices
     ) {
         self.playerPokemon   = player
@@ -88,7 +87,6 @@ final class BattleViewModel {
         self.displayMoves    = playerMoves
         self.playerMoves     = playerMoves
         self.opponentMoves   = opponentMoves
-        self.audioPlayer     = services.audioPlayer
         self.aiDriver        = BattleAIDriver(service: aiService, difficulty: difficulty)
         self.spriteColors    = SpriteColorResolver(
             spriteLoader: services.spriteLoader,
@@ -138,7 +136,7 @@ final class BattleViewModel {
 extension BattleViewModel: BattleViewModelProtocol {
     var playerName: String { playerPokemon.name }
     var opponentName: String { opponentPokemon.name }
-    var canSelectMove: Bool { engine != nil && !isResolvingTurn && winner == nil }
+    var canSelectMove: Bool { engine != nil && errorMessage == nil && !isResolvingTurn && winner == nil }
 
     func prepare() async {
         // Sendable values only: `async let` evaluates in a child task.
@@ -206,12 +204,7 @@ private extension BattleViewModel {
     }
 
     func playEntrance() async {
-        await animator.playEntrance()
-        log.append(.regular(formatter.wildAppeared(opponentColor: animator.opponentCues.color)))
-
-        if let cry = opponentPokemon.latestCry {
-            await audioPlayer.play(from: cry)
-        }
+        await eventPlayer.playEntrance(into: self, announcement: formatter.wildAppeared)
     }
 }
 

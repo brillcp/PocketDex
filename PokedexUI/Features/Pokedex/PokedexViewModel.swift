@@ -54,7 +54,7 @@ extension PokedexViewModelProtocol {
 @MainActor
 @Observable
 final class PokedexViewModel {
-    private let repository: PokedexRepositoryProtocol
+    private let repository: any PokedexImporting
     private let modelContext: ModelContext
 
     var pokemon: [Pokemon] = [] { didSet { recomputeSortedPokemon() } }
@@ -69,7 +69,7 @@ final class PokedexViewModel {
     /// views that read it don't re-sort on every body evaluation.
     private(set) var sortedPokemon: [Pokemon] = []
 
-    init(modelContext: ModelContext, repository: PokedexRepositoryProtocol) {
+    init(modelContext: ModelContext, repository: any PokedexImporting) {
         self.repository = repository
         self.modelContext = modelContext
     }

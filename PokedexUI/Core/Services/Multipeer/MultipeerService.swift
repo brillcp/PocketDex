@@ -4,21 +4,13 @@ import Foundation
 // downgrades the resulting diagnostics for values (like peer IDs) that are
 // handed from MC's delegate queue to the main actor.
 @preconcurrency import MultipeerConnectivity
+import PokeBattleKit
 import SwiftUI
 
 /// Lightweight invitation handle for SwiftUI alert presentation.
 struct PendingInvitation: Identifiable, Equatable {
     let id = UUID()
     let peerName: String
-}
-
-/// Role this device plays in the session. Both devices advertise and browse
-/// at once, so the role is decided by the invitation: the device that
-/// accepts an invite becomes `.host` (it runs the battle engine), the one
-/// that sent it becomes `.guest`.
-enum MultipeerRole: Sendable {
-    case host
-    case guest
 }
 
 /// A nearby device, as the rest of the app sees it. Opaque: the
@@ -40,7 +32,7 @@ enum MultipeerEvent {
     case invitationReceived(peerName: String)
     case advertisingFailed(Error)
     case browsingFailed(Error)
-    case message(BattleMessage)
+    case message(BattleMessage<PokemonSummary>)
 }
 
 /// Finding a nearby device and setting up the connection: discovery and
@@ -60,12 +52,15 @@ protocol PeerDiscovering: AnyObject, Sendable {
 /// message channel. The handshake and the battle only need this.
 @MainActor
 protocol PeerMessaging: AnyObject, Sendable {
-    /// This device's role once connected (`nil` before then).
-    var role: MultipeerRole? { get }
+    /// This device's role once connected (`nil` before then). Both devices
+    /// advertise and browse at once, so the invitation decides it: the
+    /// device that accepts an invite hosts (it runs the battle engine), the
+    /// one that sent it is the guest.
+    var role: PeerBattle.Role? { get }
     /// A new stream of every future event; each caller gets its own.
     func events() -> AsyncStream<MultipeerEvent>
     /// Send a message to the connected peer, in order and reliably.
-    func send(_ message: BattleMessage)
+    func send(_ message: BattleMessage<PokemonSummary>)
     /// Tell the peer we're leaving, then tear down the session.
     func disconnect()
 }
@@ -97,7 +92,7 @@ final class MultipeerService: NSObject {
     @ObservationIgnored private var handles: [MCPeerID: PeerHandle] = [:]
     @ObservationIgnored private var peers: [UUID: MCPeerID] = [:]
 
-    private(set) var role: MultipeerRole?
+    private(set) var role: PeerBattle.Role?
 
     /// Nonisolated so `AppContainer.live` (and the `\.container`
     /// environment default) can be built without the main actor. The peer
@@ -202,7 +197,7 @@ final class MultipeerService: NSObject {
     /// failures are logged but not thrown; the `.peerDisconnected` event
     /// covers loss-of-peer recovery. Uses `.reliable` delivery because the
     /// battle protocol depends on every message arriving, in order.
-    func send(_ message: BattleMessage) {
+    func send(_ message: BattleMessage<PokemonSummary>) {
         guard !session.connectedPeers.isEmpty else { return }
         do {
             let data = try JSONEncoder().encode(message)
@@ -275,7 +270,7 @@ extension MultipeerService: MCSessionDelegate {
 
     nonisolated func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
         // Decode on MC's queue and hop only the Sendable `BattleMessage`.
-        guard let message = try? JSONDecoder().decode(BattleMessage.self, from: data) else {
+        guard let message = try? JSONDecoder().decode(BattleMessage<PokemonSummary>.self, from: data) else {
             #if DEBUG
             print("MultipeerService: dropped undecodable payload (\(data.count) bytes)")
             #endif

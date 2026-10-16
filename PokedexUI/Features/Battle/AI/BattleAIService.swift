@@ -12,9 +12,13 @@ private func hpPct(_ c: Combatant) -> Int {
     Int(Double(c.currentHP) / Double(max(1, c.maxHP)) * 100)
 }
 
-/// The AI opponent's decisions. Every decision takes the `difficulty` to
-/// play at, so the player's setting applies from the next decision on.
-protocol BattleAIServiceProtocol: Sendable {
+/// The AI opponent's decisions, one protocol per screen that asks: the
+/// battle picks moves, the fighter picker fighters, the loadout screen
+/// loadouts. Decisions take the `difficulty` to play at, so the player's
+/// setting applies from the next decision on.
+typealias BattleAIServiceProtocol = MoveChoosing & FighterChoosing & LoadoutChoosing
+
+protocol MoveChoosing: Sendable {
     /// Pick the move for this turn. `defenderSeenMoves` is the subset of
     /// the defender's moves already used in the current battle; the AI only
     /// reasons about those, like a human opponent would. `nil` only when
@@ -30,6 +34,9 @@ protocol BattleAIServiceProtocol: Sendable {
         turnNumber: Int,
         difficulty: Difficulty
     ) async -> Move?
+}
+
+protocol FighterChoosing: Sendable {
     /// Pick the player's fighter id from `candidates` to challenge
     /// `opponent` with (the whole Pokédex is fine: the service picks among
     /// the fair matchups).
@@ -38,6 +45,9 @@ protocol BattleAIServiceProtocol: Sendable {
         candidates: [Candidate],
         typeChart: TypeChart?
     ) async -> Int?
+}
+
+protocol LoadoutChoosing: Sendable {
     /// Pick the AI's loadout (up to four moves) against the player's
     /// Pokémon.
     func chooseLoadout(
@@ -82,7 +92,7 @@ actor BattleAIService {
     }
 }
 
-extension BattleAIService: BattleAIServiceProtocol {
+extension BattleAIService: MoveChoosing, FighterChoosing, LoadoutChoosing {
 
     func chooseMove(
         attacker: Combatant,

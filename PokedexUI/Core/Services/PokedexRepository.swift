@@ -8,13 +8,19 @@ import PokeBattleKit
 /// decoding fan out on the cooperative pool, and rows are built and saved
 /// by `PokedexStore` on its background context. The UI then reads the
 /// persisted rows through its own main-actor `ModelContext` / `@Query`.
-protocol PokedexRepositoryProtocol: Sendable {
+///
+/// Split by role: the Pokédex and Items tabs import (`PokedexImporting`),
+/// search and the fighter picker read snapshots (`PokedexSnapshotReading`).
+protocol PokedexImporting: Sendable {
     /// Download every pokemon (details, species, evolution chains) and
     /// persist them, unless they're already stored. `onProgress` reports
     /// 0...1 in whole-percent steps.
     func loadPokemonIfNeeded(onProgress: @escaping @Sendable (Double) async -> Void) async throws
     /// Download and persist every item category, unless already stored.
     func loadItemsIfNeeded() async throws
+}
+
+protocol PokedexSnapshotReading: Sendable {
     /// Full-text search haystacks for every stored pokemon, built off the
     /// main actor.
     func searchIndex() async -> [PokemonSearchEntry]
@@ -22,6 +28,8 @@ protocol PokedexRepositoryProtocol: Sendable {
     /// actor.
     func battleCandidates() async -> [Candidate]
 }
+
+typealias PokedexRepositoryProtocol = PokedexImporting & PokedexSnapshotReading
 
 /// Production `PokedexRepositoryProtocol`. Writes through the injected
 /// `PokedexStoreProvider`'s shared store (the pokedex and items tabs can
@@ -35,7 +43,7 @@ protocol PokedexRepositoryProtocol: Sendable {
 /// 3. Every evolution chain referenced by a species, via `EvolutionService`.
 /// 4. One `PokedexStore.importPokemon` that builds and saves all rows.
 actor PokedexRepository {
-    private static let pokemonLimit = 1150
+    fileprivate static let pokemonLimit = 1150
     private static let itemLimit = 2048
     /// Bump to force a one-time item re-import after an import format change.
     /// v2: effect texts filtered to English.
@@ -164,7 +172,7 @@ private actor ProgressCounter {
     private let onProgress: @Sendable (Double) async -> Void
     /// Estimate until the detail list size is known: details + species +
     /// chains + the final import step.
-    private var total = 1150 * 2 + estimatedChainCount + 1
+    private var total = PokedexRepository.pokemonLimit * 2 + estimatedChainCount + 1
     private var done = 0
     private var lastPercent = -1
 

@@ -145,7 +145,7 @@ extension MultiplayerSetupViewModel {
         apply(outcome)
     }
 
-    /// Derived from `.battleEnded` message or launch VM's winner.
+    /// Derived from the `.battleEnded` turn message or launch VM's winner.
     var battleEnded: Bool { receivedBattleEnded || launch?.viewModel.winner != nil }
 
     /// Drives the invitation alert. Dismissing clears the pending invitation.
@@ -195,7 +195,7 @@ private extension MultiplayerSetupViewModel {
         }
     }
 
-    func handleBattleMessage(_ message: BattleMessage) {
+    func handleBattleMessage(_ message: BattleMessage<PokemonSummary>) {
         switch message {
         case .hello(let version, _, _):
             if version != MultipeerProtocol.version {
@@ -218,9 +218,9 @@ private extension MultiplayerSetupViewModel {
             showPicker = false
             reset()
             startDiscovery()
-        case .battleEnded:
+        case .turn(.battleEnded):
             receivedBattleEnded = true
-        case .moveCommitted, .roundResolved, .rematch:
+        case .turn, .rematch:
             break
         }
     }

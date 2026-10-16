@@ -27,7 +27,7 @@ final class MultiplayerHandshake {
 
     /// Both loadouts, from this device's side: what a battle is built from.
     struct Match {
-        let role: MultipeerRole
+        let role: PeerBattle.Role
         let selfSummary: PokemonSummary
         let selfMoves: [Move]
         let peerSummary: PokemonSummary
@@ -38,7 +38,7 @@ final class MultiplayerHandshake {
     private let catalog: any BattleCatalogReading
     private let movePools: MovePoolBuilder
     private let makeBattle: @MainActor (Match) -> MultiplayerBattleViewModel
-    private var peerChallenge: ChallengePayload?
+    private var peerChallenge: ChallengePayload<PokemonSummary>?
     private(set) var ownChallengeSent = false
 
     let selection = MoveSelection()
@@ -86,7 +86,7 @@ final class MultiplayerHandshake {
     }
 
     /// The peer's loadout arrived. `nil` while ours hasn't been sent.
-    func receive(_ payload: ChallengePayload) -> Outcome? {
+    func receive(_ payload: ChallengePayload<PokemonSummary>) -> Outcome? {
         peerChallenge = payload
         return ownChallengeSent ? tryLaunch() : nil
     }
