@@ -258,6 +258,13 @@ extension MultipeerService: MCSessionDelegate {
             case .connected:
                 self.stopDiscovery()
                 self.emit(.peerConnected(self.handle(for: peerID)))
+                // First message on every connection, so the peer can reject
+                // a different protocol version (see `MultiplayerSetupViewModel`).
+                self.send(.hello(
+                    protocolVersion: MultipeerProtocol.version,
+                    displayName: self.myPeerID.displayName,
+                    isHost: self.role == .host
+                ))
             case .connecting:
                 self.emit(.peerConnecting(self.handle(for: peerID)))
             case .notConnected:
