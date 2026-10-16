@@ -29,7 +29,7 @@ struct PrimaryCapsuleButton: View {
             .font(.pixel16)
             .frame(height: DesignKit.Spacing.Primitive.s24)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, DesignKit.Spacing.Primitive.s12)
+            .padding(.vertical, DesignKit.Spacing.Primitive.s16)
             .foregroundStyle(.white)
         }
         .glassEffect(.regular.tint(.pokedexRed.opacity(0.8)).interactive())
